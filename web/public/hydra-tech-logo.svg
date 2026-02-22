@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 72" role="img" aria-label="HYDRA-TECH IT SUPPORT PLATFORM">
+  <defs>
+    <linearGradient id="circleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0ea5e9" />
+    </linearGradient>
+  </defs>
+  <circle cx="36" cy="36" r="32" fill="url(#circleGrad)" />
+  <text x="36" y="46" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="#ffffff" text-anchor="middle">A</text>
+  <text x="88" y="42" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#ffffff" letter-spacing="0.5">HYDRA-TECH</text>
+  <text x="88" y="62" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#7dd3fc" letter-spacing="1">IT SUPPORT PLATFORM</text>
+</svg>

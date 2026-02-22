@@ -1,0 +1,284 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { apiRequest } from "../../api";
+import { toastError, toastSuccess } from "../../toast";
+
+const statuses = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
+const priorities = ["Low", "Medium", "High", "Critical"];
+
+export function TicketListPage({ token, user, t }) {
+  const [tickets, setTickets] = useState([]);
+  const [error, setError] = useState("");
+  const [busyTicketId, setBusyTicketId] = useState("");
+  const [form, setForm] = useState({
+    subject: "",
+    description: "",
+    priority: "Medium",
+    channel: "Portal",
+    category: "software",
+    requesterPhone: "",
+    requesterCompanyName: "",
+  });
+
+  const load = async () => {
+    try {
+      setError("");
+      const rows = await apiRequest("/api/tickets", { token });
+      setTickets(rows);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [token]);
+
+  const submitTicket = async (event) => {
+    event.preventDefault();
+    try {
+      await apiRequest("/api/tickets", {
+        token,
+        method: "POST",
+        body: JSON.stringify(form),
+      });
+      setForm({
+        subject: "",
+        description: "",
+        priority: "Medium",
+        channel: "Portal",
+        category: "software",
+        requesterPhone: "",
+        requesterCompanyName: "",
+      });
+      await load();
+      toastSuccess("Ticket created successfully.");
+    } catch (err) {
+      setError(err.message);
+      toastError(err.message || "Failed to create ticket.");
+    }
+  };
+
+  const updateStatus = async (ticketId, status) => {
+    setBusyTicketId(String(ticketId));
+    try {
+      await apiRequest(`/api/tickets/${ticketId}`, {
+        token,
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      await load();
+      toastSuccess("Ticket updated successfully.");
+    } catch (err) {
+      setError(err.message);
+      toastError(err.message || "Failed to update ticket.");
+    } finally {
+      setBusyTicketId("");
+    }
+  };
+
+  const updateTicketQuick = async (ticketId, payload, successText) => {
+    setBusyTicketId(String(ticketId));
+    try {
+      await apiRequest(`/api/tickets/${ticketId}`, {
+        token,
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      await load();
+      toastSuccess(successText);
+    } catch (err) {
+      setError(err.message);
+      toastError(err.message || "Failed to update ticket.");
+    } finally {
+      setBusyTicketId("");
+    }
+  };
+
+  const getRequesterName = (ticket) =>
+    ticket.requester_name
+    || ticket.requester_name_from_user
+    || ticket.requester_name_from_contact
+    || "-";
+
+  const getRequesterContact = (ticket) => {
+    const email = ticket.requester_email || ticket.requester_email_from_user || ticket.requester_email_from_contact || "";
+    const phone = ticket.requester_phone || ticket.requester_phone_from_contact || "";
+    const company = ticket.requester_company_name || ticket.requester_company_from_contact || "";
+    return [email, phone, company].filter(Boolean).join(" | ") || "-";
+  };
+
+  const formatDuration = (minutes) => {
+    const abs = Math.abs(minutes);
+    const days = Math.floor(abs / 1440);
+    const hours = Math.floor((abs % 1440) / 60);
+    const mins = abs % 60;
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  };
+
+  const getSlaCountdown = (ticket) => {
+    if (ticket.status === "Resolved" || ticket.status === "Closed") {
+      return { text: "Resolved", tone: "ok" };
+    }
+    const dueRaw = ticket.resolution_due_at || ticket.first_response_due_at;
+    if (!dueRaw) return { text: "No SLA", tone: "muted" };
+    const diffMinutes = Math.floor((new Date(dueRaw).getTime() - Date.now()) / 60000);
+    if (diffMinutes < 0) return { text: `Overdue ${formatDuration(diffMinutes)}`, tone: "danger" };
+    if (diffMinutes <= 60) return { text: `Due in ${formatDuration(diffMinutes)}`, tone: "warn" };
+    return { text: `Due in ${formatDuration(diffMinutes)}`, tone: "ok" };
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <h1>{t.tickets}</h1>
+        <p>Create new requests and manage queue status from one screen.</p>
+      </div>
+      {error ? <p className="error">{error}</p> : null}
+
+      <form className="card stack" onSubmit={submitTicket}>
+        <div className="tickets-header">
+          <h3>Create Ticket</h3>
+        </div>
+        <div className="grid-2">
+          <label>
+            Subject
+            <input
+              value={form.subject}
+              onChange={(e) => setForm({ ...form, subject: e.target.value })}
+              required
+            />
+          </label>
+          <label>
+            Priority
+            <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+              {priorities.map((priority) => (
+                <option key={priority}>{priority}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <label>
+          Description
+          <textarea
+            rows={4}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+        </label>
+        {user?.role === "requester" ? (
+          <div className="grid-2">
+            <label>
+              Phone Number
+              <input
+                value={form.requesterPhone}
+                onChange={(e) => setForm({ ...form, requesterPhone: e.target.value })}
+                required
+              />
+            </label>
+            <label>
+              Company Name (optional)
+              <input
+                value={form.requesterCompanyName}
+                onChange={(e) => setForm({ ...form, requesterCompanyName: e.target.value })}
+              />
+            </label>
+          </div>
+        ) : null}
+        <button type="submit">Create</button>
+      </form>
+
+      <div className="card">
+        <div className="tickets-header">
+          <h3>Ticket Queue</h3>
+          <span className="muted">{tickets.length} tickets</span>
+        </div>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Requester</th>
+                <th>Contact</th>
+                <th>Agent</th>
+                <th>SLA</th>
+                <th>Updated</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tickets.map((ticket) => (
+                <tr key={ticket.id}>
+                  <td>{ticket.id}</td>
+                  <td><Link to={`/tickets/${ticket.id}`}>{ticket.subject}</Link></td>
+                  <td>{ticket.status}</td>
+                  <td>{ticket.priority}</td>
+                  <td>{getRequesterName(ticket)}</td>
+                  <td>{getRequesterContact(ticket)}</td>
+                  <td>{ticket.assigned_agent_name || "Unassigned"}</td>
+                  <td>
+                    {(() => {
+                      const sla = getSlaCountdown(ticket);
+                      return <span className={`sla-badge sla-${sla.tone}`}>{sla.text}</span>;
+                    })()}
+                  </td>
+                  <td>{new Date(ticket.updated_at).toLocaleString()}</td>
+                  <td>
+                    {user?.role === "requester" ? (
+                      "-"
+                    ) : (
+                      <div className="stack">
+                        <div className="top-actions">
+                          <button
+                            type="button"
+                            disabled={busyTicketId === String(ticket.id)}
+                            onClick={() =>
+                              updateTicketQuick(
+                                ticket.id,
+                                { assignedAgentId: user?.id || null },
+                                "Assigned to you."
+                              )}
+                          >
+                            Assign to me
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyTicketId === String(ticket.id)}
+                            onClick={() => updateTicketQuick(ticket.id, { status: "In Progress" }, "Moved to In Progress.")}
+                          >
+                            In Progress
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyTicketId === String(ticket.id)}
+                            onClick={() => updateTicketQuick(ticket.id, { status: "Resolved" }, "Marked as Resolved.")}
+                          >
+                            Resolve
+                          </button>
+                        </div>
+                        <select
+                          value={ticket.status}
+                          disabled={busyTicketId === String(ticket.id)}
+                          onChange={(e) => updateStatus(ticket.id, e.target.value)}
+                        >
+                          {statuses.map((status) => (
+                            <option key={status}>{status}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
