@@ -9,6 +9,7 @@
     "migrate:v1": "node src/migration/from-v1.js",
     "web:build": "npm --prefix web run build",
     "web:dev": "npm --prefix web run dev",
+    "build": "npm --prefix web install && npm run web:build",
     "test": "echo \"No tests configured\""
   },
   "keywords": [],
