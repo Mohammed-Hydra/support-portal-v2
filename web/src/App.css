@@ -268,6 +268,41 @@ button:hover {
   display: block;
 }
 
+.kpi span {
+  color: var(--muted);
+}
+
+.status-card-btn {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.status-card-btn strong {
+  color: var(--text-strong);
+}
+
+.status-card-btn span {
+  color: var(--muted);
+}
+
+.status-card-btn:hover {
+  background: var(--card-hover);
+}
+
+.status-card-active,
+.status-card-active:hover {
+  background: var(--btn);
+  color: #ffffff;
+  border-color: var(--btn-active);
+}
+
+.status-card-active strong,
+.status-card-active span {
+  color: #ffffff;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
