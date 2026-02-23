@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiRequest } from "../api";
 import logoSrc from "../assets/hydra-tech-logo.svg";
 
@@ -45,6 +46,9 @@ export function LoginPage({ onLogin, t }) {
           {t.password}
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
         </label>
+        <p className="muted" style={{ marginTop: "-8px" }}>
+          <Link to="/forgot-password">{t.forgotPassword ?? "Forgot password?"}</Link>
+        </p>
         {error ? <p className="error">{error}</p> : null}
         <button type="submit">{t.signIn}</button>
       </form>

@@ -5,6 +5,8 @@ import { apiRequest } from "./api";
 import { dictionary } from "./i18n";
 import { Layout } from "./components/Layout";
 import { LoginPage } from "./pages/LoginPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TicketListPage } from "./pages/tickets/TicketListPage";
 import { TicketDetailPage } from "./pages/tickets/TicketDetailPage";
@@ -75,6 +77,8 @@ function App() {
     <>
       <Routes>
         <Route path="/login" element={<LoginPage onLogin={onLogin} t={t} />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage t={t} />} />
+        <Route path="/reset-password" element={<ResetPasswordPage t={t} />} />
         <Route path="/public/requester" element={<PublicRequesterCreatePage />} />
         <Route path="/public/requester/track" element={<PublicRequesterTrackPage />} />
         <Route path="/public/requester/portal" element={<PublicRequesterPortalPage />} />
