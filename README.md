@@ -42,6 +42,11 @@ Frontend URL: Vite default shown in terminal (usually `http://localhost:5173`)
 
 Set `VITE_API_BASE` in `web/.env` if backend is on different host.
 
+For forgot-password emails, set one of:
+- `RESEND_API_KEY` + `RESEND_FROM` (recommended), or
+- Microsoft Graph `M365_*`, or
+- SMTP `SMTP_*` (fallback).
+
 ## Main API endpoints
 
 - `POST /api/auth/login`

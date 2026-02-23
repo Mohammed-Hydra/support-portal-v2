@@ -9,6 +9,7 @@ const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TTL_MINUTES
 const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL
   || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:5173");
 const GRAPH_SCOPE = "https://graph.microsoft.com/.default";
+const RESEND_API_URL = "https://api.resend.com/emails";
 
 function hashToken(raw) {
   return crypto.createHash("sha256").update(raw).digest("hex");
@@ -21,6 +22,10 @@ function hasGraphMailConfig() {
     && process.env.M365_CLIENT_SECRET
     && process.env.M365_SENDER_UPN
   );
+}
+
+function hasResendConfig() {
+  return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM);
 }
 
 function getEmailTransporter() {
@@ -88,10 +93,40 @@ async function sendEmailViaGraph({ to, subject, text, html }) {
   }
 }
 
+async function sendEmailViaResend({ to, subject, text, html }) {
+  const response = await fetch(RESEND_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM,
+      to: [to],
+      subject,
+      text,
+      html,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(`Resend send failed: ${response.status} ${data?.message || JSON.stringify(data)}`);
+  }
+}
+
 async function sendPasswordResetEmail({ email, resetLink }) {
   const subject = "Reset your portal password";
   const text = `Use this link to set a new password:\n\n${resetLink}\n\nThis link expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.`;
   const html = `<p>Use this link to set a new password:</p><p><a href="${resetLink}">${resetLink}</a></p><p>This link expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.</p>`;
+  if (hasResendConfig()) {
+    await sendEmailViaResend({
+      to: email,
+      subject,
+      text,
+      html,
+    });
+    return;
+  }
   if (hasGraphMailConfig()) {
     await sendEmailViaGraph({
       to: email,
@@ -209,6 +244,12 @@ function usersRoutes({ logAudit }) {
       // eslint-disable-next-line no-console
       console.error("forgot-password email error:", error);
       const rawMessage = String(error?.message || "");
+      if (/Resend send failed/i.test(rawMessage)) {
+        res.status(502).json({
+          error: "Resend email sending failed. Please verify RESEND_API_KEY, RESEND_FROM, and your sender domain setup.",
+        });
+        return;
+      }
       if (/535\s*5\.7\.139|basic authentication is disabled/i.test(rawMessage)) {
         res.status(502).json({
           error: "Email login failed: Microsoft 365 SMTP basic authentication is disabled. Configure Graph OAuth mail sender (recommended) or enable SMTP AUTH for the mailbox.",
