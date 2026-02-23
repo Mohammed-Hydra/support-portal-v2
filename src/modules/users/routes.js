@@ -19,8 +19,15 @@ function usersRoutes({ logAudit }) {
         `SELECT id, name, email, role, password_hash, is_active, locale FROM users WHERE email = $1`,
         [email]
       );
-      if (!user || !user.is_active) {
+      if (!user) {
         res.status(401).json({ error: "Invalid credentials" });
+        return;
+      }
+      if (!user.is_active) {
+        res.status(403).json({
+          error: "Your account is disabled. Please check with portal admin.",
+          code: "ACCOUNT_DISABLED",
+        });
         return;
       }
 
@@ -50,7 +57,49 @@ function usersRoutes({ logAudit }) {
       `SELECT id, name, email, role, locale, is_active FROM users WHERE id = $1`,
       [req.user.sub]
     );
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    if (!user.is_active) {
+      res.status(403).json({
+        error: "Your account is disabled. Please check with portal admin.",
+        code: "ACCOUNT_DISABLED",
+      });
+      return;
+    }
     res.json(user);
+  });
+
+  router.post("/auth/change-password", authRequired, async (req, res) => {
+    try {
+      const currentPassword = (req.body.currentPassword || "").trim();
+      const newPassword = (req.body.newPassword || "").trim();
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({ error: "currentPassword and newPassword are required" });
+        return;
+      }
+      const userId = req.user.sub;
+      const user = await getOne(
+        `SELECT id, password_hash FROM users WHERE id = $1`,
+        [userId]
+      );
+      if (!user) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+      const ok = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!ok) {
+        res.status(401).json({ error: "Current password is incorrect" });
+        return;
+      }
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      await query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [passwordHash, userId]);
+      await logAudit(userId, null, "password_changed_by_user", {});
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to change password" });
+    }
   });
 
   router.get("/users", authRequired, roleRequired("admin"), async (req, res) => {
@@ -108,6 +157,35 @@ function usersRoutes({ logAudit }) {
       res.status(201).json(inserted.rows[0]);
     } catch (error) {
       res.status(500).json({ error: "Failed to create user" });
+    }
+  });
+
+  router.patch("/users/:id", authRequired, roleRequired("admin"), async (req, res) => {
+    try {
+      const userId = Number(req.params.id);
+      if (userId === Number(req.user.sub)) {
+        res.status(400).json({ error: "You cannot change your own account status" });
+        return;
+      }
+      const target = await getOne(`SELECT id, email, role, is_active FROM users WHERE id = $1`, [userId]);
+      if (!target) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+      const isActive = req.body.is_active;
+      if (typeof isActive !== "boolean") {
+        res.status(400).json({ error: "is_active (boolean) is required" });
+        return;
+      }
+      await query(`UPDATE users SET is_active = $1 WHERE id = $2`, [isActive, userId]);
+      await logAudit(req.user.sub, null, "user_status_updated", {
+        targetUserId: userId,
+        targetEmail: target.email,
+        is_active: isActive,
+      });
+      res.json({ success: true, is_active: isActive });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user" });
     }
   });
 

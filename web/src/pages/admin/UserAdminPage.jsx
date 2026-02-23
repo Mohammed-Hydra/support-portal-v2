@@ -16,6 +16,7 @@ export function UserAdminPage({ token, user, t }) {
   const [resetUserId, setResetUserId] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [deletingUserId, setDeletingUserId] = useState("");
+  const [togglingUserId, setTogglingUserId] = useState("");
 
   const loadUsers = async () => {
     try {
@@ -85,6 +86,31 @@ export function UserAdminPage({ token, user, t }) {
       toastError(err.message || "Failed to delete user.");
     } finally {
       setDeletingUserId("");
+    }
+  };
+
+  const toggleUserActive = async (targetUserId) => {
+    const target = users.find((item) => Number(item.id) === Number(targetUserId));
+    if (!target) return;
+    const willEnable = !target.is_active;
+    const action = willEnable ? "enable" : "disable";
+    const label = `${target.name} (${target.email})`;
+    if (!window.confirm(`${action === "enable" ? "Enable" : "Disable"} ${label}? ${willEnable ? "They will be able to sign in again." : "They will not be able to sign in until an admin re-enables the account."}`)) return;
+
+    try {
+      setTogglingUserId(String(targetUserId));
+      await apiRequest(`/api/users/${targetUserId}`, {
+        token,
+        method: "PATCH",
+        body: JSON.stringify({ is_active: willEnable }),
+      });
+      await loadUsers();
+      toastSuccess(willEnable ? "User enabled." : "User disabled.");
+    } catch (err) {
+      setError(err.message);
+      toastError(err.message || "Failed to update user.");
+    } finally {
+      setTogglingUserId("");
     }
   };
 
@@ -177,6 +203,15 @@ export function UserAdminPage({ token, user, t }) {
                     <td>{item.company_name || "-"}</td>
                     <td>{item.is_active ? "Active" : "Inactive"}</td>
                     <td>
+                      <button
+                        type="button"
+                        onClick={() => toggleUserActive(item.id)}
+                        disabled={String(user?.id) === String(item.id) || togglingUserId === String(item.id)}
+                        title={String(user?.id) === String(item.id) ? "You cannot disable your own account" : item.is_active ? "Disable this user (they will see a message to contact admin)" : "Enable this user"}
+                      >
+                        {togglingUserId === String(item.id) ? "..." : item.is_active ? "Disable" : "Enable"}
+                      </button>
+                      {" "}
                       <button
                         type="button"
                         onClick={() => deleteUser(item.id)}

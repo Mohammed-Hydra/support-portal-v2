@@ -18,7 +18,8 @@ export function TicketDetailPage({ token, user }) {
       setError("");
       const data = await apiRequest(`/api/tickets/${ticketId}`, { token });
       setTicket(data);
-      setAssignedAgentId(data.assigned_agent_id ? String(data.assigned_agent_id) : "");
+      const raw = data.assigned_agent_id;
+      setAssignedAgentId(raw !== undefined && raw !== null ? String(raw) : "");
     } catch (err) {
       setError(err.message);
       toastError(err.message || "Failed to load ticket.");
@@ -155,16 +156,29 @@ export function TicketDetailPage({ token, user }) {
           <div className="grid-2">
             <select value={assignedAgentId} onChange={(e) => setAssignedAgentId(e.target.value)}>
               <option value="">Unassigned</option>
+              {/* Include current user if not already in agents list (e.g. admin) */}
+              {user?.id != null && !agents.some((a) => String(a.id) === String(user.id)) ? (
+                <option value={String(user.id)}>{user.name || user.email} (you)</option>
+              ) : null}
               {agents.map((agent) => (
-                <option key={agent.id} value={agent.id}>
-                  {agent.name} ({agent.email})
+                <option key={agent.id} value={String(agent.id)}>
+                  {agent.name} ({agent.email}){String(agent.id) === String(user?.id) ? " (you)" : ""}
                 </option>
               ))}
             </select>
             <button type="submit" disabled={busyAction}>Save Assignment</button>
           </div>
           <div className="top-actions" style={{ marginTop: "10px" }}>
-            <button type="button" disabled={busyAction} onClick={() => quickUpdate({ assignedAgentId: user?.id || null }, "Assigned to you.")}>
+            <button
+              type="button"
+              disabled={busyAction || user?.id == null}
+              onClick={async () => {
+                const currentId = user?.id != null ? user.id : null;
+                if (currentId == null) return;
+                setAssignedAgentId(String(currentId));
+                await quickUpdate({ assignedAgentId: currentId }, "Assigned to you.");
+              }}
+            >
               Assign to me
             </button>
             <button type="button" disabled={busyAction} onClick={() => quickUpdate({ status: "In Progress" }, "Moved to In Progress.")}>

@@ -65,6 +65,10 @@ export function SettingsPage({ token, user, t }) {
   const [testTicketId, setTestTicketId] = useState("");
   const [editingSlaId, setEditingSlaId] = useState(null);
   const [editingRuleId, setEditingRuleId] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const isAdmin = user?.role === "admin";
   const channelHint = useMemo(
@@ -94,11 +98,91 @@ export function SettingsPage({ token, user, t }) {
   };
 
   useEffect(() => {
-    loadAll();
+    if (isAdmin) loadAll();
   }, [token, isAdmin]);
 
+  const changePassword = async (event) => {
+    event.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("New password and confirmation do not match.");
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError("New password must be at least 6 characters.");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await apiRequest("/api/auth/change-password", {
+        token,
+        method: "POST",
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+      setPasswordSuccess("Password changed successfully.");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err) {
+      setPasswordError(err.message || "Failed to change password.");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const changePasswordCard = (
+    <div className="subcard">
+      <h3>Change password</h3>
+      <p className="muted">Update your login password. You do not need an admin to reset it.</p>
+      <form className="stack" onSubmit={changePassword}>
+        <label>
+          Current password
+          <input
+            type="password"
+            value={passwordForm.currentPassword}
+            onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+            required
+          />
+        </label>
+        <label>
+          New password
+          <input
+            type="password"
+            value={passwordForm.newPassword}
+            onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+            required
+            minLength={6}
+          />
+        </label>
+        <label>
+          Confirm new password
+          <input
+            type="password"
+            value={passwordForm.confirmPassword}
+            onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+            required
+            minLength={6}
+          />
+        </label>
+        {passwordError ? <p className="error">{passwordError}</p> : null}
+        {passwordSuccess ? <p className="success">{passwordSuccess}</p> : null}
+        <button type="submit" disabled={changingPassword}>{changingPassword ? "Updating..." : "Update password"}</button>
+      </form>
+    </div>
+  );
+
   if (!isAdmin) {
-    return <p>{t.settings}: access denied</p>;
+    return (
+      <div>
+        <div className="page-header">
+          <h1>{t.settings}</h1>
+          <p>Change your account password.</p>
+        </div>
+        <div className="card">{changePasswordCard}</div>
+      </div>
+    );
   }
 
   const saveSlaPolicy = async (event) => {
@@ -195,6 +279,7 @@ export function SettingsPage({ token, user, t }) {
       </div>
 
       <div className="card">
+        {changePasswordCard}
         <div className="subcard">
           <h3>{editingSlaId ? "Edit SLA Policy" : "Create SLA Policy"}</h3>
           <form className="stack" onSubmit={saveSlaPolicy}>

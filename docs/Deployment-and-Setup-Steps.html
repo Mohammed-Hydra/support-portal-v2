@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support Portal v2 – Deployment & Setup Steps</title>
+  <style>
+    body { font-family: Segoe UI, system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px; line-height: 1.5; color: #1a1a1a; }
+    h1 { font-size: 1.5rem; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }
+    h2 { font-size: 1.15rem; margin-top: 24px; color: #1e40af; }
+    pre, code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9rem; }
+    pre { padding: 12px; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }
+    th { background: #f8fafc; font-weight: 600; }
+    ul { margin: 8px 0; padding-left: 20px; }
+    .note { background: #eff6ff; border-left: 4px solid #2563eb; padding: 12px; margin: 12px 0; }
+    @media print { body { max-width: none; } pre { white-space: pre-wrap; } }
+  </style>
+</head>
+<body>
+  <h1>HYDRA-TECH Support Portal v2 – Deployment & Setup Steps</h1>
+  <p>All steps for deploying and configuring the portal on Vercel. Use <strong>Print → Save as PDF</strong> to export this page as PDF.</p>
+
+  <h2>1. Prerequisites</h2>
+  <ul>
+    <li>Git installed (<a href="https://git-scm.com/download/win">git-scm.com/download/win</a>)</li>
+    <li>GitHub account</li>
+    <li>Vercel account (vercel.com)</li>
+    <li>Project folder: <code>D:\IT support portal v2</code></li>
+  </ul>
+
+  <h2>2. Initial Git Setup (if not a repo yet)</h2>
+  <pre>cd "D:\IT support portal v2"
+git init
+git add .
+git commit -m "Initial commit - Support Portal v2"
+git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+git branch -M main
+git push -u origin main</pre>
+  <p>Replace <code>YOUR_USERNAME</code> and <code>YOUR_REPO_NAME</code> with your GitHub details.</p>
+
+  <h2>3. GitHub Repository</h2>
+  <ul>
+    <li>GitHub → New repository → Name (e.g. support-portal-v2), Public, do not add README</li>
+    <li>Create repository and use its URL in <code>git remote add</code></li>
+  </ul>
+
+  <h2>4. Vercel Project Settings</h2>
+  <p><strong>Project → Settings → General → Build & Development</strong></p>
+  <table>
+    <tr><th>Setting</th><th>Value</th></tr>
+    <tr><td>Root Directory</td><td><em>empty</em></td></tr>
+    <tr><td>Framework Preset</td><td>Other</td></tr>
+    <tr><td>Build Command</td><td><code>npm run build</code> (Override: ON)</td></tr>
+    <tr><td>Output Directory</td><td><em>empty</em> (Override: ON)</td></tr>
+    <tr><td>Install Command</td><td>default (Override: OFF)</td></tr>
+  </table>
+
+  <h2>5. Push and Deploy</h2>
+  <pre>cd "D:\IT support portal v2"
+git add .
+git status
+git commit -m "Your message"
+git push -u origin main</pre>
+  <p>For later pushes use: <code>git push</code></p>
+
+  <h2>6. Fix 404 – Include Built Frontend</h2>
+  <ol>
+    <li>Build: <code>cd "D:\IT support portal v2\web"</code> then <code>npm run build</code></li>
+    <li>Commit: <code>git add web/dist web/.gitignore src/app.js</code> then <code>git commit -m "Include built frontend"</code> then <code>git push</code></li>
+    <li>Vercel: Build Command = <code>npm run build</code>, Output Directory = empty, then Redeploy</li>
+  </ol>
+
+  <h2>7. Logo</h2>
+  <p>Logo: <code>web/src/assets/hydra-tech-logo.svg</code>. Used in Layout and LoginPage via import.</p>
+
+  <h2>8. Share Portal & Requester Links</h2>
+  <p>Sidebar (admin/agent): Portal: Copy link, Requester: Copy link. Translations in <code>web/src/i18n.js</code> (EN/AR).</p>
+
+  <h2>9. Company Name Column</h2>
+  <p>Ticket Queue has a &quot;Company Name&quot; column after Contact. Data from API (<code>requester_company_name</code> / <code>requester_company_from_contact</code>).</p>
+
+  <h2>10. GitHub Personal Access Token</h2>
+  <p>When <code>git push</code> asks for password: GitHub → Settings → Developer settings → Personal access tokens → Generate (classic), scope <strong>repo</strong>. Use the token as the password.</p>
+
+  <h2>11. Troubleshooting</h2>
+  <table>
+    <tr><th>Issue</th><th>Fix</th></tr>
+    <tr><td>404 NOT_FOUND</td><td>Build Command = <code>npm run build</code>, Output Directory empty; commit and push web/dist; redeploy</td></tr>
+    <tr><td>Logo not showing</td><td>Ensure <code>web/src/assets/hydra-tech-logo.svg</code> exists; redeploy</td></tr>
+    <tr><td>Cannot GET /login</td><td>Build frontend (web/dist), set Build Command and empty Output Directory; redeploy</td></tr>
+    <tr><td>git not recognized</td><td>Install Git, restart terminal</td></tr>
+    <tr><td>Repository not found</td><td>Use correct GitHub repo URL in <code>git remote add</code></td></tr>
+  </table>
+
+  <h2>12. After Frontend Changes</h2>
+  <pre>cd "D:\IT support portal v2\web"
+npm run build
+cd ..
+git add web/dist
+git commit -m "Update frontend"
+git push</pre>
+
+  <p class="note"><strong>Export as PDF:</strong> In this browser, press Ctrl+P (or Cmd+P), choose &quot;Save as PDF&quot; as the destination, then Save.</p>
+  <p><em>HYDRA-TECH Support Portal v2 – Deployment &amp; Setup</em></p>
+</body>
+</html>

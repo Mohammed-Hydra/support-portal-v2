@@ -10,10 +10,10 @@
   --card-hover: rgba(22, 30, 42, 0.9);
   --muted: #94a3b8;
   --border: rgba(255, 255, 255, 0.12);
-  --border-focus: rgba(194, 31, 47, 0.6);
-  --btn: #c21f2f;
-  --btn-hover: #e02538;
-  --btn-active: #9a1926;
+  --border-focus: rgba(14, 165, 233, 0.6);
+  --btn: #0ea5e9;
+  --btn-hover: #38bdf8;
+  --btn-active: #0284c7;
   --soft: rgba(255, 255, 255, 0.06);
   --radius: 12px;
   --radius-sm: 8px;

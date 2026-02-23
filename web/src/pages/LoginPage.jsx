@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiRequest } from "../api";
 import logoSrc from "../assets/hydra-tech-logo.svg";
 
@@ -6,6 +6,14 @@ export function LoginPage({ onLogin, t }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const sessionError = sessionStorage.getItem("v2SessionError");
+    if (sessionError) {
+      setError(sessionError);
+      sessionStorage.removeItem("v2SessionError");
+    }
+  }, []);
 
   const submit = async (event) => {
     event.preventDefault();
