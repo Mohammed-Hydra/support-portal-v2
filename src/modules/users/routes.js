@@ -28,6 +28,13 @@ function hasResendConfig() {
   return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM);
 }
 
+function getConfiguredMailProvider() {
+  if (hasResendConfig()) return "resend";
+  if (hasGraphMailConfig()) return "graph";
+  if (getEmailTransporter()) return "smtp";
+  return "none";
+}
+
 function getEmailTransporter() {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
   const port = Number(process.env.SMTP_PORT || 587);
@@ -219,6 +226,9 @@ function usersRoutes({ logAudit }) {
 
   router.post("/auth/forgot-password", async (req, res) => {
     try {
+      const provider = getConfiguredMailProvider();
+      // eslint-disable-next-line no-console
+      console.log("forgot-password provider:", provider);
       const email = (req.body.email || "").trim().toLowerCase();
       if (!email) {
         res.status(400).json({ error: "Email is required" });
@@ -244,25 +254,32 @@ function usersRoutes({ logAudit }) {
       // eslint-disable-next-line no-console
       console.error("forgot-password email error:", error);
       const rawMessage = String(error?.message || "");
+      const provider = getConfiguredMailProvider();
       if (/Resend send failed/i.test(rawMessage)) {
         res.status(502).json({
           error: "Resend email sending failed. Please verify RESEND_API_KEY, RESEND_FROM, and your sender domain setup.",
+          provider,
         });
         return;
       }
       if (/535\s*5\.7\.139|basic authentication is disabled/i.test(rawMessage)) {
         res.status(502).json({
           error: "Email login failed: Microsoft 365 SMTP basic authentication is disabled. Configure Graph OAuth mail sender (recommended) or enable SMTP AUTH for the mailbox.",
+          provider,
         });
         return;
       }
       if (/Graph token request failed|Graph sendMail failed/i.test(rawMessage)) {
         res.status(502).json({
           error: "Microsoft Graph email sending failed. Please verify M365_TENANT_ID, M365_CLIENT_ID, M365_CLIENT_SECRET, and M365_SENDER_UPN.",
+          provider,
         });
         return;
       }
-      res.status(500).json({ error: "Unable to send reset email right now. Please contact portal admin." });
+      res.status(500).json({
+        error: "Unable to send reset email right now. Please contact portal admin.",
+        provider,
+      });
     }
   });
 
