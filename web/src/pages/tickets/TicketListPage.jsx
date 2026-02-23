@@ -104,9 +104,11 @@ export function TicketListPage({ token, user, t }) {
   const getRequesterContact = (ticket) => {
     const email = ticket.requester_email || ticket.requester_email_from_user || ticket.requester_email_from_contact || "";
     const phone = ticket.requester_phone || ticket.requester_phone_from_contact || "";
-    const company = ticket.requester_company_name || ticket.requester_company_from_contact || "";
-    return [email, phone, company].filter(Boolean).join(" | ") || "-";
+    return [email, phone].filter(Boolean).join(" | ") || "-";
   };
+
+  const getCompanyName = (ticket) =>
+    ticket.requester_company_name || ticket.requester_company_from_contact || "-";
 
   const formatDuration = (minutes) => {
     const abs = Math.abs(minutes);
@@ -205,6 +207,7 @@ export function TicketListPage({ token, user, t }) {
                 <th>Priority</th>
                 <th>Requester</th>
                 <th>Contact</th>
+                <th>Company Name</th>
                 <th>Agent</th>
                 <th>SLA</th>
                 <th>Updated</th>
@@ -220,6 +223,7 @@ export function TicketListPage({ token, user, t }) {
                   <td>{ticket.priority}</td>
                   <td>{getRequesterName(ticket)}</td>
                   <td>{getRequesterContact(ticket)}</td>
+                  <td>{getCompanyName(ticket)}</td>
                   <td>{ticket.assigned_agent_name || "Unassigned"}</td>
                   <td>
                     {(() => {

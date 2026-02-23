@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 const menu = [
@@ -13,12 +14,64 @@ const menu = [
 
 export function Layout({ user, t, language, setLanguage, onLogout, children }) {
   const location = useLocation();
+  const [copiedLink, setCopiedLink] = useState(null);
+  const portalUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const requesterUrl = portalUrl ? `${portalUrl}/public/requester` : "";
+
+  const copyLink = (url, which) => {
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedLink(which);
+      setTimeout(() => setCopiedLink(null), 1500);
+    });
+  };
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <img src="/hydra-tech-logo.svg" alt="HYDRA-TECH IT SUPPORT PLATFORM" className="brand-image" />
         <h2>{t.appName}</h2>
         <p className="hint">HYDRA-TECH support workspace</p>
+        {(user?.role === "admin" || user?.role === "agent") && portalUrl && (
+          <div className="hint" style={{ marginTop: 4, marginBottom: 8 }}>
+            <p style={{ margin: "0 0 4px 0" }}>
+              {t.portalLink ?? "Portal"}:{" "}
+              <button
+                type="button"
+                onClick={() => copyLink(portalUrl, "portal")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--btn)",
+                  padding: 0,
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  fontSize: "inherit",
+                }}
+              >
+                {copiedLink === "portal" ? (t.copyLinkDone ?? "Copied!") : (t.copyPortalLink ?? "Copy link")}
+              </button>
+            </p>
+            <p style={{ margin: 0 }}>
+              {t.requesterLink ?? "Requester"}:{" "}
+              <button
+                type="button"
+                onClick={() => copyLink(requesterUrl, "requester")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--btn)",
+                  padding: 0,
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  fontSize: "inherit",
+                }}
+              >
+                {copiedLink === "requester" ? (t.copyLinkDone ?? "Copied!") : (t.copyPortalLink ?? "Copy link")}
+              </button>
+            </p>
+          </div>
+        )}
         <nav>
           {menu
             .filter((item) => !item.roles || item.roles.includes(user?.role))

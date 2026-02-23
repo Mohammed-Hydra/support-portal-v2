@@ -14,6 +14,10 @@ export const dictionary = {
     userAdmin: "User Admin",
     settings: "Settings",
     logout: "Logout",
+    copyPortalLink: "Copy link",
+    copyLinkDone: "Copied!",
+    portalLink: "Portal",
+    requesterLink: "Requester",
   },
   ar: {
     appName: "هيدرا تك إي ديسك v2",
@@ -30,5 +34,9 @@ export const dictionary = {
     userAdmin: "إدارة المستخدمين",
     settings: "الإعدادات",
     logout: "تسجيل الخروج",
+    copyPortalLink: "نسخ الرابط",
+    copyLinkDone: "تم النسخ!",
+    portalLink: "البوابة",
+    requesterLink: "مقدم الطلب",
   },
 };
