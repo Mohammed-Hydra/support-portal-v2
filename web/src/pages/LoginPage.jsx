@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiRequest } from "../api";
+import logoSrc from "../assets/hydra-tech-logo.svg";
 
 export function LoginPage({ onLogin, t }) {
   const [email, setEmail] = useState("");
@@ -24,7 +25,7 @@ export function LoginPage({ onLogin, t }) {
     <div className="auth-wrap">
       <form className="card auth-card stack" onSubmit={submit}>
         <div className="page-header">
-          <img src="/hydra-tech-logo.svg" alt="HYDRA-TECH IT SUPPORT PLATFORM" className="login-brand-image" />
+          <img src={logoSrc} alt="HYDRA-TECH IT SUPPORT PLATFORM" className="login-brand-image" />
           <h2>{t.login}</h2>
           <p className="muted">Sign in to continue to the support portal.</p>
         </div>

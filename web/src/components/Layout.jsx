@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import logoSrc from "../assets/hydra-tech-logo.svg";
 
 const menu = [
   { to: "/", key: "dashboard" },
@@ -29,7 +30,7 @@ export function Layout({ user, t, language, setLanguage, onLogout, children }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <img src="/hydra-tech-logo.svg" alt="HYDRA-TECH IT SUPPORT PLATFORM" className="brand-image" />
+        <img src={logoSrc} alt="HYDRA-TECH IT SUPPORT PLATFORM" className="brand-image" />
         <h2>{t.appName}</h2>
         <p className="hint">HYDRA-TECH support workspace</p>
         {(user?.role === "admin" || user?.role === "agent") && portalUrl && (
