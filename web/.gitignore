@@ -8,7 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist - uncomment to ignore; leave commented so built files can be committed for Vercel
+# dist
 dist-ssr
 *.local
 

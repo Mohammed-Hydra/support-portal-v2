@@ -162,6 +162,24 @@ async function createApp() {
       }
       res.sendFile(path.join(webDist, "index.html"));
     });
+  } else {
+    // Fallback when frontend is not built: serve a page that explains how to fix
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api/")) return next();
+      res.set("Content-Type", "text/html");
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head><meta charset="utf-8"><title>Setup Required</title></head>
+          <body style="font-family:sans-serif;max-width:560px;margin:60px auto;padding:20px;">
+            <h1>Frontend not built</h1>
+            <p>In Vercel: <strong>Settings → General → Build &amp; Development</strong>, set <strong>Build Command</strong> to:</p>
+            <pre style="background:#eee;padding:12px;border-radius:6px;">npm run build</pre>
+            <p>Then <strong>Redeploy</strong>. Alternatively, build locally: <code>cd web && npm run build</code>, then commit the <code>web/dist</code> folder and push.</p>
+          </body>
+        </html>
+      `);
+    });
   }
 
   return app;
