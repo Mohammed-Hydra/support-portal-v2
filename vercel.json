@@ -1,15 +1,20 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
   "builds": [
     {
-      "src": "src/index.js",
+      "src": "web/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    },
+    {
+      "src": "api/index.js",
       "use": "@vercel/node"
     }
   ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "src/index.js"
-    }
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api" },
+    { "source": "/api", "destination": "/api" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
