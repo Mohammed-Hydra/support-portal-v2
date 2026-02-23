@@ -6,10 +6,21 @@ const { getMany, getOne, query } = require("../../db/client");
 const { authRequired, roleRequired, signToken } = require("../../middleware/auth");
 
 const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TTL_MINUTES || 60);
-const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:5173";
+const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL
+  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:5173");
+const GRAPH_SCOPE = "https://graph.microsoft.com/.default";
 
 function hashToken(raw) {
   return crypto.createHash("sha256").update(raw).digest("hex");
+}
+
+function hasGraphMailConfig() {
+  return Boolean(
+    process.env.M365_TENANT_ID
+    && process.env.M365_CLIENT_ID
+    && process.env.M365_CLIENT_SECRET
+    && process.env.M365_SENDER_UPN
+  );
 }
 
 function getEmailTransporter() {
@@ -23,15 +34,83 @@ function getEmailTransporter() {
   });
 }
 
+async function getGraphAccessToken() {
+  const tokenUrl = `https://login.microsoftonline.com/${encodeURIComponent(process.env.M365_TENANT_ID)}/oauth2/v2.0/token`;
+  const payload = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: process.env.M365_CLIENT_ID,
+    client_secret: process.env.M365_CLIENT_SECRET,
+    scope: GRAPH_SCOPE,
+  });
+  const response = await fetch(tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: payload.toString(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.access_token) {
+    throw new Error(`Graph token request failed: ${response.status} ${data.error_description || data.error || "unknown error"}`);
+  }
+  return data.access_token;
+}
+
+async function sendEmailViaGraph({ to, subject, text, html }) {
+  const accessToken = await getGraphAccessToken();
+  const senderUpn = process.env.M365_SENDER_UPN;
+  const graphUrl = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(senderUpn)}/sendMail`;
+  const response = await fetch(graphUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: {
+        subject,
+        body: {
+          contentType: "HTML",
+          content: html || `<pre>${text}</pre>`,
+        },
+        toRecipients: [
+          {
+            emailAddress: {
+              address: to,
+            },
+          },
+        ],
+      },
+      saveToSentItems: true,
+    }),
+  });
+  if (!response.ok) {
+    const raw = await response.text();
+    throw new Error(`Graph sendMail failed: ${response.status} ${raw}`);
+  }
+}
+
 async function sendPasswordResetEmail({ email, resetLink }) {
+  const subject = "Reset your portal password";
+  const text = `Use this link to set a new password:\n\n${resetLink}\n\nThis link expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.`;
+  const html = `<p>Use this link to set a new password:</p><p><a href="${resetLink}">${resetLink}</a></p><p>This link expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.</p>`;
+  if (hasGraphMailConfig()) {
+    await sendEmailViaGraph({
+      to: email,
+      subject,
+      text,
+      html,
+    });
+    return;
+  }
   const transporter = getEmailTransporter();
-  if (!transporter) throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS.");
+  if (!transporter) {
+    throw new Error("Mail is not configured. Set Microsoft Graph OAuth (M365_*) or SMTP env vars.");
+  }
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: email,
-    subject: "Reset your portal password",
-    text: `Use this link to set a new password:\n\n${resetLink}\n\nThis link expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.`,
-    html: `<p>Use this link to set a new password:</p><p><a href="${resetLink}">${resetLink}</a></p><p>This link expires in ${PASSWORD_RESET_TTL_MINUTES} minutes.</p>`,
+    subject,
+    text,
+    html,
   });
 }
 
@@ -127,7 +206,22 @@ function usersRoutes({ logAudit }) {
       }
       res.json({ message: "If an account exists with this email, you will receive a password reset link." });
     } catch (error) {
-      res.status(500).json({ error: error.message || "Failed to send reset link" });
+      // eslint-disable-next-line no-console
+      console.error("forgot-password email error:", error);
+      const rawMessage = String(error?.message || "");
+      if (/535\s*5\.7\.139|basic authentication is disabled/i.test(rawMessage)) {
+        res.status(502).json({
+          error: "Email login failed: Microsoft 365 SMTP basic authentication is disabled. Configure Graph OAuth mail sender (recommended) or enable SMTP AUTH for the mailbox.",
+        });
+        return;
+      }
+      if (/Graph token request failed|Graph sendMail failed/i.test(rawMessage)) {
+        res.status(502).json({
+          error: "Microsoft Graph email sending failed. Please verify M365_TENANT_ID, M365_CLIENT_ID, M365_CLIENT_SECRET, and M365_SENDER_UPN.",
+        });
+        return;
+      }
+      res.status(500).json({ error: "Unable to send reset email right now. Please contact portal admin." });
     }
   });
 

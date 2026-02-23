@@ -46,6 +46,8 @@ Set `VITE_API_BASE` in `web/.env` if backend is on different host.
 
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
 - `GET /api/users` (admin)
 - `POST /api/users` (admin)
 - `POST /api/users/:id/reset-password` (admin)
