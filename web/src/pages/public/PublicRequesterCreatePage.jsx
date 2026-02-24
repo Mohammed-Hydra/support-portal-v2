@@ -4,13 +4,81 @@ import { apiRequest } from "../../api";
 import logoSrc from "../../assets/hydra-tech-logo.svg";
 import { toastError, toastSuccess } from "../../toast";
 
-function fileToDataUrl(file) {
+function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ""));
     reader.onerror = () => reject(new Error("Failed to read selected file."));
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(blob);
   });
+}
+
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load image."));
+    };
+    img.src = url;
+  });
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), type, quality);
+  });
+}
+
+async function compressImageToDataUrl(file, { maxDim = 1280, maxBytes = 2_000_000 } = {}) {
+  const img = await loadImageFromFile(file);
+
+  let width = img.naturalWidth || img.width;
+  let height = img.naturalHeight || img.height;
+  if (!width || !height) {
+    throw new Error("Invalid image.");
+  }
+
+  let scale = Math.min(1, maxDim / Math.max(width, height));
+  let attempt = 0;
+  let blob = null;
+
+  while (attempt < 10) {
+    const w = Math.max(1, Math.floor(width * scale));
+    const h = Math.max(1, Math.floor(height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, w, h);
+
+    let quality = 0.82;
+    for (let qTry = 0; qTry < 6; qTry += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const next = await canvasToBlob(canvas, "image/jpeg", quality);
+      if (next && next.size <= maxBytes) {
+        blob = next;
+        break;
+      }
+      quality -= 0.08;
+    }
+
+    if (blob) break;
+    // If still too large, scale down and retry.
+    scale *= 0.85;
+    attempt += 1;
+  }
+
+  if (!blob) {
+    throw new Error("Image is too large. Please use a smaller photo.");
+  }
+
+  return await blobToDataUrl(blob);
 }
 
 export function PublicRequesterCreatePage() {
@@ -34,16 +102,21 @@ export function PublicRequesterCreatePage() {
     setResult("");
     setSaving(true);
     try {
-      const fd = new FormData();
-      Object.entries(form).forEach(([key, value]) => fd.append(key, value || ""));
+      let attachmentDataUrl = "";
       if (attachment) {
-        fd.append("attachment", attachment);
-        const inline = await fileToDataUrl(attachment);
-        fd.append("attachmentDataUrl", inline);
+        if (!String(attachment.type || "").startsWith("image/")) {
+          throw new Error("Only image attachments are supported.");
+        }
+        attachmentDataUrl = await compressImageToDataUrl(attachment);
       }
+
       const data = await apiRequest("/api/public/requester/tickets", {
         method: "POST",
-        body: fd,
+        body: JSON.stringify({
+          ...form,
+          attachmentDataUrl: attachmentDataUrl || undefined,
+          attachmentName: attachment ? (attachment.name || "attachment.jpg") : undefined,
+        }),
       });
       const message = `Ticket #${data.id} created successfully.`;
       setResult(message);
