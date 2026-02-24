@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../api";
 import logoSrc from "../../assets/hydra-tech-logo.svg";
+import { toastError, toastSuccess } from "../../toast";
 
 export function PublicRequesterTrackPage() {
   const [email, setEmail] = useState("");
@@ -19,9 +20,13 @@ export function PublicRequesterTrackPage() {
         method: "POST",
         body: JSON.stringify({ email }),
       });
-      setSuccess("If your email has tickets, a secure access link was sent.");
+      const message = "If your email has tickets, a secure access link was sent.";
+      setSuccess(message);
+      toastSuccess(message);
     } catch (err) {
-      setError(err.message || "Failed to send magic link.");
+      const message = err.message || "Failed to send magic link.";
+      setError(message);
+      toastError(message);
     } finally {
       setSending(false);
     }

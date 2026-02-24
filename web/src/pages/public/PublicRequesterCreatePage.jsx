@@ -2,6 +2,16 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../api";
 import logoSrc from "../../assets/hydra-tech-logo.svg";
+import { toastError, toastSuccess } from "../../toast";
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Failed to read selected file."));
+    reader.readAsDataURL(file);
+  });
+}
 
 export function PublicRequesterCreatePage() {
   const [form, setForm] = useState({
@@ -26,12 +36,20 @@ export function PublicRequesterCreatePage() {
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([key, value]) => fd.append(key, value || ""));
-      if (attachment) fd.append("attachment", attachment);
+      if (attachment) {
+        fd.append("attachment", attachment);
+        if (String(attachment.type || "").startsWith("image/")) {
+          const inline = await fileToDataUrl(attachment);
+          fd.append("attachmentDataUrl", inline);
+        }
+      }
       const data = await apiRequest("/api/public/requester/tickets", {
         method: "POST",
         body: fd,
       });
-      setResult(`Ticket #${data.id} created successfully.`);
+      const message = `Ticket #${data.id} created successfully.`;
+      setResult(message);
+      toastSuccess(message);
       setForm({
         requesterName: "",
         requesterEmail: "",
@@ -43,7 +61,9 @@ export function PublicRequesterCreatePage() {
       });
       setAttachment(null);
     } catch (err) {
-      setError(err.message || "Failed to create ticket.");
+      const message = err.message || "Failed to create ticket.";
+      setError(message);
+      toastError(message);
     } finally {
       setSaving(false);
     }

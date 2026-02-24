@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api";
 import logoSrc from "../../assets/hydra-tech-logo.svg";
+import { toastError, toastSuccess } from "../../toast";
 
 const STORAGE_KEY = "requesterPortalToken";
 
@@ -48,9 +49,15 @@ export function PublicRequesterPortalPage() {
         setRequesterToken(data.token);
         setRequester(data.requester || null);
         localStorage.setItem(STORAGE_KEY, data.token);
-        setInfo("Access granted. Your requester session is active.");
+        const message = "Access granted. Your requester session is active.";
+        setInfo(message);
+        toastSuccess(message);
       })
-      .catch((err) => setError(err.message || "Invalid or expired access link."));
+      .catch((err) => {
+        const message = err.message || "Invalid or expired access link.";
+        setError(message);
+        toastError(message);
+      });
   }, [searchParams]);
 
   useEffect(() => {
@@ -74,10 +81,13 @@ export function PublicRequesterPortalPage() {
       });
       setMessageBody("");
       setInfo("Reply sent.");
+      toastSuccess("Reply sent.");
       await refreshTicketDetails(selectedTicketId);
       await refreshTickets();
     } catch (err) {
-      setError(err.message || "Failed to send reply.");
+      const message = err.message || "Failed to send reply.";
+      setError(message);
+      toastError(message);
     }
   };
 
@@ -89,10 +99,13 @@ export function PublicRequesterPortalPage() {
         headers: authHeaders,
       });
       setInfo("Ticket reopened.");
+      toastSuccess("Ticket reopened.");
       await refreshTicketDetails(selectedTicketId);
       await refreshTickets();
     } catch (err) {
-      setError(err.message || "Failed to reopen ticket.");
+      const message = err.message || "Failed to reopen ticket.";
+      setError(message);
+      toastError(message);
     }
   };
 
@@ -104,6 +117,7 @@ export function PublicRequesterPortalPage() {
     setSelectedTicket(null);
     setSelectedTicketId("");
     setInfo("Requester session ended.");
+    toastSuccess("Requester session ended.");
   };
 
   const statusText = (status) => {

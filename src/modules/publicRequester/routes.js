@@ -52,6 +52,12 @@ function resolveAttachmentUrl(file) {
   return `/uploads-v2/${file.filename}`;
 }
 
+function resolveAttachmentFromBody(raw) {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  return value.startsWith("data:image/") ? value : "";
+}
+
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
 }
@@ -174,7 +180,7 @@ function publicRequesterRoutes({ logAudit }) {
         return;
       }
 
-      const attachmentUrl = resolveAttachmentUrl(req.file);
+      const attachmentUrl = resolveAttachmentFromBody(req.body.attachmentDataUrl) || resolveAttachmentUrl(req.file);
       const agent = await pickLeastLoadedAgent();
       const sla = await computeSla({ priority, channel: "Portal" });
 
@@ -439,7 +445,7 @@ function publicRequesterRoutes({ logAudit }) {
       }
 
       const body = String(req.body.body || "").trim();
-      const attachmentUrl = resolveAttachmentUrl(req.file);
+      const attachmentUrl = resolveAttachmentFromBody(req.body.attachmentDataUrl) || resolveAttachmentUrl(req.file);
       if (!body && !attachmentUrl) {
         res.status(400).json({ error: "body or attachment required" });
         return;
