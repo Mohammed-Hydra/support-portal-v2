@@ -16,6 +16,7 @@ const menu = [
 export function Layout({ user, t, language, setLanguage, onLogout, children }) {
   const location = useLocation();
   const [copiedLink, setCopiedLink] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const portalUrl = typeof window !== "undefined" ? window.location.origin : "";
   const requesterUrl = portalUrl ? `${portalUrl}/public/requester` : "";
 
@@ -28,8 +29,18 @@ export function Layout({ user, t, language, setLanguage, onLogout, children }) {
   };
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
+    <div className={`app-shell${menuOpen ? " menu-open" : ""}`}>
+      <div
+        className="sidebar-overlay"
+        role="button"
+        tabIndex={menuOpen ? 0 : -1}
+        aria-label="Close menu"
+        onClick={() => setMenuOpen(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" || e.key === "Enter" || e.key === " ") setMenuOpen(false);
+        }}
+      />
+      <aside className="sidebar" id="app-sidebar" aria-hidden={menuOpen ? "false" : "true"}>
         <img src={logoSrc} alt="HYDRA-TECH IT SUPPORT PLATFORM" className="brand-image" />
         <h2>{t.appName}</h2>
         <p className="hint">HYDRA-TECH.PRO support workspace</p>
@@ -81,6 +92,7 @@ export function Layout({ user, t, language, setLanguage, onLogout, children }) {
                 key={item.to}
                 to={item.to}
                 className={location.pathname === item.to ? "active-link" : ""}
+                onClick={() => setMenuOpen(false)}
               >
                 {t[item.key]}
               </Link>
@@ -89,7 +101,26 @@ export function Layout({ user, t, language, setLanguage, onLogout, children }) {
       </aside>
       <div className="main-shell">
         <header className="topbar">
-          <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              type="button"
+              className="icon-btn menu-toggle"
+              aria-label={menuOpen ? "Hide menu" : "Show menu"}
+              aria-controls="app-sidebar"
+              aria-expanded={menuOpen ? "true" : "false"}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M4 6h16M4 12h16M4 18h16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
             <strong>{user?.name}</strong> <span className="muted">({user?.role})</span>
           </div>
           <div className="top-actions">
