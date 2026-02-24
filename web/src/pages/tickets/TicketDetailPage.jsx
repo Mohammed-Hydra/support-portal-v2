@@ -132,7 +132,10 @@ export function TicketDetailPage({ token, user }) {
     return { text: `Due in ${human}`, tone: "ok" };
   };
   const sla = getSlaCountdown();
-  const isImageAttachment = (url) => /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String(url || ""));
+  const isImageAttachment = (url) => {
+    const raw = String(url || "");
+    return raw.startsWith("data:image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(raw);
+  };
 
   return (
     <div>

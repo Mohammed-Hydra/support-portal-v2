@@ -20,6 +20,19 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 },
 });
 
+function resolveAttachmentUrl(file) {
+  if (!file) return "";
+  if (process.env.VERCEL === "1" && file.mimetype && file.mimetype.startsWith("image/")) {
+    try {
+      const raw = fs.readFileSync(file.path);
+      return `data:${file.mimetype};base64,${raw.toString("base64")}`;
+    } catch (error) {
+      // Fall back to public uploads path if inline conversion fails.
+    }
+  }
+  return `/uploads-v2/${file.filename}`;
+}
+
 function splitTags(value) {
   if (!value) return [];
   if (Array.isArray(value)) return value;
@@ -151,7 +164,7 @@ function ticketsRoutes({ logAudit }) {
       const status = req.body.status || "New";
       const sla = await computeSla(priority);
       const autoAgent = await pickLeastLoadedAgent();
-      const attachmentUrl = req.file ? `/uploads-v2/${req.file.filename}` : "";
+      const attachmentUrl = resolveAttachmentUrl(req.file);
       const tags = splitTags(req.body.tags);
       const requesterNameFromBody = (req.body.requesterName || "").trim();
       const requesterPhone = (req.body.requesterPhone || "").trim();
@@ -371,7 +384,7 @@ function ticketsRoutes({ logAudit }) {
       }
 
       const body = (req.body.body || "").trim();
-      const attachmentUrl = req.file ? `/uploads-v2/${req.file.filename}` : "";
+      const attachmentUrl = resolveAttachmentUrl(req.file);
       const isInternal = req.body.isInternal === "true" || req.body.isInternal === true;
       if (!body && !attachmentUrl) {
         res.status(400).json({ error: "body or attachment required" });
