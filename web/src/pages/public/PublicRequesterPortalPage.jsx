@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api";
+import logoSrc from "../../assets/hydra-tech-logo.svg";
 
 const STORAGE_KEY = "requesterPortalToken";
 
@@ -129,6 +130,7 @@ export function PublicRequesterPortalPage() {
       <div className="auth-wrap">
         <div className="card auth-card stack">
           <div className="page-header">
+            <img src={logoSrc} alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" className="login-brand-image" />
             <h2>Requester Access</h2>
             <p className="muted">Use your email magic link to access your ticket portal.</p>
           </div>
@@ -144,6 +146,7 @@ export function PublicRequesterPortalPage() {
     <div className="content">
       <div className="container">
         <div className="page-header">
+          <img src={logoSrc} alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" className="login-brand-image" />
           <h1>Requester Ticket Portal</h1>
           <p className="muted">
             {requester?.name ? `${requester.name} - ` : ""}

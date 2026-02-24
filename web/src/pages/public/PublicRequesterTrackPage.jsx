@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../api";
+import logoSrc from "../../assets/hydra-tech-logo.svg";
 
 export function PublicRequesterTrackPage() {
   const [email, setEmail] = useState("");
@@ -30,6 +31,7 @@ export function PublicRequesterTrackPage() {
     <div className="auth-wrap">
       <form className="card auth-card stack" onSubmit={submit}>
         <div className="page-header">
+          <img src={logoSrc} alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" className="login-brand-image" />
           <h2>Track Your Tickets</h2>
           <p className="muted">Enter your email to receive a secure one-time access link.</p>
         </div>

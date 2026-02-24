@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../api";
+import logoSrc from "../../assets/hydra-tech-logo.svg";
 
 export function PublicRequesterCreatePage() {
   const [form, setForm] = useState({
@@ -52,6 +53,7 @@ export function PublicRequesterCreatePage() {
     <div className="auth-wrap">
       <form className="card auth-card stack" onSubmit={submit}>
         <div className="page-header">
+          <img src={logoSrc} alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" className="login-brand-image" />
           <h2>Requester Portal</h2>
           <p className="muted">Create a support ticket without login credentials.</p>
         </div>
