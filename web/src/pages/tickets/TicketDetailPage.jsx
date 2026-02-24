@@ -132,6 +132,7 @@ export function TicketDetailPage({ token, user }) {
     return { text: `Due in ${human}`, tone: "ok" };
   };
   const sla = getSlaCountdown();
+  const isImageAttachment = (url) => /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String(url || ""));
 
   return (
     <div>
@@ -197,6 +198,22 @@ export function TicketDetailPage({ token, user }) {
           <div key={item.id} className="timeline-item">
             <small>{new Date(item.created_at).toLocaleString()} - {item.author_name || item.source}</small>
             <p>{item.body || "(attachment only)"}</p>
+            {item.attachment_url ? (
+              <div style={{ marginTop: "6px" }}>
+                <a href={item.attachment_url} target="_blank" rel="noreferrer">
+                  View attachment
+                </a>
+                {isImageAttachment(item.attachment_url) ? (
+                  <div style={{ marginTop: "8px" }}>
+                    <img
+                      src={item.attachment_url}
+                      alt="Attachment"
+                      style={{ maxWidth: "320px", width: "100%", borderRadius: "8px", border: "1px solid var(--border)" }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             {item.is_internal ? <em>Internal note</em> : null}
           </div>
         ))}
