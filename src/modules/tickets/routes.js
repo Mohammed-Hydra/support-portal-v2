@@ -22,7 +22,7 @@ const upload = multer({
 
 function resolveAttachmentUrl(file) {
   if (!file) return "";
-  if (process.env.VERCEL === "1" && file.mimetype && file.mimetype.startsWith("image/")) {
+  if (file.mimetype && file.mimetype.startsWith("image/")) {
     try {
       const raw = fs.readFileSync(file.path);
       return `data:${file.mimetype};base64,${raw.toString("base64")}`;
