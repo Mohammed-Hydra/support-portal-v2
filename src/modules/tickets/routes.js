@@ -25,6 +25,36 @@ function resolveAttachmentUrl(file) {
   const name = String(file.originalname || "");
   const extLooksImage = /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)$/i.test(name);
   const mimeLooksImage = String(file.mimetype || "").startsWith("image/");
+  const sniffImageMime = (header) => {
+    if (!header || header.length < 12) return "";
+    // JPEG: FF D8 FF
+    if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) return "image/jpeg";
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (
+      header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47
+      && header[4] === 0x0d && header[5] === 0x0a && header[6] === 0x1a && header[7] === 0x0a
+    ) return "image/png";
+    // GIF: GIF87a / GIF89a
+    const asText = header.toString("ascii", 0, 6);
+    if (asText === "GIF87a" || asText === "GIF89a") return "image/gif";
+    // WEBP: RIFF....WEBP
+    if (header.toString("ascii", 0, 4) === "RIFF" && header.toString("ascii", 8, 12) === "WEBP") return "image/webp";
+    // BMP: BM
+    if (header[0] === 0x42 && header[1] === 0x4d) return "image/bmp";
+    return "";
+  };
+
+  const tryInline = (forceMime) => {
+    try {
+      const mime = forceMime;
+      if (!mime) return "";
+      const raw = fs.readFileSync(file.path);
+      return `data:${mime};base64,${raw.toString("base64")}`;
+    } catch (error) {
+      return "";
+    }
+  };
+
   if (mimeLooksImage || extLooksImage) {
     try {
       const mime = mimeLooksImage
@@ -36,11 +66,27 @@ function resolveAttachmentUrl(file) {
                 : /\.(svg)$/i.test(name) ? "image/svg+xml"
                   : /\.(heic|heif)$/i.test(name) ? "image/heic"
                     : "image/jpeg");
-      const raw = fs.readFileSync(file.path);
-      return `data:${mime};base64,${raw.toString("base64")}`;
+      const inline = tryInline(mime);
+      if (inline) return inline;
     } catch (error) {
       // Fall back to public uploads path if inline conversion fails.
     }
+  }
+
+  // If the device sends a generic mimetype (or no extension), sniff common image headers.
+  try {
+    const fd = fs.openSync(file.path, "r");
+    try {
+      const header = Buffer.alloc(16);
+      fs.readSync(fd, header, 0, header.length, 0);
+      const sniffed = sniffImageMime(header);
+      const inline = tryInline(sniffed);
+      if (inline) return inline;
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch (error) {
+    // ignore and fall back
   }
   return `/uploads-v2/${file.filename}`;
 }
