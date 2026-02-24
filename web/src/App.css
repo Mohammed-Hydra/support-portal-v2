@@ -246,6 +246,37 @@ button:hover {
   background: var(--btn-hover);
 }
 
+.icon-btn {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+  color: var(--text);
+}
+
+.icon-btn:hover {
+  background: var(--card-hover);
+}
+
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.menu-toggle {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 6px;
+  border-radius: 10px;
+}
+
 .error {
   margin: 0;
   color: #b91c1c;
