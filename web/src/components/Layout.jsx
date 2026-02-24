@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logoSrc from "../assets/hydra-tech-logo.svg";
 
@@ -19,6 +19,15 @@ export function Layout({ user, t, language, setLanguage, onLogout, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const portalUrl = typeof window !== "undefined" ? window.location.origin : "";
   const requesterUrl = portalUrl ? `${portalUrl}/public/requester` : "";
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return undefined;
+    const mq = window.matchMedia("(max-width: 900px)");
+    const sync = () => setMenuOpen(!mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const copyLink = (url, which) => {
     if (!url) return;
