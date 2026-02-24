@@ -1,1 +1,7 @@
 .vercel
+
+# Local secret dumps / accidental credential exports
+RESEND_API_KEY=*.env
+RESEND_API_KEY=*.env.txt
+postgresql*.txt
+*secret*.txt
