@@ -12,6 +12,7 @@ export function TicketDetailPage({ token, user }) {
   const [isInternal, setIsInternal] = useState(false);
   const [error, setError] = useState("");
   const [busyAction, setBusyAction] = useState(false);
+  const [preview, setPreview] = useState(null);
 
   const load = async () => {
     try {
@@ -203,9 +204,19 @@ export function TicketDetailPage({ token, user }) {
             <p>{item.body || "(attachment only)"}</p>
             {item.attachment_url ? (
               <div style={{ marginTop: "6px" }}>
-                <a href={item.attachment_url} target="_blank" rel="noreferrer">
-                  View attachment
-                </a>
+                {isImageAttachment(item.attachment_url) ? (
+                  <button
+                    type="button"
+                    className="text-btn"
+                    onClick={() => setPreview({ url: item.attachment_url, title: "Attachment" })}
+                  >
+                    View attachment
+                  </button>
+                ) : (
+                  <a href={item.attachment_url} target="_blank" rel="noreferrer">
+                    View attachment
+                  </a>
+                )}
                 {isImageAttachment(item.attachment_url) ? (
                   <div style={{ marginTop: "8px" }}>
                     <img
@@ -221,6 +232,39 @@ export function TicketDetailPage({ token, user }) {
           </div>
         ))}
       </div>
+
+      {preview?.url ? (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreview(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setPreview(null);
+          }}
+          tabIndex={-1}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <strong>{preview.title || "Attachment"}</strong>
+              <button type="button" className="icon-close" onClick={() => setPreview(null)} aria-label="Close">
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <img src={preview.url} alt={preview.title || "Attachment"} />
+            </div>
+            <div className="modal-footer">
+              <a className="btn-secondary" href={preview.url} target="_blank" rel="noreferrer">
+                Open in new tab
+              </a>
+              <button type="button" onClick={() => setPreview(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <form className="card" onSubmit={sendMessage}>
         <h3>Add Reply / Note</h3>
