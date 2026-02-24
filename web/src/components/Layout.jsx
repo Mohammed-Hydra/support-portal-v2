@@ -32,7 +32,7 @@ export function Layout({ user, t, language, setLanguage, onLogout, children }) {
       <aside className="sidebar">
         <img src={logoSrc} alt="HYDRA-TECH IT SUPPORT PLATFORM" className="brand-image" />
         <h2>{t.appName}</h2>
-        <p className="hint">HYDRA-TECH support workspace</p>
+        <p className="hint">HYDRA-TECH.PRO support workspace</p>
         {(user?.role === "admin" || user?.role === "agent") && portalUrl && (
           <div className="hint" style={{ marginTop: 4, marginBottom: 8 }}>
             <p style={{ margin: "0 0 4px 0" }}>

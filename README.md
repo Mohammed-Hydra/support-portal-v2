@@ -12,6 +12,7 @@ Zoho-style full support portal rebuild in a separate project.
 
 - PostgreSQL-first architecture and schema migration at startup
 - Auth + role permissions (`admin`, `agent`, `requester`)
+- User emails enforced to `@hydra-tech.pro` (configurable with `USER_EMAIL_DOMAIN`)
 - Admin user management (create users + reset password)
 - Ticket queues, ticket detail timeline, status updates, comments/internal notes
 - Auto-assignment + SLA due date calculations

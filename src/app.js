@@ -3,7 +3,7 @@ const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
-const { migrate, query, getOne } = require("./db/client");
+const { migrate, query, getOne, getMany } = require("./db/client");
 const { usersRoutes } = require("./modules/users/routes");
 const { ticketsRoutes } = require("./modules/tickets/routes");
 const { reportsRoutes } = require("./modules/reports/routes");
@@ -14,11 +14,50 @@ const { whatsappWebhookRoutes } = require("./modules/channels/whatsappWebhook");
 const { settingsRoutes } = require("./modules/settings/routes");
 const { publicRequesterRoutes } = require("./modules/publicRequester/routes");
 const { pickLeastLoadedAgent, computeSla, calcDueDate } = require("./modules/automations/service");
+const USER_EMAIL_DOMAIN = (process.env.USER_EMAIL_DOMAIN || "hydra-tech.pro").toLowerCase();
+
+function normalizePortalEmail(value, userId) {
+  const raw = String(value || "").trim().toLowerCase();
+  const localRaw = raw.includes("@") ? raw.split("@")[0] : raw;
+  const cleanLocal = localRaw.replace(/[^a-z0-9._-]/g, "") || `user${userId}`;
+  return `${cleanLocal}@${USER_EMAIL_DOMAIN}`;
+}
+
+async function enforceUserEmailDomain() {
+  const users = await getMany(`SELECT id, email FROM users ORDER BY id ASC`);
+  if (!users.length) return;
+  const usedEmails = new Set();
+  const updates = [];
+
+  users.forEach((user) => {
+    const baseEmail = normalizePortalEmail(user.email, user.id);
+    let nextEmail = baseEmail;
+    if (usedEmails.has(nextEmail)) {
+      const [local] = baseEmail.split("@");
+      nextEmail = `${local}.${user.id}@${USER_EMAIL_DOMAIN}`;
+      let n = 1;
+      while (usedEmails.has(nextEmail)) {
+        nextEmail = `${local}.${user.id}.${n}@${USER_EMAIL_DOMAIN}`;
+        n += 1;
+      }
+    }
+    usedEmails.add(nextEmail);
+    if (String(user.email || "").toLowerCase() !== nextEmail) {
+      updates.push({ id: user.id, email: nextEmail });
+    }
+  });
+
+  for (const item of updates) {
+    // eslint-disable-next-line no-await-in-loop
+    await query(`UPDATE users SET email = $1 WHERE id = $2`, [item.email, item.id]);
+  }
+}
 
 async function ensureSeedData() {
+  await enforceUserEmailDomain();
   const hasAnyUser = await getOne(`SELECT id FROM users LIMIT 1`);
   if (!hasAnyUser) {
-    const adminEmail = (process.env.SUPPORT_ADMIN_EMAIL || "admin@hydra-tech.com").toLowerCase();
+    const adminEmail = (process.env.SUPPORT_ADMIN_EMAIL || `admin@${USER_EMAIL_DOMAIN}`).toLowerCase();
     const adminPassword = process.env.SUPPORT_ADMIN_PASSWORD || "ChangeThisPassword123!";
     const passwordHash = await bcrypt.hash(adminPassword, 10);
     await query(
@@ -149,7 +188,7 @@ async function createApp() {
       return;
     }
     res.json({
-      name: "HYDRA-TECH eDesk v2 API",
+      name: "HYDRA-TECH.PRO API",
       message: "Frontend build is not present. Run web build or use Vite dev server.",
     });
   });

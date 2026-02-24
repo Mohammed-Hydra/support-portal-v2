@@ -10,9 +10,24 @@ const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL
   || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:5173");
 const GRAPH_SCOPE = "https://graph.microsoft.com/.default";
 const RESEND_API_URL = "https://api.resend.com/emails";
+const USER_EMAIL_DOMAIN = (process.env.USER_EMAIL_DOMAIN || "hydra-tech.pro").toLowerCase();
 
 function hashToken(raw) {
   return crypto.createHash("sha256").update(raw).digest("hex");
+}
+
+function toPortalDomainEmail(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+  const localPart = raw.includes("@") ? raw.split("@")[0] : raw;
+  const cleanLocal = localPart.replace(/[^a-z0-9._-]/g, "");
+  if (!cleanLocal) return "";
+  return `${cleanLocal}@${USER_EMAIL_DOMAIN}`;
+}
+
+function isPortalDomainEmail(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  return /^[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(raw) && raw.endsWith(`@${USER_EMAIL_DOMAIN}`);
 }
 
 function hasGraphMailConfig() {
@@ -161,7 +176,7 @@ function usersRoutes({ logAudit }) {
 
   router.post("/auth/login", async (req, res) => {
     try {
-      const email = (req.body.email || "").trim().toLowerCase();
+      const email = toPortalDomainEmail(req.body.email || "");
       const password = req.body.password || "";
       if (!email || !password) {
         res.status(400).json({ error: "Email and password are required" });
@@ -229,7 +244,7 @@ function usersRoutes({ logAudit }) {
       const provider = getConfiguredMailProvider();
       // eslint-disable-next-line no-console
       console.log("forgot-password provider:", provider);
-      const email = (req.body.email || "").trim().toLowerCase();
+      const email = toPortalDomainEmail(req.body.email || "");
       if (!email) {
         res.status(400).json({ error: "Email is required" });
         return;
@@ -368,12 +383,16 @@ function usersRoutes({ logAudit }) {
   router.post("/users", authRequired, roleRequired("admin"), async (req, res) => {
     try {
       const name = (req.body.name || "").trim();
-      const email = (req.body.email || "").trim().toLowerCase();
+      const email = String(req.body.email || "").trim().toLowerCase();
       const role = (req.body.role || "requester").trim();
       const password = (req.body.password || "").trim();
       const locale = req.body.locale === "ar" ? "ar" : "en";
       if (!name || !email || !password) {
         res.status(400).json({ error: "name, email and password are required" });
+        return;
+      }
+      if (!isPortalDomainEmail(email)) {
+        res.status(400).json({ error: `New user email must be in @${USER_EMAIL_DOMAIN} domain` });
         return;
       }
       if (!["admin", "agent", "requester"].includes(role)) {

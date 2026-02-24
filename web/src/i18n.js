@@ -1,6 +1,6 @@
 export const dictionary = {
   en: {
-    appName: "HYDRA-TECH eDesk v2",
+    appName: "HYDRA-TECH.PRO",
     login: "Login",
     email: "Email",
     password: "Password",
@@ -37,7 +37,7 @@ export const dictionary = {
     requesterLink: "Requester",
   },
   ar: {
-    appName: "هيدرا تك إي ديسك v2",
+    appName: "HYDRA-TECH.PRO",
     login: "تسجيل الدخول",
     email: "البريد الإلكتروني",
     password: "كلمة المرور",
