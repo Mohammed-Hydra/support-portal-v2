@@ -29,10 +29,22 @@ const upload = multer({
 
 function resolveAttachmentUrl(file) {
   if (!file) return "";
-  if (file.mimetype && file.mimetype.startsWith("image/")) {
+  const name = String(file.originalname || "");
+  const extLooksImage = /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)$/i.test(name);
+  const mimeLooksImage = String(file.mimetype || "").startsWith("image/");
+  if (mimeLooksImage || extLooksImage) {
     try {
+      const mime = mimeLooksImage
+        ? file.mimetype
+        : (/\.(png)$/i.test(name) ? "image/png"
+          : /\.(gif)$/i.test(name) ? "image/gif"
+            : /\.(webp)$/i.test(name) ? "image/webp"
+              : /\.(bmp)$/i.test(name) ? "image/bmp"
+                : /\.(svg)$/i.test(name) ? "image/svg+xml"
+                  : /\.(heic|heif)$/i.test(name) ? "image/heic"
+                    : "image/jpeg");
       const raw = fs.readFileSync(file.path);
-      return `data:${file.mimetype};base64,${raw.toString("base64")}`;
+      return `data:${mime};base64,${raw.toString("base64")}`;
     } catch (error) {
       // Fall back to public uploads path if inline conversion fails.
     }
