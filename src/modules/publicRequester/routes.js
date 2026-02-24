@@ -24,7 +24,11 @@ const upload = multer({
       cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`);
     },
   }),
-  limits: { fileSize: 15 * 1024 * 1024 },
+  limits: {
+    fileSize: 15 * 1024 * 1024,
+    // Allow large base64 data URLs sent as text fields.
+    fieldSize: 30 * 1024 * 1024,
+  },
 });
 
 function resolveAttachmentUrl(file) {
@@ -101,7 +105,38 @@ function resolveAttachmentUrl(file) {
 function resolveAttachmentFromBody(raw) {
   const value = String(raw || "").trim();
   if (!value) return "";
-  return value.startsWith("data:image/") ? value : "";
+  const match = value.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return "";
+  const mime = String(match[1] || "").toLowerCase();
+  const base64 = match[2] || "";
+  if (!base64) return "";
+
+  const sniffImageMime = (header) => {
+    if (!header || header.length < 12) return "";
+    if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) return "image/jpeg";
+    if (
+      header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47
+      && header[4] === 0x0d && header[5] === 0x0a && header[6] === 0x1a && header[7] === 0x0a
+    ) return "image/png";
+    const asText = header.toString("ascii", 0, 6);
+    if (asText === "GIF87a" || asText === "GIF89a") return "image/gif";
+    if (header.toString("ascii", 0, 4) === "RIFF" && header.toString("ascii", 8, 12) === "WEBP") return "image/webp";
+    if (header[0] === 0x42 && header[1] === 0x4d) return "image/bmp";
+    return "";
+  };
+
+  if (mime.startsWith("image/")) return value;
+
+  // Some devices/browser flows send `application/octet-stream` for images.
+  // Sniff the first bytes (without decoding the full payload) and rebuild as image data URL if needed.
+  try {
+    const header = Buffer.from(base64.slice(0, 64), "base64");
+    const sniffed = sniffImageMime(header);
+    if (!sniffed) return "";
+    return `data:${sniffed};base64,${base64}`;
+  } catch (error) {
+    return "";
+  }
 }
 
 function normalizeEmail(value) {

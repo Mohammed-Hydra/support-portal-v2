@@ -38,10 +38,8 @@ export function PublicRequesterCreatePage() {
       Object.entries(form).forEach(([key, value]) => fd.append(key, value || ""));
       if (attachment) {
         fd.append("attachment", attachment);
-        if (String(attachment.type || "").startsWith("image/")) {
-          const inline = await fileToDataUrl(attachment);
-          fd.append("attachmentDataUrl", inline);
-        }
+        const inline = await fileToDataUrl(attachment);
+        fd.append("attachmentDataUrl", inline);
       }
       const data = await apiRequest("/api/public/requester/tickets", {
         method: "POST",

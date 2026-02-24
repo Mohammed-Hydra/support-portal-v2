@@ -17,7 +17,11 @@ const upload = multer({
       cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`);
     },
   }),
-  limits: { fileSize: 15 * 1024 * 1024 },
+  limits: {
+    fileSize: 15 * 1024 * 1024,
+    // Allow large base64 data URLs sent as text fields.
+    fieldSize: 30 * 1024 * 1024,
+  },
 });
 
 function resolveAttachmentUrl(file) {
