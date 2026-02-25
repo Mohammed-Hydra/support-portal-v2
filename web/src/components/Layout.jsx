@@ -16,18 +16,28 @@ const menu = [
 export function Layout({ user, t, language, setLanguage, onLogout, children }) {
   const location = useLocation();
   const [copiedLink, setCopiedLink] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const raw = window.localStorage.getItem("portal.menuOpen");
+      if (raw === null) return true;
+      return raw === "true";
+    } catch (e) {
+      return true;
+    }
+  });
   const portalUrl = typeof window !== "undefined" ? window.location.origin : "";
   const requesterUrl = portalUrl ? `${portalUrl}/public/requester` : "";
 
   useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return undefined;
-    const mq = window.matchMedia("(max-width: 900px)");
-    const sync = () => setMenuOpen(!mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
+    if (typeof window === "undefined") return undefined;
+    try {
+      window.localStorage.setItem("portal.menuOpen", String(menuOpen));
+    } catch (e) {
+      // ignore
+    }
+    return undefined;
+  }, [menuOpen]);
 
   const copyLink = (url, which) => {
     if (!url) return;
@@ -101,7 +111,6 @@ export function Layout({ user, t, language, setLanguage, onLogout, children }) {
                 key={item.to}
                 to={item.to}
                 className={location.pathname === item.to ? "active-link" : ""}
-                onClick={() => setMenuOpen(false)}
               >
                 {t[item.key]}
               </Link>
