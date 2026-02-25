@@ -102,7 +102,22 @@ async function createApp() {
   const webDist = path.join(__dirname, "..", "web", "dist");
   const hasWebDist = fs.existsSync(webDist);
   if (hasWebDist) {
-    app.use(express.static(webDist));
+    app.use(express.static(webDist, {
+      etag: true,
+      lastModified: true,
+      setHeaders: (res, filePath) => {
+        const normalized = String(filePath || "").replace(/\\/g, "/");
+        if (normalized.includes("/assets/")) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          return;
+        }
+        if (normalized.endsWith("/index.html") || normalized.endsWith("index.html")) {
+          res.setHeader("Cache-Control", "no-store");
+          res.setHeader("Pragma", "no-cache");
+          res.setHeader("Expires", "0");
+        }
+      },
+    }));
   }
   app.use("/uploads-v2", express.static(process.env.VERCEL === "1" ? "/tmp/uploads-v2" : path.join(__dirname, "..", "uploads")));
 
@@ -184,6 +199,9 @@ async function createApp() {
 
   app.get("/", (req, res) => {
     if (hasWebDist) {
+      res.set("Cache-Control", "no-store");
+      res.set("Pragma", "no-cache");
+      res.set("Expires", "0");
       res.sendFile(path.join(webDist, "index.html"));
       return;
     }
@@ -199,6 +217,9 @@ async function createApp() {
         next();
         return;
       }
+      res.set("Cache-Control", "no-store");
+      res.set("Pragma", "no-cache");
+      res.set("Expires", "0");
       res.sendFile(path.join(webDist, "index.html"));
     });
   } else {
