@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api";
 import logoSrc from "../../assets/hydra-tech-logo.svg";
 import { toastError, toastSuccess } from "../../toast";
@@ -82,6 +82,7 @@ async function compressImageToDataUrl(file, { maxDim = 1280, maxBytes = 2_000_00
 }
 
 export function PublicRequesterCreatePage() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     requesterName: "",
     requesterEmail: "",
@@ -90,11 +91,57 @@ export function PublicRequesterCreatePage() {
     subject: "",
     description: "",
     priority: "Medium",
+    category: "general",
+    categoryOther: "",
   });
   const [attachment, setAttachment] = useState(null);
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const DRAFT_KEY = "requesterCreateDraftV2";
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        setForm((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const payload = { ...form };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+    } catch (e) {
+      // ignore
+    }
+  }, [form]);
+
+  const attachmentPreviewUrl = useMemo(() => {
+    if (!attachment) return "";
+    try {
+      return URL.createObjectURL(attachment);
+    } catch (e) {
+      return "";
+    }
+  }, [attachment]);
+
+  useEffect(() => {
+    if (!attachmentPreviewUrl) return undefined;
+    return () => {
+      try {
+        URL.revokeObjectURL(attachmentPreviewUrl);
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, [attachmentPreviewUrl]);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -114,11 +161,12 @@ export function PublicRequesterCreatePage() {
         method: "POST",
         body: JSON.stringify({
           ...form,
+          category: form.category === "other" ? (form.categoryOther || "other") : form.category,
           attachmentDataUrl: attachmentDataUrl || undefined,
           attachmentName: attachment ? (attachment.name || "attachment.jpg") : undefined,
         }),
       });
-      const message = `Ticket #${data.id} created successfully.`;
+      const message = `Ticket #${data.id} created successfully.${data.magicLinkSent ? " We sent you an access link by email." : ""}`;
       setResult(message);
       toastSuccess(message);
       setForm({
@@ -129,8 +177,19 @@ export function PublicRequesterCreatePage() {
         subject: "",
         description: "",
         priority: "Medium",
+        category: "general",
+        categoryOther: "",
       });
       setAttachment(null);
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch (e) {
+        // ignore
+      }
+      const email = String(form.requesterEmail || "").trim();
+      if (email) {
+        navigate(`/public/requester/track?email=${encodeURIComponent(email)}`);
+      }
     } catch (err) {
       const message = err.message || "Failed to create ticket.";
       setError(message);
@@ -192,6 +251,28 @@ export function PublicRequesterCreatePage() {
           />
         </label>
         <label>
+          Category
+          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            <option value="general">General</option>
+            <option value="software">Software</option>
+            <option value="hardware">Hardware</option>
+            <option value="network">Network</option>
+            <option value="access">Access / Accounts</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        {form.category === "other" ? (
+          <label>
+            Other category
+            <input
+              value={form.categoryOther}
+              onChange={(e) => setForm({ ...form, categoryOther: e.target.value })}
+              placeholder="e.g. Printer, VPN, Email..."
+              required
+            />
+          </label>
+        ) : null}
+        <label>
           Description
           <textarea
             rows={4}
@@ -212,6 +293,15 @@ export function PublicRequesterCreatePage() {
               <option>High</option>
               <option>Critical</option>
             </select>
+            <small className="muted">
+              {form.priority === "Critical"
+                ? "Critical: business is down"
+                : form.priority === "High"
+                  ? "High: major impact"
+                  : form.priority === "Low"
+                    ? "Low: minor / how-to"
+                    : "Medium: normal request"}
+            </small>
           </label>
           <label>
             Attachment
@@ -219,8 +309,19 @@ export function PublicRequesterCreatePage() {
               type="file"
               onChange={(e) => setAttachment(e.target.files?.[0] || null)}
             />
+            <small className="muted">Images only. Large images are automatically compressed.</small>
           </label>
         </div>
+        {attachmentPreviewUrl ? (
+          <div className="requester-attachment-preview">
+            <p className="muted" style={{ margin: 0 }}>
+              Selected: <strong>{attachment?.name}</strong> ({Math.round((attachment?.size || 0) / 1024)} KB)
+            </p>
+            {String(attachment?.type || "").startsWith("image/") ? (
+              <img src={attachmentPreviewUrl} alt="Attachment preview" />
+            ) : null}
+          </div>
+        ) : null}
         {error ? <p className="error">{error}</p> : null}
         {result ? <p className="success">{result}</p> : null}
         <button type="submit" disabled={saving}>{saving ? "Creating..." : "Create Ticket"}</button>

@@ -5,6 +5,16 @@ const fs = require("fs");
 const { authRequired, roleRequired } = require("../../middleware/auth");
 const { getMany, getOne, query } = require("../../db/client");
 const { pickLeastLoadedAgent, computeSla, calcDueDate, runAutomationRules } = require("../automations/service");
+const { sendNotificationEmail, getRequesterTrackUrl } = require("../../lib/mailer");
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 const uploadDir = process.env.VERCEL === "1" ? "/tmp/uploads-v2" : path.join(__dirname, "..", "..", "..", "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -106,6 +116,65 @@ function splitTags(value) {
 
 function ticketsRoutes({ logAudit }) {
   const router = express.Router();
+
+  async function getRequesterNotificationTarget(ticketId) {
+    const row = await getOne(
+      `
+        SELECT
+          COALESCE(NULLIF(t.requester_email, ''), c.email, '') AS email,
+          COALESCE(NULLIF(t.requester_name, ''), c.name, '') AS name,
+          t.subject,
+          t.status,
+          t.priority
+        FROM tickets t
+        LEFT JOIN contacts c ON c.id = t.requester_contact_id
+        WHERE t.id = $1
+      `,
+      [ticketId]
+    );
+    const email = String(row?.email || "").trim().toLowerCase();
+    if (!email) return null;
+    return {
+      email,
+      name: String(row?.name || "").trim(),
+      subject: String(row?.subject || "").trim(),
+      status: String(row?.status || "").trim(),
+      priority: String(row?.priority || "").trim(),
+    };
+  }
+
+  async function notifyRequester({ ticketId, title, bodyLines }) {
+    const target = await getRequesterNotificationTarget(ticketId);
+    if (!target) return;
+
+    const trackUrl = getRequesterTrackUrl();
+    const subject = title || `Update on ticket #${ticketId}`;
+    const lines = (Array.isArray(bodyLines) ? bodyLines : [String(bodyLines || "")]).filter(Boolean);
+
+    const text = [
+      ...(target.name ? [`Hi ${target.name},`, ""] : []),
+      `Ticket #${ticketId}: ${target.subject || ""}`.trim(),
+      `Status: ${target.status}${target.priority ? ` | Priority: ${target.priority}` : ""}`,
+      "",
+      ...lines,
+      ...(trackUrl ? ["", `View / Reply: ${trackUrl}`] : []),
+    ].join("\n");
+
+    const html = [
+      ...(target.name ? [`<p>Hi ${escapeHtml(target.name)},</p>`] : []),
+      `<p><strong>Ticket #${ticketId}</strong>: ${escapeHtml(target.subject || "")}</p>`,
+      `<p><strong>Status</strong>: ${escapeHtml(target.status)}${target.priority ? ` &nbsp;|&nbsp; <strong>Priority</strong>: ${escapeHtml(target.priority)}` : ""}</p>`,
+      ...lines.map((line) => `<p>${escapeHtml(line)}</p>`),
+      ...(trackUrl ? [`<p><a href="${trackUrl}">View / Reply</a></p>`] : []),
+    ].join("");
+
+    try {
+      await sendNotificationEmail({ to: target.email, subject, text, html });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn("Requester notification failed:", error?.message || error);
+    }
+  }
 
   router.get("/tickets", authRequired, async (req, res) => {
     const filters = [];
@@ -436,6 +505,29 @@ function ticketsRoutes({ logAudit }) {
         });
       }
 
+      if (nextStatus !== existing.status) {
+        if (nextStatus === "Waiting User") {
+          await notifyRequester({
+            ticketId,
+            title: `Action required for ticket #${ticketId}`,
+            bodyLines: [
+              "Our support team needs more information to proceed.",
+              "Please reply in the requester portal with any additional details or screenshots.",
+            ],
+          });
+        }
+        if (nextStatus === "Resolved" || nextStatus === "Closed") {
+          await notifyRequester({
+            ticketId,
+            title: `Ticket #${ticketId} marked as ${nextStatus}`,
+            bodyLines: [
+              "Your ticket has been marked as resolved.",
+              "If the issue is not fixed, you can reopen the ticket from the requester portal.",
+            ],
+          });
+        }
+      }
+
       res.json(updated.rows[0]);
     } catch (error) {
       res.status(500).json({ error: "Failed to update ticket" });
@@ -494,6 +586,17 @@ function ticketsRoutes({ logAudit }) {
         context: { isInternal },
         logAudit,
       });
+
+      if ((req.user.role === "admin" || req.user.role === "agent") && !isInternal) {
+        const snippet = body ? (body.length > 500 ? `${body.slice(0, 500)}…` : body) : "";
+        await notifyRequester({
+          ticketId,
+          title: `New reply on ticket #${ticketId}`,
+          bodyLines: [
+            snippet ? `Message: ${snippet}` : "A new update was added to your ticket.",
+          ],
+        });
+      }
       res.status(201).json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to add message" });

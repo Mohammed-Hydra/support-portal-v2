@@ -1,14 +1,20 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api";
 import logoSrc from "../../assets/hydra-tech-logo.svg";
 import { toastError, toastSuccess } from "../../toast";
 
 export function PublicRequesterTrackPage() {
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    const fromQuery = String(searchParams.get("email") || "").trim();
+    if (fromQuery) setEmail(fromQuery);
+  }, [searchParams]);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -38,7 +44,7 @@ export function PublicRequesterTrackPage() {
         <div className="page-header">
           <img src={logoSrc} alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" className="login-brand-image" />
           <h2>Track Your Tickets</h2>
-          <p className="muted">Enter your email to receive a secure one-time access link.</p>
+          <p className="muted">Enter your email to receive a secure one-time access link (expires soon).</p>
         </div>
         <label>
           Email
@@ -47,6 +53,9 @@ export function PublicRequesterTrackPage() {
         {error ? <p className="error">{error}</p> : null}
         {success ? <p className="success">{success}</p> : null}
         <button type="submit" disabled={sending}>{sending ? "Sending..." : "Send Access Link"}</button>
+        <p className="muted">
+          Wrong email? Just enter the correct one above.
+        </p>
         <p className="muted">
           Need to create a new ticket? <Link to="/public/requester">Go to create form</Link>
         </p>

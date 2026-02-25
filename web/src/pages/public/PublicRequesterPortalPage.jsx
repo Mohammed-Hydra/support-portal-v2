@@ -1,44 +1,79 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api";
 import logoSrc from "../../assets/hydra-tech-logo.svg";
 import { toastError, toastSuccess } from "../../toast";
 
 const STORAGE_KEY = "requesterPortalToken";
+const SEEN_KEY = "requesterPortalLastSeenV2";
 
 export function PublicRequesterPortalPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [requesterToken, setRequesterToken] = useState(localStorage.getItem(STORAGE_KEY) || "");
   const [requester, setRequester] = useState(null);
   const [tickets, setTickets] = useState([]);
   const [selectedTicketId, setSelectedTicketId] = useState("");
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [messageBody, setMessageBody] = useState("");
+  const [messageAttachment, setMessageAttachment] = useState(null);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [loadingTickets, setLoadingTickets] = useState(false);
+  const [loadingTicket, setLoadingTicket] = useState(false);
+  const [filters, setFilters] = useState({ q: "", status: "", days: "30", sort: "updated_desc" });
+  const [lastSeenByTicket, setLastSeenByTicket] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(SEEN_KEY) || "{}") || {};
+    } catch (e) {
+      return {};
+    }
+  });
 
   const authHeaders = useMemo(
     () => (requesterToken ? { Authorization: `Bearer ${requesterToken}` } : {}),
     [requesterToken]
   );
 
+  const attachmentPreviewUrl = useMemo(() => {
+    if (!messageAttachment) return "";
+    try {
+      return URL.createObjectURL(messageAttachment);
+    } catch (e) {
+      return "";
+    }
+  }, [messageAttachment]);
+
+  useEffect(() => {
+    if (!attachmentPreviewUrl) return undefined;
+    return () => {
+      try {
+        URL.revokeObjectURL(attachmentPreviewUrl);
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, [attachmentPreviewUrl]);
+
   const refreshTickets = async () => {
     if (!requesterToken) return;
-    const rows = await apiRequest("/api/public/requester/tickets", {
-      headers: authHeaders,
-    });
+    setLoadingTickets(true);
+    const rows = await apiRequest("/api/public/requester/tickets", { headers: authHeaders });
     setTickets(Array.isArray(rows) ? rows : []);
     if (!selectedTicketId && rows[0]) {
       setSelectedTicketId(String(rows[0].id));
     }
+    setLoadingTickets(false);
   };
 
   const refreshTicketDetails = async (ticketId) => {
     if (!requesterToken || !ticketId) return;
+    setLoadingTicket(true);
     const data = await apiRequest(`/api/public/requester/tickets/${ticketId}`, {
       headers: authHeaders,
     });
     setSelectedTicket(data);
+    setLoadingTicket(false);
   };
 
   useEffect(() => {
@@ -52,6 +87,7 @@ export function PublicRequesterPortalPage() {
         const message = "Access granted. Your requester session is active.";
         setInfo(message);
         toastSuccess(message);
+        navigate("/public/requester/portal", { replace: true });
       })
       .catch((err) => {
         const message = err.message || "Invalid or expired access link.";
@@ -70,16 +106,96 @@ export function PublicRequesterPortalPage() {
     refreshTicketDetails(selectedTicketId).catch((err) => setError(err.message || "Failed to load ticket details."));
   }, [selectedTicketId]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(SEEN_KEY, JSON.stringify(lastSeenByTicket || {}));
+    } catch (e) {
+      // ignore
+    }
+  }, [lastSeenByTicket]);
+
+  useEffect(() => {
+    if (!selectedTicketId) return;
+    setLastSeenByTicket((prev) => ({ ...prev, [String(selectedTicketId)]: new Date().toISOString() }));
+  }, [selectedTicketId]);
+
+  async function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Failed to read selected file."));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function compressImageToDataUrl(file, { maxDim = 1280, maxBytes = 2_000_000 } = {}) {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    const loaded = new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error("Failed to load image."));
+    });
+    img.src = url;
+    await loaded.finally(() => URL.revokeObjectURL(url));
+
+    let width = img.naturalWidth || img.width;
+    let height = img.naturalHeight || img.height;
+    if (!width || !height) throw new Error("Invalid image.");
+
+    let scale = Math.min(1, maxDim / Math.max(width, height));
+    let attempt = 0;
+    let blob = null;
+    while (attempt < 10) {
+      const w = Math.max(1, Math.floor(width * scale));
+      const h = Math.max(1, Math.floor(height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+
+      let quality = 0.82;
+      for (let qTry = 0; qTry < 6; qTry += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        const next = await new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/jpeg", quality));
+        if (next && next.size <= maxBytes) {
+          blob = next;
+          break;
+        }
+        quality -= 0.08;
+      }
+      if (blob) break;
+      scale *= 0.85;
+      attempt += 1;
+    }
+    if (!blob) throw new Error("Image is too large. Please use a smaller photo.");
+    return await blobToDataUrl(blob);
+  }
+
   const sendMessage = async (event) => {
     event.preventDefault();
-    if (!messageBody.trim() || !selectedTicketId) return;
+    if ((!messageBody.trim() && !messageAttachment) || !selectedTicketId) return;
     try {
+      let attachmentDataUrl = "";
+      let attachmentName = "";
+      if (messageAttachment) {
+        if (!String(messageAttachment.type || "").startsWith("image/")) {
+          throw new Error("Only image attachments are supported.");
+        }
+        attachmentDataUrl = await compressImageToDataUrl(messageAttachment);
+        attachmentName = messageAttachment.name || "attachment.jpg";
+      }
       await apiRequest(`/api/public/requester/tickets/${selectedTicketId}/messages`, {
         method: "POST",
         headers: authHeaders,
-        body: JSON.stringify({ body: messageBody }),
+        body: JSON.stringify({
+          body: messageBody,
+          attachmentDataUrl: attachmentDataUrl || undefined,
+          attachmentName: attachmentName || undefined,
+        }),
       });
       setMessageBody("");
+      setMessageAttachment(null);
       setInfo("Reply sent.");
       toastSuccess("Reply sent.");
       await refreshTicketDetails(selectedTicketId);
@@ -156,6 +272,56 @@ export function PublicRequesterPortalPage() {
     );
   }
 
+  const filteredTickets = useMemo(() => {
+    const days = Number(filters.days || "0");
+    const hasDays = Number.isFinite(days) && days > 0;
+    const limit = hasDays ? (Date.now() - days * 24 * 60 * 60 * 1000) : 0;
+    const q = String(filters.q || "").trim().toLowerCase();
+    const status = String(filters.status || "").trim();
+    let rows = [...tickets];
+    if (hasDays) {
+      rows = rows.filter((t) => {
+        const ts = Date.parse(t.updated_at || t.created_at || "");
+        return Number.isFinite(ts) && ts >= limit;
+      });
+    }
+    if (status) rows = rows.filter((t) => t.status === status);
+    if (q) {
+      rows = rows.filter((t) =>
+        String(t.subject || "").toLowerCase().includes(q) || String(t.id).includes(q)
+      );
+    }
+    rows.sort((a, b) => {
+      const ta = Date.parse(a.updated_at || a.created_at || "") || 0;
+      const tb = Date.parse(b.updated_at || b.created_at || "") || 0;
+      if (filters.sort === "updated_asc") return ta - tb;
+      return tb - ta;
+    });
+    return rows;
+  }, [tickets, filters.days, filters.q, filters.sort, filters.status]);
+
+  const statusSteps = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
+  const selectedStepIndex = Math.max(0, statusSteps.indexOf(String(selectedTicket?.status || "")));
+
+  const expectedFirstResponse = useMemo(() => {
+    if (!selectedTicket?.first_response_due_at) return "";
+    if (selectedTicket?.first_response_at) return "";
+    try {
+      const dt = new Date(selectedTicket.first_response_due_at);
+      return Number.isFinite(dt.getTime()) ? dt.toLocaleString() : "";
+    } catch (e) {
+      return "";
+    }
+  }, [selectedTicket]);
+
+  const ticketUnread = (ticket) => {
+    const lastSeen = Date.parse(lastSeenByTicket?.[String(ticket.id)] || "");
+    const updated = Date.parse(ticket.updated_at || ticket.created_at || "");
+    if (!Number.isFinite(updated)) return false;
+    if (!Number.isFinite(lastSeen)) return true;
+    return updated > lastSeen;
+  };
+
   return (
     <div className="content">
       <div className="container">
@@ -179,6 +345,28 @@ export function PublicRequesterPortalPage() {
         <div className="grid-2">
           <div className="card">
             <h3>Your Tickets</h3>
+            <div className="grid-2" style={{ marginBottom: 10 }}>
+              <input
+                placeholder="Search by ticket # or subject"
+                value={filters.q}
+                onChange={(e) => setFilters((p) => ({ ...p, q: e.target.value }))}
+              />
+              <select value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
+                <option value="">All statuses</option>
+                {statusSteps.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="grid-2" style={{ marginBottom: 10 }}>
+              <select value={filters.days} onChange={(e) => setFilters((p) => ({ ...p, days: e.target.value }))}>
+                <option value="0">All time</option>
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+              </select>
+              <select value={filters.sort} onChange={(e) => setFilters((p) => ({ ...p, sort: e.target.value }))}>
+                <option value="updated_desc">Newest updated</option>
+                <option value="updated_asc">Oldest updated</option>
+              </select>
+            </div>
             <div className="table-wrap">
               <table className="table">
                 <thead>
@@ -190,19 +378,29 @@ export function PublicRequesterPortalPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tickets.map((ticket) => (
+                  {filteredTickets.map((ticket) => (
                     <tr
                       key={ticket.id}
                       onClick={() => setSelectedTicketId(String(ticket.id))}
                       style={{ cursor: "pointer", opacity: String(ticket.id) === selectedTicketId ? 1 : 0.8 }}
                     >
                       <td>{ticket.id}</td>
-                      <td>{ticket.subject}</td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span>{ticket.subject}</span>
+                          {ticketUnread(ticket) ? <span className="unread-badge">New</span> : null}
+                        </div>
+                      </td>
                       <td>{statusText(ticket.status)}</td>
                       <td>{ticket.priority}</td>
                     </tr>
                   ))}
-                  {!tickets.length ? (
+                  {loadingTickets ? (
+                    <tr>
+                      <td colSpan={4} className="muted">Loading...</td>
+                    </tr>
+                  ) : null}
+                  {!filteredTickets.length && !loadingTickets ? (
                     <tr>
                       <td colSpan={4} className="muted">No tickets found.</td>
                     </tr>
@@ -221,15 +419,49 @@ export function PublicRequesterPortalPage() {
                 <p><strong>Subject:</strong> {selectedTicket.subject}</p>
                 <p><strong>Status:</strong> {statusText(selectedTicket.status)}</p>
                 <p><strong>Priority:</strong> {selectedTicket.priority}</p>
+                <p><strong>Assigned:</strong> {selectedTicket.assigned_agent_name || "Support team"}</p>
+                {expectedFirstResponse ? (
+                  <p className="muted" style={{ marginTop: -6 }}>
+                    Expected first response by <strong>{expectedFirstResponse}</strong>
+                  </p>
+                ) : null}
+                <div className="requester-status-steps" style={{ marginTop: 10 }}>
+                  {statusSteps.map((step, idx) => (
+                    <div
+                      key={step}
+                      className={`requester-step${idx < selectedStepIndex ? " done" : idx === selectedStepIndex ? " active" : ""}`}
+                    >
+                      <span className="dot" />
+                      <span className="label">{step}</span>
+                    </div>
+                  ))}
+                </div>
+                {selectedTicket.status === "Waiting User" ? (
+                  <div className="requester-banner warn">
+                    <strong>Action required:</strong> please reply with more details so we can continue.
+                  </div>
+                ) : null}
                 {(selectedTicket.status === "Resolved" || selectedTicket.status === "Closed") ? (
                   <button type="button" onClick={reopenTicket}>Reopen Ticket</button>
                 ) : null}
                 <hr />
                 <h4>Conversation</h4>
+                {loadingTicket ? <p className="muted">Loading conversation...</p> : null}
                 {(selectedTicket.messages || []).map((item) => (
                   <div key={item.id} className="timeline-item">
                     <small>{new Date(item.created_at).toLocaleString()} - {messageAuthor(item)}</small>
-                    <p>{item.body || "(attachment only)"}</p>
+                    <p style={{ whiteSpace: "pre-wrap" }}>{item.body || (item.attachment_url ? "(attachment)" : "")}</p>
+                    {item.attachment_url ? (
+                      <div className="requester-attachment">
+                        {String(item.attachment_url).startsWith("data:image/") ? (
+                          <a href={item.attachment_url} target="_blank" rel="noreferrer">
+                            <img src={item.attachment_url} alt="Attachment" />
+                          </a>
+                        ) : (
+                          <a href={item.attachment_url} target="_blank" rel="noreferrer">View attachment</a>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
                 ))}
                 <form className="stack" onSubmit={sendMessage}>
@@ -239,6 +471,21 @@ export function PublicRequesterPortalPage() {
                     value={messageBody}
                     onChange={(e) => setMessageBody(e.target.value)}
                   />
+                  <label className="muted" style={{ marginTop: -4 }}>
+                    Attach image (optional)
+                    <input
+                      type="file"
+                      onChange={(e) => setMessageAttachment(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                  {attachmentPreviewUrl ? (
+                    <div className="requester-attachment-preview">
+                      <p className="muted" style={{ margin: 0 }}>
+                        Selected: <strong>{messageAttachment?.name}</strong> ({Math.round((messageAttachment?.size || 0) / 1024)} KB)
+                      </p>
+                      <img src={attachmentPreviewUrl} alt="Attachment preview" />
+                    </div>
+                  ) : null}
                   <button type="submit">Send Reply</button>
                 </form>
               </>

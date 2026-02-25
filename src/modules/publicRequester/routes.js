@@ -322,9 +322,14 @@ async function requesterSessionRequired(req, res, next) {
 async function ensureRequesterOwnsTicket(requesterEmail, ticketId) {
   const ticket = await getOne(
     `
-      SELECT t.*, c.email AS contact_email, c.name AS contact_name
+      SELECT
+        t.*,
+        c.email AS contact_email,
+        c.name AS contact_name,
+        au.name AS assigned_agent_name
       FROM tickets t
       LEFT JOIN contacts c ON c.id = t.requester_contact_id
+      LEFT JOIN users au ON au.id = t.assigned_agent_id
       WHERE t.id = $1
     `,
     [ticketId]
@@ -597,8 +602,9 @@ function publicRequesterRoutes({ logAudit }) {
     }
     const messages = await getMany(
       `
-        SELECT m.*
+        SELECT m.*, u.name AS author_name
         FROM ticket_messages m
+        LEFT JOIN users u ON u.id = m.author_user_id
         WHERE m.ticket_id = $1
           AND m.is_internal = FALSE
         ORDER BY m.created_at ASC
