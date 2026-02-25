@@ -132,6 +132,17 @@ function ticketsRoutes({ logAudit }) {
       params.push(req.query.channel);
       idx += 1;
     }
+    if (req.query.breached === "1" || req.query.breached === "true") {
+      filters.push(`t.resolution_due_at IS NOT NULL AND t.resolution_due_at < NOW() AND t.status NOT IN ('Resolved','Closed')`);
+    }
+    if (req.query.days) {
+      const parsedDays = Number(req.query.days);
+      if (Number.isFinite(parsedDays) && parsedDays > 0) {
+        filters.push(`t.created_at >= NOW() - ($${idx}::int * INTERVAL '1 day')`);
+        params.push(Math.floor(parsedDays));
+        idx += 1;
+      }
+    }
 
     const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
     const tickets = await getMany(

@@ -5,42 +5,66 @@ import { apiRequest } from "../api";
 export function DashboardPage({ token, user, t }) {
   const [tickets, setTickets] = useState([]);
   const [report, setReport] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingTickets, setLoadingTickets] = useState(true);
+  const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState("");
   const [period, setPeriod] = useState("all");
   const [activeStatus, setActiveStatus] = useState("");
+  const [activePriority, setActivePriority] = useState("");
 
   useEffect(() => {
     let mounted = true;
 
-    async function loadDashboard() {
+    async function loadTickets() {
       try {
         setError("");
-        setLoading(true);
+        setLoadingTickets(true);
         const ticketsRows = await apiRequest("/api/tickets", { token });
         if (!mounted) return;
         setTickets(Array.isArray(ticketsRows) ? ticketsRows : []);
-
-        if (user?.role === "admin") {
-          const overview = await apiRequest("/api/reports/overview", { token });
-          if (!mounted) return;
-          setReport(overview);
-        } else {
-          setReport(null);
-        }
       } catch (err) {
         if (!mounted) return;
         setError(err.message);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setLoadingTickets(false);
       }
     }
 
-    loadDashboard();
+    loadTickets();
     return () => {
       mounted = false;
     };
-  }, [token, user]);
+  }, [token]);
+
+  useEffect(() => {
+    let mounted = true;
+    if (user?.role !== "admin") {
+      setReport(null);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    async function loadOverview() {
+      try {
+        setLoadingReport(true);
+        const qs = period === "all" ? "" : `?days=${encodeURIComponent(period)}`;
+        const overview = await apiRequest(`/api/reports/overview${qs}`, { token });
+        if (!mounted) return;
+        setReport(overview);
+      } catch (err) {
+        if (!mounted) return;
+        setError(err.message);
+      } finally {
+        if (mounted) setLoadingReport(false);
+      }
+    }
+
+    loadOverview();
+    return () => {
+      mounted = false;
+    };
+  }, [token, user, period]);
 
   const filteredByPeriod = useMemo(() => {
     if (period === "all") return tickets;
@@ -68,6 +92,21 @@ export function DashboardPage({ token, user, t }) {
     return counts;
   }, [filteredByPeriod]);
 
+  const priorityCounts = useMemo(() => {
+    const counts = {
+      Critical: 0,
+      High: 0,
+      Medium: 0,
+      Low: 0,
+    };
+    filteredByPeriod.forEach((ticket) => {
+      if (Object.prototype.hasOwnProperty.call(counts, ticket.priority)) {
+        counts[ticket.priority] += 1;
+      }
+    });
+    return counts;
+  }, [filteredByPeriod]);
+
   const openTickets = useMemo(
     () => filteredByPeriod.filter((ticket) => !["Resolved", "Closed"].includes(ticket.status)).length,
     [filteredByPeriod]
@@ -78,10 +117,27 @@ export function DashboardPage({ token, user, t }) {
     [filteredByPeriod]
   );
 
+  const myOpenTickets = useMemo(() => {
+    if (!user?.id) return 0;
+    return filteredByPeriod.filter((ticket) =>
+      Number(ticket.assigned_agent_id) === Number(user.id)
+      && !["Resolved", "Closed"].includes(ticket.status)
+    ).length;
+  }, [filteredByPeriod, user]);
+
   const visibleTickets = useMemo(() => {
-    if (!activeStatus) return filteredByPeriod;
-    return filteredByPeriod.filter((ticket) => ticket.status === activeStatus);
-  }, [activeStatus, filteredByPeriod]);
+    let rows = filteredByPeriod;
+    if (activeStatus) rows = rows.filter((ticket) => ticket.status === activeStatus);
+    if (activePriority) rows = rows.filter((ticket) => ticket.priority === activePriority);
+    return rows;
+  }, [activeStatus, activePriority, filteredByPeriod]);
+
+  const breachedLink = useMemo(() => {
+    const qs = new URLSearchParams();
+    qs.set("breached", "1");
+    if (period !== "all") qs.set("days", period);
+    return `/tickets?${qs.toString()}`;
+  }, [period]);
 
   return (
     <div>
@@ -90,7 +146,7 @@ export function DashboardPage({ token, user, t }) {
         <p>Interactive overview of volume, status, and recent activity.</p>
       </div>
       {error ? <p className="error">{error}</p> : null}
-      {loading ? (
+      {loadingTickets ? (
         <div className="card">
           <p>Loading...</p>
         </div>
@@ -115,10 +171,42 @@ export function DashboardPage({ token, user, t }) {
             <div className="card kpi"><strong>{openTickets}</strong><span>Open</span></div>
             <div className="card kpi"><strong>{closedTickets}</strong><span>Closed</span></div>
             <div className="card kpi">
-              <strong>{user?.role === "admin" ? report?.avgResolutionHours ?? 0 : "-"}</strong>
-              <span>{user?.role === "admin" ? "Avg Resolve (h)" : "My View"}</span>
+              {user?.role === "admin" ? (
+                <>
+                  <strong>{loadingReport ? "..." : (report?.slaBreaches ?? 0)}</strong>
+                  <span>
+                    SLA Breaches{" "}
+                    <Link to={breachedLink} style={{ marginLeft: 6, fontSize: 12 }}>
+                      View
+                    </Link>
+                  </span>
+                </>
+              ) : user?.role === "agent" ? (
+                <>
+                  <strong>{myOpenTickets}</strong>
+                  <span>My open</span>
+                </>
+              ) : (
+                <>
+                  <strong>-</strong>
+                  <span>My View</span>
+                </>
+              )}
             </div>
           </div>
+
+          {user?.role === "admin" ? (
+            <div className="grid-2" style={{ marginTop: 10 }}>
+              <div className="card kpi">
+                <strong>{loadingReport ? "..." : (report?.avgResolutionHours ?? 0)}</strong>
+                <span>Avg Resolve (h)</span>
+              </div>
+              <div className="card kpi">
+                <strong>{loadingReport ? "..." : (report?.avgFirstResponseHours ?? 0)}</strong>
+                <span>Avg 1st Response (h)</span>
+              </div>
+            </div>
+          ) : null}
 
           <div className="card">
             <h3>Tickets by Status</h3>
@@ -138,10 +226,60 @@ export function DashboardPage({ token, user, t }) {
           </div>
 
           <div className="card">
+            <h3>Tickets by Priority</h3>
+            <div className="grid-4">
+              {Object.entries(priorityCounts).map(([priority, count]) => (
+                <button
+                  key={priority}
+                  type="button"
+                  className={`card kpi status-card-btn${activePriority === priority ? " status-card-active" : ""}`}
+                  onClick={() => setActivePriority((current) => (current === priority ? "" : priority))}
+                >
+                  <strong>{count}</strong>
+                  <span>{priority}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {user?.role === "admin" && Array.isArray(report?.workload) ? (
+            <div className="card">
+              <h3>Team Workload</h3>
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Agent</th>
+                      <th>Open Items</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.workload.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{Number(item.open_items || 0)}</td>
+                      </tr>
+                    ))}
+                    {!report.workload.length ? (
+                      <tr>
+                        <td colSpan={2} className="muted">No agents found.</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="card">
             <div className="tickets-header">
-              <h3>{activeStatus ? `${activeStatus} Tickets` : "Recent Tickets"}</h3>
-              {activeStatus ? (
-                <button type="button" onClick={() => setActiveStatus("")}>
+              <h3>
+                {activeStatus || activePriority
+                  ? `${[activeStatus, activePriority].filter(Boolean).join(" • ")} Tickets`
+                  : "Recent Tickets"}
+              </h3>
+              {activeStatus || activePriority ? (
+                <button type="button" onClick={() => { setActiveStatus(""); setActivePriority(""); }}>
                   Clear Filter
                 </button>
               ) : null}

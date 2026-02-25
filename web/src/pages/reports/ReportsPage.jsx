@@ -89,6 +89,9 @@ export function ReportsPage({ token, t }) {
             <p>
               Average resolution time: <strong>{report.avgResolutionHours || 0} hours</strong>
             </p>
+            <p style={{ marginTop: 6 }}>
+              Average first response time: <strong>{report.avgFirstResponseHours || 0} hours</strong>
+            </p>
           </div>
 
           <div className="card">

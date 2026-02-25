@@ -8,6 +8,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { AgentDashboardPage } from "./pages/AgentDashboardPage";
 import { TicketListPage } from "./pages/tickets/TicketListPage";
 import { TicketDetailPage } from "./pages/tickets/TicketDetailPage";
 import { ReportsPage } from "./pages/reports/ReportsPage";
@@ -88,7 +89,8 @@ function App() {
             <Protected token={token}>
               <Layout user={user} t={t} language={language} setLanguage={setLanguage} onLogout={onLogout}>
                 <Routes>
-                  <Route path="/" element={<DashboardPage token={token} t={t} />} />
+                  <Route path="/" element={<DashboardPage token={token} user={user} t={t} />} />
+                  <Route path="/agent-dashboard" element={<AgentDashboardPage token={token} user={user} t={t} />} />
                   <Route path="/tickets" element={<TicketListPage token={token} user={user} t={t} />} />
                   <Route path="/tickets/:ticketId" element={<TicketDetailPage token={token} user={user} t={t} />} />
                   <Route path="/reports" element={<ReportsPage token={token} t={t} />} />

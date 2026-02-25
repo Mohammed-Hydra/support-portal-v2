@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api";
 import { toastError, toastSuccess } from "../../toast";
 
@@ -7,6 +7,8 @@ const statuses = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
 const priorities = ["Low", "Medium", "High", "Critical"];
 
 export function TicketListPage({ token, user, t }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [error, setError] = useState("");
   const [busyTicketId, setBusyTicketId] = useState("");
@@ -20,10 +22,27 @@ export function TicketListPage({ token, user, t }) {
     requesterCompanyName: "",
   });
 
+  const listFilters = useMemo(() => {
+    const qs = new URLSearchParams(location.search || "");
+    const status = String(qs.get("status") || "").trim();
+    const priority = String(qs.get("priority") || "").trim();
+    const daysRaw = String(qs.get("days") || "").trim();
+    const daysParsed = Number(daysRaw);
+    const days = Number.isFinite(daysParsed) && daysParsed > 0 ? String(Math.floor(daysParsed)) : "";
+    const breached = qs.get("breached") === "1" || qs.get("breached") === "true";
+    return { status, priority, days, breached };
+  }, [location.search]);
+
   const load = async () => {
     try {
       setError("");
-      const rows = await apiRequest("/api/tickets", { token });
+      const qs = new URLSearchParams();
+      if (listFilters.status) qs.set("status", listFilters.status);
+      if (listFilters.priority) qs.set("priority", listFilters.priority);
+      if (listFilters.breached) qs.set("breached", "1");
+      if (listFilters.days) qs.set("days", listFilters.days);
+      const url = qs.toString() ? `/api/tickets?${qs.toString()}` : "/api/tickets";
+      const rows = await apiRequest(url, { token });
       setTickets(rows);
     } catch (err) {
       setError(err.message);
@@ -32,7 +51,7 @@ export function TicketListPage({ token, user, t }) {
 
   useEffect(() => {
     load();
-  }, [token]);
+  }, [token, listFilters.status, listFilters.priority, listFilters.breached, listFilters.days]);
 
   const submitTicket = async (event) => {
     event.preventDefault();
@@ -139,6 +158,23 @@ export function TicketListPage({ token, user, t }) {
         <p>Create new requests and manage queue status from one screen.</p>
       </div>
       {error ? <p className="error">{error}</p> : null}
+
+      {(listFilters.status || listFilters.priority || listFilters.breached || listFilters.days) ? (
+        <div className="card">
+          <div className="tickets-header">
+            <h3>Active Filters</h3>
+            <button type="button" onClick={() => navigate("/tickets")}>Clear</button>
+          </div>
+          <p className="muted" style={{ margin: 0 }}>
+            {[
+              listFilters.breached ? "SLA breached" : null,
+              listFilters.status ? `Status: ${listFilters.status}` : null,
+              listFilters.priority ? `Priority: ${listFilters.priority}` : null,
+              listFilters.days ? `Last ${listFilters.days} days` : null,
+            ].filter(Boolean).join(" • ")}
+          </p>
+        </div>
+      ) : null}
 
       <form className="card stack" onSubmit={submitTicket}>
         <div className="tickets-header">
