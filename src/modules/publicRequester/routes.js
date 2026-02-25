@@ -12,6 +12,8 @@ const REQUESTER_SESSION_SECRET = process.env.REQUESTER_SESSION_SECRET || process
 const REQUESTER_MAGIC_LINK_TTL_MINUTES = Number(process.env.REQUESTER_MAGIC_LINK_TTL_MINUTES || 20);
 const REQUESTER_LINK_COOLDOWN_SECONDS = Number(process.env.REQUESTER_LINK_COOLDOWN_SECONDS || 60);
 const REQUESTER_PORTAL_BASE_URL = process.env.REQUESTER_PORTAL_BASE_URL || "https://it-support-v2.vercel.app/public/requester";
+const RESEND_API_URL = "https://api.resend.com/emails";
+const GRAPH_SCOPE = "https://graph.microsoft.com/.default";
 
 const uploadDir = process.env.VERCEL === "1" ? "/tmp/uploads-v2" : path.join(__dirname, "..", "..", "..", "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -165,6 +167,19 @@ function buildRequesterMagicUrl(rawToken) {
   return url.toString();
 }
 
+function hasResendConfig() {
+  return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM);
+}
+
+function hasGraphMailConfig() {
+  return Boolean(
+    process.env.M365_TENANT_ID
+    && process.env.M365_CLIENT_ID
+    && process.env.M365_CLIENT_SECRET
+    && process.env.M365_SENDER_UPN
+  );
+}
+
 function getTransporter() {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
     return null;
@@ -181,21 +196,98 @@ function getTransporter() {
   });
 }
 
+async function getGraphAccessToken() {
+  const tokenUrl = `https://login.microsoftonline.com/${encodeURIComponent(process.env.M365_TENANT_ID)}/oauth2/v2.0/token`;
+  const payload = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: process.env.M365_CLIENT_ID,
+    client_secret: process.env.M365_CLIENT_SECRET,
+    scope: GRAPH_SCOPE,
+  });
+  const response = await fetch(tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: payload.toString(),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.access_token) {
+    throw new Error(`Graph token request failed: ${response.status} ${data.error_description || data.error || "unknown error"}`);
+  }
+  return data.access_token;
+}
+
+async function sendEmailViaGraph({ to, subject, text, html }) {
+  const accessToken = await getGraphAccessToken();
+  const senderUpn = process.env.M365_SENDER_UPN;
+  const graphUrl = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(senderUpn)}/sendMail`;
+  const response = await fetch(graphUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: {
+        subject,
+        body: {
+          contentType: "HTML",
+          content: html || `<pre>${text}</pre>`,
+        },
+        toRecipients: [{ emailAddress: { address: to } }],
+      },
+      saveToSentItems: true,
+    }),
+  });
+  if (!response.ok) {
+    const raw = await response.text();
+    throw new Error(`Graph sendMail failed: ${response.status} ${raw}`);
+  }
+}
+
+async function sendEmailViaResend({ to, subject, text, html }) {
+  const response = await fetch(RESEND_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM,
+      to: [to],
+      subject,
+      text,
+      html,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(`Resend send failed: ${response.status} ${data?.message || JSON.stringify(data)}`);
+  }
+}
+
 async function sendMagicLinkEmail({ email, link }) {
+  const subject = "Your IT Support Portal access link";
+  const text = `Use this one-time link to access your requester portal:\n\n${link}\n\nThis link expires in ${REQUESTER_MAGIC_LINK_TTL_MINUTES} minutes.`;
+  const html = `<p>Use this one-time link to access your requester portal:</p><p><a href="${link}">${link}</a></p><p>This link expires in ${REQUESTER_MAGIC_LINK_TTL_MINUTES} minutes.</p>`;
+
+  if (hasResendConfig()) {
+    await sendEmailViaResend({ to: email, subject, text, html });
+    return;
+  }
+  if (hasGraphMailConfig()) {
+    await sendEmailViaGraph({ to: email, subject, text, html });
+    return;
+  }
   const transporter = getTransporter();
   if (!transporter) {
-    throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.");
+    throw new Error("Mail is not configured. Set RESEND_API_KEY+RESEND_FROM, M365_*, or SMTP env vars.");
   }
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: email,
-    subject: "Your IT Support Portal access link",
-    text: `Use this one-time link to access your requester portal:\n\n${link}\n\nThis link expires in ${REQUESTER_MAGIC_LINK_TTL_MINUTES} minutes.`,
-    html: `
-      <p>Use this one-time link to access your requester portal:</p>
-      <p><a href="${link}">${link}</a></p>
-      <p>This link expires in ${REQUESTER_MAGIC_LINK_TTL_MINUTES} minutes.</p>
-    `,
+    subject,
+    text,
+    html,
   });
 }
 
