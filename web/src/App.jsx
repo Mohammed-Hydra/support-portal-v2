@@ -48,7 +48,7 @@ function App() {
         localStorage.setItem("v2User", JSON.stringify(me));
       })
       .catch((err) => {
-        if (err.code === "ACCOUNT_DISABLED" && err.message) {
+        if ((err.code === "ACCOUNT_DISABLED" || err.code === "ACCOUNT_DELETED") && err.message) {
           sessionStorage.setItem("v2SessionError", err.message);
         }
         setToken("");

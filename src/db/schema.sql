@@ -156,3 +156,11 @@ CREATE TABLE IF NOT EXISTS channel_threads (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(source, thread_key)
 );
+
+CREATE TABLE IF NOT EXISTS deleted_user_emails (
+  id BIGSERIAL PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  deleted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_by_user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  reason TEXT
+);

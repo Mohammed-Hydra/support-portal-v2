@@ -188,6 +188,14 @@ function usersRoutes({ logAudit }) {
         [email]
       );
       if (!user) {
+        const deleted = await getOne(`SELECT id FROM deleted_user_emails WHERE LOWER(email) = LOWER($1)`, [email]);
+        if (deleted) {
+          res.status(403).json({
+            error: "Your account was deleted. Please contact portal admin.",
+            code: "ACCOUNT_DELETED",
+          });
+          return;
+        }
         res.status(401).json({ error: "Invalid credentials" });
         return;
       }
@@ -488,6 +496,18 @@ function usersRoutes({ logAudit }) {
         res.status(404).json({ error: "User not found" });
         return;
       }
+      await query(
+        `
+          INSERT INTO deleted_user_emails (email, deleted_by_user_id, reason)
+          VALUES ($1, $2, $3)
+          ON CONFLICT (email)
+          DO UPDATE SET
+            deleted_at = NOW(),
+            deleted_by_user_id = EXCLUDED.deleted_by_user_id,
+            reason = EXCLUDED.reason
+        `,
+        [String(target.email || "").toLowerCase(), req.user.sub, "deleted_by_admin"]
+      );
       await query(`UPDATE tickets SET assigned_agent_id = NULL WHERE assigned_agent_id = $1`, [userId]);
       await query(`UPDATE tickets SET requester_user_id = NULL WHERE requester_user_id = $1`, [userId]);
       await query(`DELETE FROM ticket_collaborators WHERE user_id = $1`, [userId]);
