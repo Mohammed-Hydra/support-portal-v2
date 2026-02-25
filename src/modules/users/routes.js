@@ -476,6 +476,37 @@ function usersRoutes({ logAudit }) {
     }
   });
 
+  router.delete("/users/:id", authRequired, roleRequired("admin"), async (req, res) => {
+    try {
+      const userId = Number(req.params.id);
+      if (userId === Number(req.user.sub)) {
+        res.status(400).json({ error: "You cannot delete your own account" });
+        return;
+      }
+      const target = await getOne(`SELECT id, name, email FROM users WHERE id = $1`, [userId]);
+      if (!target) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+      await query(`UPDATE tickets SET assigned_agent_id = NULL WHERE assigned_agent_id = $1`, [userId]);
+      await query(`UPDATE tickets SET requester_user_id = NULL WHERE requester_user_id = $1`, [userId]);
+      await query(`DELETE FROM ticket_collaborators WHERE user_id = $1`, [userId]);
+      await query(`UPDATE ticket_messages SET author_user_id = NULL WHERE author_user_id = $1`, [userId]);
+      await query(`UPDATE audit_logs SET actor_user_id = NULL WHERE actor_user_id = $1`, [userId]);
+      await query(`UPDATE kb_articles SET created_by = NULL WHERE created_by = $1`, [userId]);
+      await query(`UPDATE automation_runs SET actor_user_id = NULL WHERE actor_user_id = $1`, [userId]);
+      await query(`DELETE FROM users WHERE id = $1`, [userId]);
+      await logAudit(req.user.sub, null, "user_deleted_permanently", {
+        targetUserId: userId,
+        targetEmail: target.email,
+        targetName: target.name,
+      });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete user permanently" });
+    }
+  });
+
   return router;
 }
 

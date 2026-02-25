@@ -17,6 +17,7 @@ export function UserAdminPage({ token, user, t }) {
   const [newPassword, setNewPassword] = useState("");
   const [deletingUserId, setDeletingUserId] = useState("");
   const [togglingUserId, setTogglingUserId] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState({ userId: null, confirmEmail: "" });
 
   const loadUsers = async () => {
     try {
@@ -68,10 +69,26 @@ export function UserAdminPage({ token, user, t }) {
     }
   };
 
-  const deleteUser = async (targetUserId) => {
+  const openDeleteConfirm = (targetUserId) => {
+    setDeleteConfirm({ userId: targetUserId, confirmEmail: "" });
+  };
+
+  const closeDeleteConfirm = () => {
+    setDeleteConfirm({ userId: null, confirmEmail: "" });
+  };
+
+  const deleteUserPermanently = async () => {
+    const targetUserId = deleteConfirm.userId;
     const target = users.find((item) => Number(item.id) === Number(targetUserId));
-    const label = target ? `${target.name} (${target.email})` : `#${targetUserId}`;
-    if (!window.confirm(`Delete user ${label}? This cannot be undone.`)) return;
+    if (!target) {
+      toastError("User not found.");
+      return;
+    }
+    const emailMatch = (deleteConfirm.confirmEmail || "").trim().toLowerCase() === (target.email || "").toLowerCase();
+    if (!emailMatch) {
+      toastError("Type the user's email exactly to confirm permanent deletion.");
+      return;
+    }
 
     try {
       setDeletingUserId(String(targetUserId));
@@ -79,8 +96,9 @@ export function UserAdminPage({ token, user, t }) {
         token,
         method: "DELETE",
       });
+      closeDeleteConfirm();
       await loadUsers();
-      toastSuccess("User deleted successfully.");
+      toastSuccess("User deleted permanently.");
     } catch (err) {
       setError(err.message);
       toastError(err.message || "Failed to delete user.");
@@ -188,6 +206,38 @@ export function UserAdminPage({ token, user, t }) {
 
         <div className="subcard">
           <h3>User List</h3>
+          {deleteConfirm.userId ? (() => {
+            const target = users.find((u) => Number(u.id) === Number(deleteConfirm.userId));
+            const label = target ? `${target.name} (${target.email})` : `#${deleteConfirm.userId}`;
+            return (
+              <div className="stack" style={{ marginBottom: 16, padding: 12, background: "var(--bg-muted, #f5f5f5)", borderRadius: 8 }}>
+                <p style={{ margin: "0 0 8px 0", fontWeight: 600 }}>Permanently delete user?</p>
+                <p style={{ margin: "0 0 8px 0", fontSize: 14 }}>{label}</p>
+                <p style={{ margin: "0 0 8px 0", fontSize: 13, color: "var(--muted, #666)" }}>This cannot be undone. Type the user&apos;s email below to confirm.</p>
+                <input
+                  type="text"
+                  placeholder="Type user's email to confirm"
+                  value={deleteConfirm.confirmEmail}
+                  onChange={(e) => setDeleteConfirm((c) => ({ ...c, confirmEmail: e.target.value }))}
+                  style={{ marginBottom: 8, maxWidth: 320 }}
+                  autoFocus
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button type="button" onClick={closeDeleteConfirm}>Cancel</button>
+                  <button
+                    type="button"
+                    onClick={deleteUserPermanently}
+                    disabled={
+                      deletingUserId === String(deleteConfirm.userId)
+                      || (deleteConfirm.confirmEmail || "").trim().toLowerCase() !== (target?.email || "").toLowerCase()
+                    }
+                  >
+                    {deletingUserId === String(deleteConfirm.userId) ? "Deleting..." : "Delete permanently"}
+                  </button>
+                </div>
+              </div>
+            );
+          })() : null}
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -214,8 +264,9 @@ export function UserAdminPage({ token, user, t }) {
                       {" "}
                       <button
                         type="button"
-                        onClick={() => deleteUser(item.id)}
+                        onClick={() => openDeleteConfirm(item.id)}
                         disabled={String(user?.id) === String(item.id) || deletingUserId === String(item.id)}
+                        title="Permanently delete this user (requires confirmation)"
                       >
                         {deletingUserId === String(item.id) ? "Deleting..." : "Delete"}
                       </button>
