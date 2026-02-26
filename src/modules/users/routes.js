@@ -11,14 +11,28 @@ const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL
 const GRAPH_SCOPE = "https://graph.microsoft.com/.default";
 const RESEND_API_URL = "https://api.resend.com/emails";
 const USER_EMAIL_DOMAIN = (process.env.USER_EMAIL_DOMAIN || "hydra-tech.pro").toLowerCase();
+const ENFORCE_USER_EMAIL_DOMAIN = !/^(false|0|no|off)$/i.test(String(process.env.ENFORCE_USER_EMAIL_DOMAIN || "true").trim());
 
 function hashToken(raw) {
   return crypto.createHash("sha256").update(raw).digest("hex");
 }
 
-function toPortalDomainEmail(value) {
+function normalizeEmail(value) {
   const raw = String(value || "").trim().toLowerCase();
+  return raw;
+}
+
+function isValidEmail(value) {
+  const raw = normalizeEmail(value);
+  return /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(raw);
+}
+
+function toPortalEmail(value) {
+  const raw = normalizeEmail(value);
   if (!raw) return "";
+  if (!ENFORCE_USER_EMAIL_DOMAIN) {
+    return raw;
+  }
   const localPart = raw.includes("@") ? raw.split("@")[0] : raw;
   const cleanLocal = localPart.replace(/[^a-z0-9._-]/g, "");
   if (!cleanLocal) return "";
@@ -26,7 +40,10 @@ function toPortalDomainEmail(value) {
 }
 
 function isPortalDomainEmail(value) {
-  const raw = String(value || "").trim().toLowerCase();
+  const raw = normalizeEmail(value);
+  if (!ENFORCE_USER_EMAIL_DOMAIN) {
+    return isValidEmail(raw);
+  }
   return /^[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(raw) && raw.endsWith(`@${USER_EMAIL_DOMAIN}`);
 }
 
@@ -176,10 +193,14 @@ function usersRoutes({ logAudit }) {
 
   router.post("/auth/login", async (req, res) => {
     try {
-      const email = toPortalDomainEmail(req.body.email || "");
+      const email = toPortalEmail(req.body.email || "");
       const password = req.body.password || "";
       if (!email || !password) {
         res.status(400).json({ error: "Email and password are required" });
+        return;
+      }
+      if (!isValidEmail(email)) {
+        res.status(400).json({ error: "Please enter a valid email address." });
         return;
       }
 
@@ -252,9 +273,13 @@ function usersRoutes({ logAudit }) {
       const provider = getConfiguredMailProvider();
       // eslint-disable-next-line no-console
       console.log("forgot-password provider:", provider);
-      const email = toPortalDomainEmail(req.body.email || "");
+      const email = toPortalEmail(req.body.email || "");
       if (!email) {
         res.status(400).json({ error: "Email is required" });
+        return;
+      }
+      if (!isValidEmail(email)) {
+        res.status(400).json({ error: "Please enter a valid email address." });
         return;
       }
       const user = await getOne(
@@ -391,7 +416,7 @@ function usersRoutes({ logAudit }) {
   router.post("/users", authRequired, roleRequired("admin"), async (req, res) => {
     try {
       const name = (req.body.name || "").trim();
-      const email = String(req.body.email || "").trim().toLowerCase();
+      const email = normalizeEmail(req.body.email || "");
       const role = (req.body.role || "requester").trim();
       const password = (req.body.password || "").trim();
       const locale = req.body.locale === "ar" ? "ar" : "en";
@@ -400,7 +425,11 @@ function usersRoutes({ logAudit }) {
         return;
       }
       if (!isPortalDomainEmail(email)) {
-        res.status(400).json({ error: `New user email must be in @${USER_EMAIL_DOMAIN} domain` });
+        res.status(400).json({
+          error: ENFORCE_USER_EMAIL_DOMAIN
+            ? `New user email must be in @${USER_EMAIL_DOMAIN} domain`
+            : "Please enter a valid email address.",
+        });
         return;
       }
       if (!["admin", "agent", "requester"].includes(role)) {

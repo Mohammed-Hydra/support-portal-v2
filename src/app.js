@@ -15,6 +15,7 @@ const { settingsRoutes } = require("./modules/settings/routes");
 const { publicRequesterRoutes } = require("./modules/publicRequester/routes");
 const { pickLeastLoadedAgent, computeSla, calcDueDate } = require("./modules/automations/service");
 const USER_EMAIL_DOMAIN = (process.env.USER_EMAIL_DOMAIN || "hydra-tech.pro").toLowerCase();
+const ENFORCE_USER_EMAIL_DOMAIN = !/^(false|0|no|off)$/i.test(String(process.env.ENFORCE_USER_EMAIL_DOMAIN || "true").trim());
 
 function normalizePortalEmail(value, userId) {
   const raw = String(value || "").trim().toLowerCase();
@@ -54,7 +55,9 @@ async function enforceUserEmailDomain() {
 }
 
 async function ensureSeedData() {
-  await enforceUserEmailDomain();
+  if (ENFORCE_USER_EMAIL_DOMAIN) {
+    await enforceUserEmailDomain();
+  }
   const hasAnyUser = await getOne(`SELECT id FROM users LIMIT 1`);
   if (!hasAnyUser) {
     const adminEmail = (process.env.SUPPORT_ADMIN_EMAIL || `admin@${USER_EMAIL_DOMAIN}`).toLowerCase();
