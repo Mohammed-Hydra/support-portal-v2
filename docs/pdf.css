@@ -1,0 +1,75 @@
+@page {
+  size: A4;
+  margin: 18mm 16mm;
+}
+
+html, body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 12.2px;
+  line-height: 1.45;
+  color: #0f172a;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 10px 0;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 18px 0 8px 0;
+}
+
+h3 {
+  font-size: 13.5px;
+  margin: 14px 0 6px 0;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 14px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 10px 0;
+}
+
+th, td {
+  border: 1px solid #e2e8f0;
+  padding: 6px 7px;
+  vertical-align: top;
+}
+
+th {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11.5px;
+}
+
+blockquote {
+  margin: 10px 0;
+  padding: 8px 10px;
+  border-left: 3px solid #2563eb;
+  background: #eff6ff;
+}
+
+ul, ol {
+  margin: 6px 0 10px 18px;
+}
+
+li {
+  margin: 2px 0;
+}
+
+/* Avoid awkward breaks */
+h1, h2, h3, table, blockquote {
+  page-break-inside: avoid;
+}
+

@@ -1,4 +1,6 @@
 .vercel
+node_modules/
+web/node_modules/
 
 # Local secret dumps / accidental credential exports
 RESEND_API_KEY=*.env

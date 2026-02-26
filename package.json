@@ -10,6 +10,7 @@
     "web:build": "npm --prefix web run build",
     "web:dev": "npm --prefix web run dev",
     "build": "npm --prefix web install && npm run web:build",
+    "docs:pdf": "node scripts/docs-to-pdf.js \"docs/Client-Support-Plan-KWD.md\" \"docs/Client-Support-Plan-KWD.pdf\"",
     "test": "echo \"No tests configured\""
   },
   "keywords": [],
@@ -25,5 +26,10 @@
     "multer": "^2.0.2",
     "nodemailer": "^8.0.1",
     "pg": "^8.18.0"
+  },
+  "devDependencies": {
+    "marked": "^17.0.3",
+    "md-to-pdf": "^5.2.5",
+    "playwright-core": "^1.58.2"
   }
 }
