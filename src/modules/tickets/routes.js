@@ -422,6 +422,10 @@ function ticketsRoutes({ logAudit }) {
 
       const nextStatus = req.body.status || existing.status;
       const nextPriority = req.body.priority || existing.priority;
+      const nextSubject = typeof req.body.subject === "string" ? req.body.subject.trim() || existing.subject : existing.subject;
+      const nextDescription = Object.prototype.hasOwnProperty.call(req.body || {}, "description")
+        ? (req.body.description ?? existing.description)
+        : existing.description;
       const hasAssignedAgentField = Object.prototype.hasOwnProperty.call(req.body || {}, "assignedAgentId");
       let assignedAgentId = existing.assigned_agent_id;
       if (hasAssignedAgentField) {
@@ -433,21 +437,26 @@ function ticketsRoutes({ logAudit }) {
         }
       }
       const tags = splitTags(req.body.tags || existing.tags || []);
+      const nextCategory = Object.prototype.hasOwnProperty.call(req.body || {}, "category")
+        ? ((req.body.category && String(req.body.category).trim()) || null)
+        : existing.category;
 
       const updated = await query(
         `
           UPDATE tickets
           SET status = $1,
               priority = $2,
-              assigned_agent_id = $3,
-              category = $4,
-              tags = $5::text[],
+              subject = $3,
+              description = $4,
+              assigned_agent_id = $5,
+              category = $6,
+              tags = $7::text[],
               updated_at = NOW(),
               resolved_at = CASE WHEN $1 IN ('Resolved', 'Closed') THEN NOW() ELSE resolved_at END
-          WHERE id = $6
+          WHERE id = $8
           RETURNING *
         `,
-        [nextStatus, nextPriority, assignedAgentId, req.body.category || existing.category, tags, ticketId]
+        [nextStatus, nextPriority, nextSubject, nextDescription, assignedAgentId, nextCategory, tags, ticketId]
       );
 
       if (Array.isArray(req.body.collaboratorIds)) {

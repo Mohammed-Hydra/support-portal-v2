@@ -13,6 +13,13 @@ export function TicketDetailPage({ token, user }) {
   const [error, setError] = useState("");
   const [busyAction, setBusyAction] = useState(false);
   const [preview, setPreview] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editSubject, setEditSubject] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editStatus, setEditStatus] = useState("");
+  const [editPriority, setEditPriority] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editTags, setEditTags] = useState("");
 
   const load = async () => {
     try {
@@ -97,6 +104,48 @@ export function TicketDetailPage({ token, user }) {
     }
   };
 
+  const openEditModal = () => {
+    setEditSubject(ticket.subject || "");
+    setEditDescription(ticket.description || "");
+    setEditStatus(ticket.status || "New");
+    setEditPriority(ticket.priority || "Medium");
+    setEditCategory(ticket.category || "");
+    setEditTags(Array.isArray(ticket.tags) ? ticket.tags.join(", ") : "");
+    setShowEditModal(true);
+  };
+
+  const saveEditTicket = async (event) => {
+    event.preventDefault();
+    const subject = (editSubject || "").trim();
+    if (!subject) {
+      toastError("Subject is required.");
+      return;
+    }
+    setBusyAction(true);
+    try {
+      await apiRequest(`/api/tickets/${ticketId}`, {
+        token,
+        method: "PATCH",
+        body: JSON.stringify({
+          subject,
+          description: editDescription ?? "",
+          status: editStatus,
+          priority: editPriority,
+          category: (editCategory || "").trim() || undefined,
+          tags: editTags,
+        }),
+      });
+      await load();
+      setShowEditModal(false);
+      toastSuccess("Ticket updated successfully.");
+    } catch (err) {
+      setError(err.message);
+      toastError(err.message || "Failed to update ticket.");
+    } finally {
+      setBusyAction(false);
+    }
+  };
+
   if (!ticket) return <p>Loading...</p>;
 
   const requesterName =
@@ -153,6 +202,13 @@ export function TicketDetailPage({ token, user }) {
         <p><strong>Requester Company:</strong> {requesterCompany}</p>
         <p><strong>SLA:</strong> <span className={`sla-badge sla-${sla.tone}`}>{sla.text}</span></p>
         <p><strong>Description:</strong> {ticket.description || "N/A"}</p>
+        {(user?.role === "admin" || user?.role === "agent") && (
+          <div style={{ marginTop: "12px" }}>
+            <button type="button" onClick={openEditModal} disabled={busyAction}>
+              Edit ticket information
+            </button>
+          </div>
+        )}
       </div>
 
       {user?.role === "admin" || user?.role === "agent" ? (
@@ -262,6 +318,99 @@ export function TicketDetailPage({ token, user }) {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showEditModal ? (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-ticket-title"
+          onClick={() => !busyAction && setShowEditModal(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !busyAction) setShowEditModal(false);
+          }}
+          tabIndex={-1}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <form onSubmit={saveEditTicket}>
+              <div className="modal-header">
+                <strong id="edit-ticket-title">Edit ticket information</strong>
+                <button
+                  type="button"
+                  className="icon-close"
+                  onClick={() => !busyAction && setShowEditModal(false)}
+                  aria-label="Close"
+                  disabled={busyAction}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="modal-body">
+                <label>
+                  Subject <span style={{ color: "var(--danger, #c00)" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editSubject}
+                  onChange={(e) => setEditSubject(e.target.value)}
+                  required
+                  placeholder="Ticket subject"
+                />
+                <label>Description</label>
+                <textarea
+                  rows={4}
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Ticket description"
+                />
+                <div className="grid-2">
+                  <div>
+                    <label>Status</label>
+                    <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)}>
+                      <option value="New">New</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Waiting User">Waiting User</option>
+                      <option value="Resolved">Resolved</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>Priority</label>
+                    <select value={editPriority} onChange={(e) => setEditPriority(e.target.value)}>
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Critical">Critical</option>
+                    </select>
+                  </div>
+                </div>
+                <label>Category</label>
+                <input
+                  type="text"
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  placeholder="Optional category"
+                />
+                <label>Tags (comma-separated)</label>
+                <input
+                  type="text"
+                  value={editTags}
+                  onChange={(e) => setEditTags(e.target.value)}
+                  placeholder="e.g. billing, urgent"
+                />
+              </div>
+              <div className="modal-footer">
+                <button type="button" onClick={() => !busyAction && setShowEditModal(false)} disabled={busyAction}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={busyAction}>
+                  {busyAction ? "Saving…" : "Save changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       ) : null}
