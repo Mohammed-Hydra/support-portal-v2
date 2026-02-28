@@ -247,7 +247,7 @@ export function TicketListPage({ token, user, t }) {
                 <th>Agent</th>
                 <th>SLA</th>
                 <th>Updated</th>
-                <th>Action</th>
+                <th className="action-cell">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -268,7 +268,7 @@ export function TicketListPage({ token, user, t }) {
                     })()}
                   </td>
                   <td>{new Date(ticket.updated_at).toLocaleString()}</td>
-                  <td>
+                  <td className="action-cell">
                     {user?.role === "requester" ? (
                       "-"
                     ) : (
@@ -299,6 +299,15 @@ export function TicketListPage({ token, user, t }) {
                             onClick={() => updateTicketQuick(ticket.id, { status: "Resolved" }, "Marked as Resolved.")}
                           >
                             Resolve
+                          </button>
+                        </div>
+                        <div className="top-actions" style={{ marginTop: "4px" }}>
+                          <button
+                            type="button"
+                            disabled={busyTicketId === String(ticket.id)}
+                            onClick={() => navigate(`/tickets/${ticket.id}`)}
+                          >
+                            Edit
                           </button>
                         </div>
                         <select

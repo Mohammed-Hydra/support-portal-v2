@@ -425,6 +425,14 @@ button:hover {
   overflow-x: auto;
 }
 
+.action-cell {
+  min-width: 340px;
+}
+
+.action-cell .top-actions {
+  flex-wrap: wrap;
+}
+
 .report-pre {
   margin: 0;
   white-space: pre-wrap;
