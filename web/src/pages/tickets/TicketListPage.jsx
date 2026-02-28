@@ -277,6 +277,13 @@ export function TicketListPage({ token, user, t }) {
                           <button
                             type="button"
                             disabled={busyTicketId === String(ticket.id)}
+                            onClick={() => navigate(`/tickets/${ticket.id}`)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyTicketId === String(ticket.id)}
                             onClick={() =>
                               updateTicketQuick(
                                 ticket.id,
@@ -299,15 +306,6 @@ export function TicketListPage({ token, user, t }) {
                             onClick={() => updateTicketQuick(ticket.id, { status: "Resolved" }, "Marked as Resolved.")}
                           >
                             Resolve
-                          </button>
-                        </div>
-                        <div className="top-actions" style={{ marginTop: "4px" }}>
-                          <button
-                            type="button"
-                            disabled={busyTicketId === String(ticket.id)}
-                            onClick={() => navigate(`/tickets/${ticket.id}`)}
-                          >
-                            Edit
                           </button>
                         </div>
                         <select
