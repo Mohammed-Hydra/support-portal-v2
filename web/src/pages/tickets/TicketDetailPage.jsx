@@ -203,20 +203,19 @@ export function TicketDetailPage({ token, user }) {
         <p><strong>Requester Company:</strong> {requesterCompany}</p>
         <p><strong>SLA:</strong> <span className={`sla-badge sla-${sla.tone}`}>{sla.text}</span></p>
         <p><strong>Description:</strong> {ticket.description || "N/A"}</p>
+        {token && (
+          <p style={{ marginTop: "16px", marginBottom: 0 }}>
+            <button
+              type="button"
+              onClick={openEditModal}
+              disabled={busyAction}
+              data-testid="edit-ticket-information"
+            >
+              Edit ticket information
+            </button>
+          </p>
+        )}
       </div>
-
-      {token && (
-        <div className="card" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
-          <button
-            type="button"
-            onClick={openEditModal}
-            disabled={busyAction}
-            data-testid="edit-ticket-information"
-          >
-            Edit ticket information
-          </button>
-        </div>
-      )}
 
       {(() => {
         const role = String(user?.role || "").toLowerCase();
