@@ -190,7 +190,18 @@ export function TicketDetailPage({ token, user }) {
 
   return (
     <div>
-      <h1>Ticket #{ticket.id}: {ticket.subject}</h1>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+        <h1 style={{ margin: 0 }}>Ticket #{ticket.id}: {ticket.subject}</h1>
+        <button
+          type="button"
+          onClick={openEditModal}
+          disabled={busyAction}
+          data-testid="edit-ticket-information"
+          style={{ width: "auto" }}
+        >
+          Edit ticket information
+        </button>
+      </div>
       {error ? <p className="error">{error}</p> : null}
       <div className="card">
         <p><strong>Status:</strong> {ticket.status}</p>
@@ -203,18 +214,17 @@ export function TicketDetailPage({ token, user }) {
         <p><strong>Requester Company:</strong> {requesterCompany}</p>
         <p><strong>SLA:</strong> <span className={`sla-badge sla-${sla.tone}`}>{sla.text}</span></p>
         <p><strong>Description:</strong> {ticket.description || "N/A"}</p>
-        {token && (
-          <p style={{ marginTop: "16px", marginBottom: 0 }}>
-            <button
-              type="button"
-              onClick={openEditModal}
-              disabled={busyAction}
-              data-testid="edit-ticket-information"
-            >
-              Edit ticket information
-            </button>
-          </p>
-        )}
+        <p style={{ marginTop: "16px", marginBottom: 0 }}>
+          <button
+            type="button"
+            onClick={openEditModal}
+            disabled={busyAction}
+            data-testid="edit-ticket-information-2"
+            style={{ width: "auto" }}
+          >
+            Edit ticket information
+          </button>
+        </p>
       </div>
 
       {(() => {
@@ -256,6 +266,9 @@ export function TicketDetailPage({ token, user }) {
             </button>
             <button type="button" disabled={busyAction} onClick={() => quickUpdate({ status: "Resolved" }, "Marked as Resolved.")}>
               Resolve
+            </button>
+            <button type="button" disabled={busyAction} onClick={openEditModal}>
+              Edit
             </button>
           </div>
         </form>
