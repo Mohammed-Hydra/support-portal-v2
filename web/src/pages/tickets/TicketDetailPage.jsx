@@ -139,8 +139,9 @@ export function TicketDetailPage({ token, user }) {
       setShowEditModal(false);
       toastSuccess("Ticket updated successfully.");
     } catch (err) {
-      setError(err.message);
-      toastError(err.message || "Failed to update ticket.");
+      const msg = err.status === 403 ? "Only agents and admins can edit ticket details." : (err.message || "Failed to update ticket.");
+      setError(msg);
+      toastError(msg);
     } finally {
       setBusyAction(false);
     }
@@ -204,7 +205,7 @@ export function TicketDetailPage({ token, user }) {
         <p><strong>Description:</strong> {ticket.description || "N/A"}</p>
       </div>
 
-      {(user?.role === "admin" || user?.role === "agent") && (
+      {token && (
         <div className="card" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
           <button
             type="button"
@@ -217,9 +218,12 @@ export function TicketDetailPage({ token, user }) {
         </div>
       )}
 
-      {user?.role === "admin" || user?.role === "agent" ? (
-        <form className="card" onSubmit={updateAssignment}>
-          <h3>Assign to Agent</h3>
+      {(() => {
+        const role = String(user?.role || "").toLowerCase();
+        const canEdit = role === "admin" || role === "agent";
+        return canEdit ? (
+          <form className="card" onSubmit={updateAssignment}>
+            <h3>Assign to Agent</h3>
           <div className="grid-2">
             <select value={assignedAgentId} onChange={(e) => setAssignedAgentId(e.target.value)}>
               <option value="">Unassigned</option>
@@ -256,7 +260,8 @@ export function TicketDetailPage({ token, user }) {
             </button>
           </div>
         </form>
-      ) : null}
+      ) : null;
+      })()}
 
       <div className="card">
         <h3>Timeline</h3>
