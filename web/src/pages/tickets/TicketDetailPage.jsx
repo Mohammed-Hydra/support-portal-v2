@@ -411,12 +411,17 @@ export function TicketDetailPage({ token, user }) {
                   </div>
                 </div>
                 <label>Category</label>
-                <input
-                  type="text"
+                <select
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
-                  placeholder="Optional category"
-                />
+                >
+                  <option value="">—</option>
+                  <option value="software">Software</option>
+                  <option value="hardware">Hardware</option>
+                  <option value="network">Network</option>
+                  <option value="access">Access</option>
+                  <option value="other">Other</option>
+                </select>
                 <label>Tags (comma-separated)</label>
                 <input
                   type="text"
