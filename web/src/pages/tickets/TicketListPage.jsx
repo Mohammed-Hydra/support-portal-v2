@@ -24,10 +24,14 @@ export function TicketListPage({ token, user, t }) {
     description: "",
     priority: "Medium",
     channel: "Portal",
-    category: "software",
+    category: "general",
+    categoryOther: "",
+    requesterName: "",
+    requesterEmail: "",
     requesterPhone: "",
     requesterCompanyName: "",
   });
+  const [attachment, setAttachment] = useState(null);
   const [kbSuggestions, setKbSuggestions] = useState([]);
   const [customFieldDefs, setCustomFieldDefs] = useState([]);
   const [customFields, setCustomFields] = useState({});
@@ -124,10 +128,35 @@ export function TicketListPage({ token, user, t }) {
   const submitTicket = async (event) => {
     event.preventDefault();
     try {
+      const category = form.category === "other" ? (form.categoryOther || "other") : form.category;
+      const payload = {
+        subject: form.subject,
+        description: form.description,
+        priority: form.priority,
+        channel: form.channel,
+        category,
+        requesterPhone: form.requesterPhone,
+        requesterCompanyName: form.requesterCompanyName,
+      };
+      if (user?.role === "admin" || user?.role === "agent") {
+        payload.requesterName = form.requesterName;
+        payload.requesterEmail = form.requesterEmail;
+      }
+      let body;
+      if (attachment) {
+        const fd = new FormData();
+        Object.entries(payload).forEach(([k, v]) => {
+          if (v != null && v !== "") fd.append(k, String(v));
+        });
+        fd.append("attachment", attachment);
+        body = fd;
+      } else {
+        body = JSON.stringify(payload);
+      }
       const created = await apiRequest("/api/tickets", {
         token,
         method: "POST",
-        body: JSON.stringify(form),
+        body,
       });
       if (created?.id && Object.keys(customFields).length > 0) {
         await apiRequest(`/api/tickets/${created.id}/custom-fields`, {
@@ -141,10 +170,14 @@ export function TicketListPage({ token, user, t }) {
         description: "",
         priority: "Medium",
         channel: "Portal",
-        category: "software",
+        category: "general",
+        categoryOther: "",
+        requesterName: "",
+        requesterEmail: "",
         requesterPhone: "",
         requesterCompanyName: "",
       });
+      setAttachment(null);
       setCustomFields({});
       await load();
       toastSuccess("Ticket created successfully.");
@@ -258,6 +291,47 @@ export function TicketListPage({ token, user, t }) {
 
       <Collapsible title="Create Ticket" defaultOpen={true}>
       <form className="card stack" onSubmit={submitTicket}>
+        {(user?.role === "admin" || user?.role === "agent") && (
+          <>
+            <div className="grid-2">
+              <label>
+                Requester Name
+                <input
+                  value={form.requesterName}
+                  onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
+                  placeholder="Full name"
+                />
+              </label>
+              <label>
+                Requester Email
+                <input
+                  type="email"
+                  value={form.requesterEmail}
+                  onChange={(e) => setForm({ ...form, requesterEmail: e.target.value })}
+                  placeholder="email@example.com"
+                />
+              </label>
+            </div>
+            <div className="grid-2">
+              <label>
+                Requester Phone
+                <input
+                  value={form.requesterPhone}
+                  onChange={(e) => setForm({ ...form, requesterPhone: e.target.value })}
+                  placeholder="Phone number"
+                />
+              </label>
+              <label>
+                Company
+                <input
+                  value={form.requesterCompanyName}
+                  onChange={(e) => setForm({ ...form, requesterCompanyName: e.target.value })}
+                  placeholder="Company name"
+                />
+              </label>
+            </div>
+          </>
+        )}
         <div className="grid-2">
           <label>
             Subject
@@ -276,6 +350,37 @@ export function TicketListPage({ token, user, t }) {
             </select>
           </label>
         </div>
+        <div className="grid-2">
+          <label>
+            Category
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+              <option value="general">General</option>
+              <option value="software">Software</option>
+              <option value="hardware">Hardware</option>
+              <option value="network">Network</option>
+              <option value="access">Access / Accounts</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label>
+            Channel
+            <select value={form.channel} onChange={(e) => setForm({ ...form, channel: e.target.value })}>
+              {channels.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {form.category === "other" && (
+          <label>
+            Other category
+            <input
+              value={form.categoryOther}
+              onChange={(e) => setForm({ ...form, categoryOther: e.target.value })}
+              placeholder="e.g. Printer, VPN, Email..."
+            />
+          </label>
+        )}
         <label>
           Description
           <textarea
@@ -284,6 +389,20 @@ export function TicketListPage({ token, user, t }) {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
         </label>
+        {(user?.role === "admin" || user?.role === "agent") && (
+          <label>
+            Attachment
+            <input
+              type="file"
+              onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+            />
+            {attachment && (
+              <small className="muted">
+                Selected: {attachment.name} ({Math.round((attachment.size || 0) / 1024)} KB)
+              </small>
+            )}
+          </label>
+        )}
         {kbSuggestions.length > 0 && (
           <div className="kb-suggestions">
             <strong>Suggested articles</strong>
@@ -312,7 +431,7 @@ export function TicketListPage({ token, user, t }) {
             ))}
           </div>
         )}
-        {user?.role === "requester" ? (
+        {user?.role === "requester" && (
           <div className="grid-2">
             <label>
               Phone Number
@@ -330,7 +449,7 @@ export function TicketListPage({ token, user, t }) {
               />
             </label>
           </div>
-        ) : null}
+        )}
         <button type="submit">Create</button>
       </form>
       </Collapsible>

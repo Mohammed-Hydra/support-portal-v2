@@ -347,6 +347,7 @@ function ticketsRoutes({ logAudit, createNotification }) {
       const attachmentUrl = resolveAttachmentUrl(req.file);
       const tags = splitTags(req.body.tags);
       const requesterNameFromBody = (req.body.requesterName || "").trim();
+      const requesterEmailFromBody = (req.body.requesterEmail || "").trim().toLowerCase();
       const requesterPhone = (req.body.requesterPhone || "").trim();
       const requesterCompanyName = (req.body.requesterCompanyName || "").trim();
 
@@ -359,27 +360,33 @@ function ticketsRoutes({ logAudit, createNotification }) {
         [req.user.sub]
       );
       const isRequesterActor = req.user.role === "requester";
-      const requesterName = isRequesterActor ? (requesterNameFromBody || requesterUser?.name || "Requester") : null;
-      const requesterEmail = isRequesterActor ? (requesterUser?.email || "") : "";
+      const requesterName = isRequesterActor
+        ? (requesterNameFromBody || requesterUser?.name || "Requester")
+        : (requesterNameFromBody || null);
+      const requesterEmail = isRequesterActor
+        ? (requesterUser?.email || "")
+        : (requesterEmailFromBody || null);
 
       let requesterContactId = null;
-      if (isRequesterActor && requesterEmail) {
+      const hasRequesterInfo = requesterEmail || (isRequesterActor && requesterUser?.email);
+      const emailForContact = requesterEmail || (isRequesterActor ? requesterUser?.email : null);
+      if (hasRequesterInfo && emailForContact) {
         const contactUpsert = await query(
           `
             INSERT INTO contacts (name, email, phone, company)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (email)
             DO UPDATE SET
-              name = EXCLUDED.name,
+              name = COALESCE(NULLIF(EXCLUDED.name, ''), contacts.name),
               phone = COALESCE(NULLIF(EXCLUDED.phone, ''), contacts.phone),
               company = COALESCE(NULLIF(EXCLUDED.company, ''), contacts.company)
             RETURNING id
           `,
           [
-            requesterName,
-            requesterEmail,
-            requesterPhone || requesterUser?.phone || "",
-            requesterCompanyName || requesterUser?.company_name || "",
+            requesterName || "Requester",
+            emailForContact,
+            requesterPhone || (isRequesterActor ? requesterUser?.phone || "" : ""),
+            requesterCompanyName || (isRequesterActor ? requesterUser?.company_name || "" : ""),
           ]
         );
         requesterContactId = contactUpsert.rows[0]?.id || null;
@@ -403,12 +410,12 @@ function ticketsRoutes({ logAudit, createNotification }) {
           req.body.channel || "Portal",
           req.body.category || null,
           tags,
-          req.user.sub,
+          isRequesterActor ? req.user.sub : null,
           requesterContactId,
-          isRequesterActor ? (requesterPhone || requesterUser?.phone || null) : null,
-          isRequesterActor ? (requesterCompanyName || requesterUser?.company_name || null) : null,
+          requesterPhone || (isRequesterActor ? requesterUser?.phone || null : null),
+          requesterCompanyName || (isRequesterActor ? requesterUser?.company_name || null : null),
           requesterName,
-          requesterEmail || null,
+          requesterEmail || (isRequesterActor ? requesterUser?.email || null : null),
           autoAgent ? autoAgent.id : null,
           calcDueDate(sla.first_response_minutes),
           calcDueDate(sla.resolution_minutes),
