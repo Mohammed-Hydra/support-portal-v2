@@ -363,9 +363,22 @@ export function TicketDetailPage({ token, user }) {
         </div>
       ) : null}
 
+      {/* Floating Edit tab - vertical bar on right edge */}
+      {(user?.role === "admin" || user?.role === "agent") && (
+        <button
+          type="button"
+          className="edit-ticket-tab"
+          onClick={openEditModal}
+          aria-label="Edit ticket information"
+          title="Edit ticket"
+        >
+          <span>Edit</span>
+        </button>
+      )}
+
       {showEditModal ? (
         <div
-          className="modal-backdrop"
+          className="edit-drawer-backdrop"
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-ticket-title"
@@ -375,8 +388,8 @@ export function TicketDetailPage({ token, user }) {
           }}
           tabIndex={-1}
         >
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <form onSubmit={saveEditTicket}>
+          <div className="edit-drawer" onClick={(e) => e.stopPropagation()}>
+            <form onSubmit={saveEditTicket} className="edit-drawer-form">
               <div className="modal-header">
                 <strong id="edit-ticket-title">Edit ticket information</strong>
                 <button
@@ -498,7 +511,7 @@ export function TicketDetailPage({ token, user }) {
         </div>
       ) : null}
 
-      <form className="card" onSubmit={sendMessage}>
+      <form className="card" onSubmit={sendMessage} style={{ marginBottom: 0 }}>
         <h3>Add Reply / Note</h3>
         <textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
         {user?.role !== "requester" ? (

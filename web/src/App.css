@@ -630,6 +630,133 @@ body[dir="rtl"] .toast-host {
   }
 }
 
+/* Floating Edit tab - vertical bar on right edge */
+.edit-ticket-tab {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 9999;
+  width: 36px;
+  min-height: 100px;
+  padding: 16px 6px;
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  background: var(--soft);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.5px;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.edit-ticket-tab:hover {
+  background: var(--card-hover);
+  box-shadow: -3px 0 12px rgba(0, 0, 0, 0.12);
+}
+
+.edit-ticket-tab span {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  display: block;
+}
+
+/* Edit drawer - slides in from right */
+.edit-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  justify-content: flex-end;
+  padding: 0;
+  animation: fadeIn 0.2s ease;
+}
+
+.edit-drawer {
+  width: min(420px, 100vw);
+  max-width: 100%;
+  height: 100%;
+  max-height: 100vh;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  animation: slideInRight 0.25s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.edit-drawer-form {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  height: 100%;
+}
+
+.edit-drawer .modal-header {
+  padding: 14px 16px;
+  flex-shrink: 0;
+}
+
+.edit-drawer .modal-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+body[dir="rtl"] .edit-ticket-tab {
+  right: auto;
+  left: 0;
+  border-right: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+}
+
+body[dir="rtl"] .edit-drawer-backdrop {
+  justify-content: flex-start;
+}
+
+body[dir="rtl"] .edit-drawer {
+  border-left: none;
+  border-right: 1px solid var(--border);
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.15);
+  animation: slideInLeft 0.25s ease;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -829,5 +956,10 @@ body[dir="rtl"] .toast-host {
   .tickets-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .edit-ticket-tab {
+    width: 44px;
+    min-height: 80px;
   }
 }
