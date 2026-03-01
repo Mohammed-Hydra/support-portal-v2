@@ -404,10 +404,10 @@ function usersRoutes({ logAudit }) {
   router.get("/users/agents", authRequired, roleRequired("admin", "agent"), async (req, res) => {
     const agents = await getMany(
       `
-        SELECT id, name, email
+        SELECT id, name, email, role
         FROM users
-        WHERE role = 'agent' AND is_active = TRUE
-        ORDER BY name ASC, id ASC
+        WHERE role IN ('admin', 'agent') AND is_active = TRUE
+        ORDER BY role ASC, name ASC, id ASC
       `
     );
     res.json(agents);
