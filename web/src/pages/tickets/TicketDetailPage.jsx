@@ -20,6 +20,11 @@ export function TicketDetailPage({ token, user }) {
   const [editPriority, setEditPriority] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editTags, setEditTags] = useState("");
+  const [editChannel, setEditChannel] = useState("");
+  const [editRequesterName, setEditRequesterName] = useState("");
+  const [editRequesterEmail, setEditRequesterEmail] = useState("");
+  const [editRequesterPhone, setEditRequesterPhone] = useState("");
+  const [editAssignedAgentId, setEditAssignedAgentId] = useState("");
 
   const load = async () => {
     try {
@@ -111,6 +116,14 @@ export function TicketDetailPage({ token, user }) {
     setEditPriority(ticket.priority || "Medium");
     setEditCategory(ticket.category || "");
     setEditTags(Array.isArray(ticket.tags) ? ticket.tags.join(", ") : "");
+    setEditChannel(ticket.channel || "Portal");
+    const rn = ticket.requester_name || ticket.requester_name_from_user || ticket.requester_name_from_contact || "";
+    const re = ticket.requester_email || ticket.requester_email_from_user || ticket.requester_email_from_contact || "";
+    const rp = ticket.requester_phone || ticket.requester_phone_from_contact || "";
+    setEditRequesterName(rn);
+    setEditRequesterEmail(re);
+    setEditRequesterPhone(rp);
+    setEditAssignedAgentId(ticket.assigned_agent_id != null ? String(ticket.assigned_agent_id) : "");
     setShowEditModal(true);
   };
 
@@ -133,6 +146,11 @@ export function TicketDetailPage({ token, user }) {
           priority: editPriority,
           category: (editCategory || "").trim() || undefined,
           tags: editTags,
+          channel: editChannel || "Portal",
+          requesterName: editRequesterName || undefined,
+          requesterEmail: editRequesterEmail || undefined,
+          requesterPhone: editRequesterPhone || undefined,
+          assignedAgentId: editAssignedAgentId || null,
         }),
       });
       await load();
@@ -207,7 +225,7 @@ export function TicketDetailPage({ token, user }) {
         <p><strong>Status:</strong> {ticket.status}</p>
         <p><strong>Priority:</strong> {ticket.priority}</p>
         <p><strong>Channel:</strong> {ticket.channel}</p>
-        <p><strong>Assigned Agent:</strong> {ticket.assigned_agent_id || "Unassigned"}</p>
+        <p><strong>Assigned Agent:</strong> {ticket.assigned_agent_name || "Unassigned"}</p>
         <p><strong>Requester Name:</strong> {requesterName}</p>
         <p><strong>Requester Email:</strong> {requesterEmail}</p>
         <p><strong>Requester Phone:</strong> {requesterPhone}</p>
@@ -410,6 +428,43 @@ export function TicketDetailPage({ token, user }) {
                     </select>
                   </div>
                 </div>
+                <label>Channel</label>
+                <select value={editChannel} onChange={(e) => setEditChannel(e.target.value)}>
+                  <option value="Portal">Portal</option>
+                  <option value="Email">Email</option>
+                  <option value="WhatsApp">WhatsApp</option>
+                </select>
+                <label>Requester Name</label>
+                <input
+                  type="text"
+                  value={editRequesterName}
+                  onChange={(e) => setEditRequesterName(e.target.value)}
+                  placeholder="Requester name"
+                />
+                <label>Requester Email</label>
+                <input
+                  type="email"
+                  value={editRequesterEmail}
+                  onChange={(e) => setEditRequesterEmail(e.target.value)}
+                  placeholder="Requester email"
+                />
+                <label>Requester Phone</label>
+                <input
+                  type="text"
+                  value={editRequesterPhone}
+                  onChange={(e) => setEditRequesterPhone(e.target.value)}
+                  placeholder="Requester phone"
+                />
+                <label>Assigned Agent</label>
+                <select value={editAssignedAgentId} onChange={(e) => setEditAssignedAgentId(e.target.value)}>
+                  <option value="">Unassigned</option>
+                  {user?.id != null && !agents.some((a) => String(a.id) === String(user.id)) ? (
+                    <option value={String(user.id)}>{user.name || user.email} (you)</option>
+                  ) : null}
+                  {agents.map((a) => (
+                    <option key={a.id} value={String(a.id)}>{a.name} ({a.email})</option>
+                  ))}
+                </select>
                 <label>Category</label>
                 <select
                   value={editCategory}

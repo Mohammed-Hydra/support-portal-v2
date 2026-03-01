@@ -461,6 +461,18 @@ function ticketsRoutes({ logAudit }) {
       const nextCategory = Object.prototype.hasOwnProperty.call(req.body || {}, "category")
         ? ((req.body.category && String(req.body.category).trim()) || null)
         : existing.category;
+      const nextChannel = typeof req.body.channel === "string" && req.body.channel.trim()
+        ? req.body.channel.trim()
+        : existing.channel;
+      const nextRequesterName = Object.prototype.hasOwnProperty.call(req.body || {}, "requesterName")
+        ? (req.body.requesterName != null ? String(req.body.requesterName).trim() || null : existing.requester_name)
+        : existing.requester_name;
+      const nextRequesterEmail = Object.prototype.hasOwnProperty.call(req.body || {}, "requesterEmail")
+        ? (req.body.requesterEmail != null ? String(req.body.requesterEmail).trim() || null : existing.requester_email)
+        : existing.requester_email;
+      const nextRequesterPhone = Object.prototype.hasOwnProperty.call(req.body || {}, "requesterPhone")
+        ? (req.body.requesterPhone != null ? String(req.body.requesterPhone).trim() || null : existing.requester_phone)
+        : existing.requester_phone;
 
       const updated = await query(
         `
@@ -472,12 +484,16 @@ function ticketsRoutes({ logAudit }) {
               assigned_agent_id = $5,
               category = $6,
               tags = $7::text[],
+              channel = $8,
+              requester_name = $9,
+              requester_email = $10,
+              requester_phone = $11,
               updated_at = NOW(),
               resolved_at = CASE WHEN $1 IN ('Resolved', 'Closed') THEN NOW() ELSE resolved_at END
-          WHERE id = $8
+          WHERE id = $12
           RETURNING *
         `,
-        [nextStatus, nextPriority, nextSubject, nextDescription, assignedAgentId, nextCategory, tags, ticketId]
+        [nextStatus, nextPriority, nextSubject, nextDescription, assignedAgentId, nextCategory, tags, nextChannel, nextRequesterName, nextRequesterEmail, nextRequesterPhone, ticketId]
       );
 
       if (Array.isArray(req.body.collaboratorIds)) {
