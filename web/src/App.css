@@ -291,6 +291,11 @@ body {
   color: var(--muted);
 }
 
+.dashboard-chart-wrap {
+  min-height: 220px;
+  width: 100%;
+}
+
 .card {
   background: var(--card);
   border-radius: 10px;

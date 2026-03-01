@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { apiRequest } from "../api";
 
 export function DashboardPage({ token, user, t }) {
@@ -132,6 +133,29 @@ export function DashboardPage({ token, user, t }) {
     return rows;
   }, [activeStatus, activePriority, filteredByPeriod]);
 
+  const statusChartData = useMemo(
+    () => Object.entries(statusCounts).map(([name, count]) => ({ name, count })),
+    [statusCounts]
+  );
+
+  const priorityChartData = useMemo(
+    () => Object.entries(priorityCounts).map(([name, count]) => ({ name, count })),
+    [priorityCounts]
+  );
+
+  const trendChartData = useMemo(() => {
+    const byDay = {};
+    filteredByPeriod.forEach((ticket) => {
+      const ts = Date.parse(ticket.created_at || ticket.updated_at || "");
+      if (!Number.isFinite(ts)) return;
+      const key = new Date(ts).toISOString().slice(0, 10);
+      byDay[key] = (byDay[key] || 0) + 1;
+    });
+    return Object.entries(byDay)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, count]) => ({ date: date.slice(5), count }));
+  }, [filteredByPeriod]);
+
   const breachedLink = useMemo(() => {
     const qs = new URLSearchParams();
     qs.set("breached", "1");
@@ -210,7 +234,18 @@ export function DashboardPage({ token, user, t }) {
 
           <div className="card">
             <h3>Tickets by Status</h3>
-            <div className="grid-4">
+            <div className="dashboard-chart-wrap">
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={statusChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--muted)" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Bar dataKey="count" fill="var(--btn)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid-4" style={{ marginTop: 12 }}>
               {Object.entries(statusCounts).map(([status, count]) => (
                 <button
                   key={status}
@@ -227,7 +262,18 @@ export function DashboardPage({ token, user, t }) {
 
           <div className="card">
             <h3>Tickets by Priority</h3>
-            <div className="grid-4">
+            <div className="dashboard-chart-wrap">
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={priorityChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--muted)" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Bar dataKey="count" fill="var(--btn)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid-4" style={{ marginTop: 12 }}>
               {Object.entries(priorityCounts).map(([priority, count]) => (
                 <button
                   key={priority}
@@ -241,6 +287,23 @@ export function DashboardPage({ token, user, t }) {
               ))}
             </div>
           </div>
+
+          {trendChartData.length > 0 && (
+            <div className="card">
+              <h3>Tickets Over Time</h3>
+              <div className="dashboard-chart-wrap">
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={trendChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted)" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
+                    <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                    <Line type="monotone" dataKey="count" stroke="var(--btn)" strokeWidth={2} dot={{ fill: "var(--btn)" }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
 
           {user?.role === "admin" && Array.isArray(report?.workload) ? (
             <div className="card">

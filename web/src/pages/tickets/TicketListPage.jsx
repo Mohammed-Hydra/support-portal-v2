@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api";
 import { toastError, toastSuccess } from "../../toast";
+import { exportTicketsToCsv } from "../../utils/csvExport";
 
 const statuses = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
 const priorities = ["Low", "Medium", "High", "Critical"];
@@ -336,7 +337,18 @@ export function TicketListPage({ token, user, t }) {
       <div className="card">
         <div className="tickets-header">
           <h3>Ticket Queue</h3>
-          <span className="muted">{tickets.length} tickets</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span className="muted">{tickets.length} tickets</span>
+            <button
+              type="button"
+              onClick={() => {
+                exportTicketsToCsv(tickets);
+                toastSuccess("CSV exported.");
+              }}
+            >
+              Export CSV
+            </button>
+          </div>
         </div>
         <div className="stack" style={{ marginBottom: "16px", gap: "12px" }}>
           <div className="grid-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>

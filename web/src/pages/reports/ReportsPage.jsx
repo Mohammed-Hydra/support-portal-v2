@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api";
+import { exportTicketsToCsv } from "../../utils/csvExport";
+import { toastSuccess } from "../../toast";
 
 export function ReportsPage({ token, t }) {
   const [report, setReport] = useState(null);
@@ -122,7 +124,18 @@ export function ReportsPage({ token, t }) {
           </div>
 
           <div className="card">
-            <h3>Search Tickets</h3>
+            <div className="tickets-header">
+              <h3>Search Tickets</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  exportTicketsToCsv(filteredTickets);
+                  toastSuccess("CSV exported.");
+                }}
+              >
+                Export CSV
+              </button>
+            </div>
             <div className="grid-2">
               <select
                 value={agentQuery}
