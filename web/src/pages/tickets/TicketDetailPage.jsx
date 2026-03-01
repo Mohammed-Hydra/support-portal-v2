@@ -484,14 +484,14 @@ export function TicketDetailPage({ token, user }) {
                   onChange={(e) => setEditTags(e.target.value)}
                   placeholder="e.g. billing, urgent"
                 />
-              </div>
-              <div className="modal-footer">
-                <button type="button" onClick={() => !busyAction && setShowEditModal(false)} disabled={busyAction}>
-                  Cancel
-                </button>
-                <button type="submit" disabled={busyAction}>
-                  {busyAction ? "Saving…" : "Save changes"}
-                </button>
+                <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--border)", position: "sticky", bottom: 0, background: "rgba(255,255,255,0.98)" }}>
+                  <button type="button" onClick={() => !busyAction && setShowEditModal(false)} disabled={busyAction}>
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={busyAction}>
+                    {busyAction ? "Saving…" : "Save"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
