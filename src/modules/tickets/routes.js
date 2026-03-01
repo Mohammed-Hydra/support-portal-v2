@@ -201,6 +201,27 @@ function ticketsRoutes({ logAudit }) {
       params.push(req.query.channel);
       idx += 1;
     }
+    if (req.query.category) {
+      filters.push(`t.category = $${idx}`);
+      params.push(req.query.category);
+      idx += 1;
+    }
+    if (req.query.agent) {
+      const agentId = Number(req.query.agent);
+      if (Number.isFinite(agentId)) {
+        filters.push(`t.assigned_agent_id = $${idx}`);
+        params.push(agentId);
+        idx += 1;
+      }
+    }
+    if (req.query.id) {
+      const ticketId = Number(req.query.id);
+      if (Number.isFinite(ticketId)) {
+        filters.push(`t.id = $${idx}`);
+        params.push(ticketId);
+        idx += 1;
+      }
+    }
     if (req.query.breached === "1" || req.query.breached === "true") {
       filters.push(`t.resolution_due_at IS NOT NULL AND t.resolution_due_at < NOW() AND t.status NOT IN ('Resolved','Closed')`);
     }

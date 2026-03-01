@@ -5,6 +5,8 @@ import { toastError, toastSuccess } from "../../toast";
 
 const statuses = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
 const priorities = ["Low", "Medium", "High", "Critical"];
+const categories = ["general", "software", "hardware", "network", "access", "other"];
+const channels = ["Portal", "Email", "WhatsApp"];
 
 export function TicketListPage({ token, user, t }) {
   const location = useLocation();
@@ -12,6 +14,8 @@ export function TicketListPage({ token, user, t }) {
   const [tickets, setTickets] = useState([]);
   const [error, setError] = useState("");
   const [busyTicketId, setBusyTicketId] = useState("");
+  const [agents, setAgents] = useState([]);
+  const [searchTicketId, setSearchTicketId] = useState("");
   const [form, setForm] = useState({
     subject: "",
     description: "",
@@ -26,11 +30,15 @@ export function TicketListPage({ token, user, t }) {
     const qs = new URLSearchParams(location.search || "");
     const status = String(qs.get("status") || "").trim();
     const priority = String(qs.get("priority") || "").trim();
+    const category = String(qs.get("category") || "").trim();
+    const agent = String(qs.get("agent") || "").trim();
+    const channel = String(qs.get("channel") || "").trim();
+    const id = String(qs.get("id") || "").trim();
     const daysRaw = String(qs.get("days") || "").trim();
     const daysParsed = Number(daysRaw);
     const days = Number.isFinite(daysParsed) && daysParsed > 0 ? String(Math.floor(daysParsed)) : "";
     const breached = qs.get("breached") === "1" || qs.get("breached") === "true";
-    return { status, priority, days, breached };
+    return { status, priority, category, agent, channel, id, days, breached };
   }, [location.search]);
 
   const load = async () => {
@@ -39,6 +47,10 @@ export function TicketListPage({ token, user, t }) {
       const qs = new URLSearchParams();
       if (listFilters.status) qs.set("status", listFilters.status);
       if (listFilters.priority) qs.set("priority", listFilters.priority);
+      if (listFilters.category) qs.set("category", listFilters.category);
+      if (listFilters.agent) qs.set("agent", listFilters.agent);
+      if (listFilters.channel) qs.set("channel", listFilters.channel);
+      if (listFilters.id) qs.set("id", listFilters.id);
       if (listFilters.breached) qs.set("breached", "1");
       if (listFilters.days) qs.set("days", listFilters.days);
       const url = qs.toString() ? `/api/tickets?${qs.toString()}` : "/api/tickets";
@@ -51,7 +63,31 @@ export function TicketListPage({ token, user, t }) {
 
   useEffect(() => {
     load();
-  }, [token, listFilters.status, listFilters.priority, listFilters.breached, listFilters.days]);
+  }, [token, listFilters.status, listFilters.priority, listFilters.category, listFilters.agent, listFilters.channel, listFilters.id, listFilters.breached, listFilters.days]);
+
+  useEffect(() => {
+    setSearchTicketId(listFilters.id || "");
+  }, [listFilters.id]);
+
+  useEffect(() => {
+    if (user?.role !== "admin" && user?.role !== "agent") return;
+    apiRequest("/api/users/agents", { token })
+      .then((rows) => setAgents(Array.isArray(rows) ? rows : []))
+      .catch(() => setAgents([]));
+  }, [token, user?.role]);
+
+  const applyFilters = (updates) => {
+    const qs = new URLSearchParams(location.search || "");
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v != null && v !== "") qs.set(k, String(v));
+      else qs.delete(k);
+    });
+    navigate(`/tickets?${qs.toString()}`, { replace: true });
+  };
+
+  const handleSearch = () => {
+    applyFilters({ id: searchTicketId.trim() || null });
+  };
 
   const submitTicket = async (event) => {
     event.preventDefault();
@@ -159,7 +195,7 @@ export function TicketListPage({ token, user, t }) {
       </div>
       {error ? <p className="error">{error}</p> : null}
 
-      {(listFilters.status || listFilters.priority || listFilters.breached || listFilters.days) ? (
+      {(listFilters.status || listFilters.priority || listFilters.category || listFilters.agent || listFilters.channel || listFilters.id || listFilters.breached || listFilters.days) ? (
         <div className="card">
           <div className="tickets-header">
             <h3>Active Filters</h3>
@@ -170,6 +206,10 @@ export function TicketListPage({ token, user, t }) {
               listFilters.breached ? "SLA breached" : null,
               listFilters.status ? `Status: ${listFilters.status}` : null,
               listFilters.priority ? `Priority: ${listFilters.priority}` : null,
+              listFilters.category ? `Category: ${listFilters.category}` : null,
+              listFilters.agent ? `Agent: ${agents.find((a) => String(a.id) === listFilters.agent)?.name || listFilters.agent}` : null,
+              listFilters.channel ? `Type: ${listFilters.channel}` : null,
+              listFilters.id ? `Ticket #${listFilters.id}` : null,
               listFilters.days ? `Last ${listFilters.days} days` : null,
             ].filter(Boolean).join(" • ")}
           </p>
@@ -232,6 +272,87 @@ export function TicketListPage({ token, user, t }) {
         <div className="tickets-header">
           <h3>Ticket Queue</h3>
           <span className="muted">{tickets.length} tickets</span>
+        </div>
+        <div className="stack" style={{ marginBottom: "16px", gap: "12px" }}>
+          <div className="grid-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
+            <label>
+              Status
+              <select
+                value={listFilters.status}
+                onChange={(e) => applyFilters({ status: e.target.value || null })}
+              >
+                <option value="">All</option>
+                {statuses.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Priority
+              <select
+                value={listFilters.priority}
+                onChange={(e) => applyFilters({ priority: e.target.value || null })}
+              >
+                <option value="">All</option>
+                {priorities.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Category
+              <select
+                value={listFilters.category}
+                onChange={(e) => applyFilters({ category: e.target.value || null })}
+              >
+                <option value="">All</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                ))}
+              </select>
+            </label>
+            {(user?.role === "admin" || user?.role === "agent") && (
+              <label>
+                Agent
+                <select
+                  value={listFilters.agent}
+                  onChange={(e) => applyFilters({ agent: e.target.value || null })}
+                >
+                  <option value="">All</option>
+                  {agents.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name || a.email}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label>
+              Ticket type
+              <select
+                value={listFilters.channel}
+                onChange={(e) => applyFilters({ channel: e.target.value || null })}
+              >
+                <option value="">All</option>
+                {channels.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div style={{ display: "flex", gap: "8px", alignItems: "flex-end", flexWrap: "wrap" }}>
+            <label style={{ margin: 0, flex: "1 1 120px", minWidth: "120px" }}>
+              <span style={{ display: "block", marginBottom: "4px" }}>Ticket #</span>
+              <input
+                type="text"
+                placeholder="e.g. 22"
+                value={searchTicketId}
+                onChange={(e) => setSearchTicketId(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+            </label>
+            <button type="button" onClick={handleSearch}>
+              Search
+            </button>
+          </div>
         </div>
         <div className="table-wrap">
           <table className="table">
