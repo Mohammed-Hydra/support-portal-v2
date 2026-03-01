@@ -433,6 +433,12 @@ button:hover {
   flex-wrap: wrap;
 }
 
+.action-buttons-compact button {
+  min-width: 60px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
 .report-pre {
   margin: 0;
   white-space: pre-wrap;

@@ -273,14 +273,7 @@ export function TicketListPage({ token, user, t }) {
                       "-"
                     ) : (
                       <div className="stack">
-                        <div className="top-actions">
-                          <button
-                            type="button"
-                            disabled={busyTicketId === String(ticket.id)}
-                            onClick={() => navigate(`/tickets/${ticket.id}`)}
-                          >
-                            Edit
-                          </button>
+                        <div className="top-actions action-buttons-compact">
                           <button
                             type="button"
                             disabled={busyTicketId === String(ticket.id)}
@@ -306,6 +299,13 @@ export function TicketListPage({ token, user, t }) {
                             onClick={() => updateTicketQuick(ticket.id, { status: "Resolved" }, "Marked as Resolved.")}
                           >
                             Resolve
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyTicketId === String(ticket.id)}
+                            onClick={() => navigate(`/tickets/${ticket.id}`)}
+                          >
+                            Edit
                           </button>
                         </div>
                         <select

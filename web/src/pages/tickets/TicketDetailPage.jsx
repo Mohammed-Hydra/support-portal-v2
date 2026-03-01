@@ -248,7 +248,7 @@ export function TicketDetailPage({ token, user }) {
             </select>
             <button type="submit" disabled={busyAction}>Save Assignment</button>
           </div>
-          <div className="top-actions" style={{ marginTop: "10px" }}>
+          <div className="top-actions action-buttons-compact" style={{ marginTop: "10px" }}>
             <button
               type="button"
               disabled={busyAction || user?.id == null}
