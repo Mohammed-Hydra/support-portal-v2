@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiRequest } from "../../api";
 import { toastError, toastSuccess } from "../../toast";
+import { StatusBadge, PriorityBadge } from "../../components/StatusBadge";
 
 export function TicketDetailPage({ token, user }) {
   const { ticketId } = useParams();
@@ -246,8 +247,8 @@ export function TicketDetailPage({ token, user }) {
       </div>
       {error ? <p className="error">{error}</p> : null}
       <div className="card">
-        <p><strong>Status:</strong> {ticket.status}</p>
-        <p><strong>Priority:</strong> {ticket.priority}</p>
+        <p><strong>Status:</strong> <StatusBadge status={ticket.status} /></p>
+        <p><strong>Priority:</strong> <PriorityBadge priority={ticket.priority} /></p>
         <p><strong>Channel:</strong> {ticket.channel}</p>
         <p><strong>Assigned Agent:</strong> {ticket.assigned_agent_name || "Unassigned"}</p>
         <p><strong>Requester Name:</strong> {requesterName}</p>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api";
 import { exportTicketsToCsv } from "../../utils/csvExport";
 import { toastSuccess } from "../../toast";
+import { StatusBadge, PriorityBadge } from "../../components/StatusBadge";
 
 export function ReportsPage({ token, t }) {
   const [report, setReport] = useState(null);
@@ -170,8 +171,8 @@ export function ReportsPage({ token, t }) {
                       <td>{item.id}</td>
                       <td>{item.subject}</td>
                       <td>{item.assigned_agent_name || "Unassigned"}</td>
-                      <td>{item.status}</td>
-                      <td>{item.priority}</td>
+                      <td><StatusBadge status={item.status} /></td>
+                      <td><PriorityBadge priority={item.priority} /></td>
                     </tr>
                   ))}
                   {!filteredTickets.length ? (

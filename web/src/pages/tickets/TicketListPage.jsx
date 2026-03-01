@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api";
 import { toastError, toastSuccess } from "../../toast";
 import { exportTicketsToCsv } from "../../utils/csvExport";
+import { StatusBadge, PriorityBadge } from "../../components/StatusBadge";
+import { Collapsible } from "../../components/Collapsible";
 
 const statuses = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
 const priorities = ["Low", "Medium", "High", "Critical"];
@@ -254,10 +256,8 @@ export function TicketListPage({ token, user, t }) {
         </div>
       ) : null}
 
+      <Collapsible title="Create Ticket" defaultOpen={true}>
       <form className="card stack" onSubmit={submitTicket}>
-        <div className="tickets-header">
-          <h3>Create Ticket</h3>
-        </div>
         <div className="grid-2">
           <label>
             Subject
@@ -333,6 +333,7 @@ export function TicketListPage({ token, user, t }) {
         ) : null}
         <button type="submit">Create</button>
       </form>
+      </Collapsible>
 
       <div className="card">
         <div className="tickets-header">
@@ -453,8 +454,8 @@ export function TicketListPage({ token, user, t }) {
                 <tr key={ticket.id}>
                   <td>{ticket.id}</td>
                   <td><Link to={`/tickets/${ticket.id}`}>{ticket.subject}</Link></td>
-                  <td>{ticket.status}</td>
-                  <td>{ticket.priority}</td>
+                  <td><StatusBadge status={ticket.status} /></td>
+                  <td><PriorityBadge priority={ticket.priority} /></td>
                   <td>{getRequesterName(ticket)}</td>
                   <td>{getRequesterContact(ticket)}</td>
                   <td>{getCompanyName(ticket)}</td>

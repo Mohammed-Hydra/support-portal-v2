@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logoSrc from "../assets/hydra-tech-logo.svg";
 import { NotificationBell } from "./NotificationBell";
+import { Breadcrumbs } from "./Breadcrumbs";
 
 const menu = [
   { to: "/", key: "dashboard" },
@@ -15,7 +16,7 @@ const menu = [
   { to: "/settings", key: "settings" },
 ];
 
-export function Layout({ user, t, language, setLanguage, onLogout, token, children }) {
+export function Layout({ user, t, language, setLanguage, theme, setTheme, onLogout, token, children }) {
   const location = useLocation();
   const [copiedLink, setCopiedLink] = useState(null);
   const [menuOpen, setMenuOpen] = useState(() => {
@@ -123,8 +124,8 @@ export function Layout({ user, t, language, setLanguage, onLogout, token, childr
         </nav>
       </aside>
       <div className="main-shell">
-        <header className="topbar">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <header className="topbar topbar-sticky">
+          <div className="topbar-left">
             <button
               type="button"
               className="icon-btn menu-toggle"
@@ -144,9 +145,27 @@ export function Layout({ user, t, language, setLanguage, onLogout, token, childr
                 />
               </svg>
             </button>
+            <Breadcrumbs />
             <strong>{user?.name}</strong> <span className="muted">({user?.role})</span>
+            {(user?.role === "admin" || user?.role === "agent") && (
+              <>
+                <Link to="/tickets" className="quick-action-btn">New ticket</Link>
+                {location.pathname.startsWith("/tickets/") && (
+                  <Link to="/tickets" className="quick-action-btn">All tickets</Link>
+                )}
+              </>
+            )}
           </div>
           <div className="top-actions">
+            <button
+              type="button"
+              className="icon-btn"
+              title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+              aria-label="Toggle theme"
+              onClick={() => setTheme((v) => (v === "dark" ? "light" : "dark"))}
+            >
+              {theme === "dark" ? "☀" : "☽"}
+            </button>
             {token && (user?.role === "admin" || user?.role === "agent" || user?.role === "requester") && (
               <NotificationBell token={token} />
             )}
@@ -171,7 +190,7 @@ export function Layout({ user, t, language, setLanguage, onLogout, token, childr
             <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")}>
               {language === "en" ? "AR" : "EN"}
             </button>
-            <button type="button" onClick={onLogout}>
+            <button type="button" onClick={onLogout} className="logout-btn">
               {t.logout}
             </button>
           </div>

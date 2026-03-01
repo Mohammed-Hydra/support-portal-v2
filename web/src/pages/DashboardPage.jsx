@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { apiRequest } from "../api";
+import { StatusBadge, PriorityBadge } from "../components/StatusBadge";
 
 export function DashboardPage({ token, user, t }) {
   const [tickets, setTickets] = useState([]);
@@ -163,11 +164,29 @@ export function DashboardPage({ token, user, t }) {
     return `/tickets?${qs.toString()}`;
   }, [period]);
 
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    const name = user?.name?.split(" ")[0] || "there";
+    if (hour < 12) return `Good morning, ${name}`;
+    if (hour < 18) return `Good afternoon, ${name}`;
+    return `Good evening, ${name}`;
+  }, [user?.name]);
+
+  const tip = useMemo(() => {
+    const tips = [
+      "Use the period filters to focus on recent activity.",
+      "Click status or priority cards to filter the ticket list.",
+      "Export tickets to CSV from the Tickets or Reports page.",
+    ];
+    return tips[Math.floor(Math.random() * tips.length)];
+  }, []);
+
   return (
     <div>
       <div className="page-header">
         <h1>{t.dashboard}</h1>
-        <p>Interactive overview of volume, status, and recent activity.</p>
+        <p className="welcome-greeting">{greeting}</p>
+        <p className="welcome-tip">💡 {tip}</p>
       </div>
       {error ? <p className="error">{error}</p> : null}
       {loadingTickets ? (
@@ -363,8 +382,8 @@ export function DashboardPage({ token, user, t }) {
                     <tr key={ticket.id}>
                       <td>{ticket.id}</td>
                       <td><Link to={`/tickets/${ticket.id}`}>{ticket.subject}</Link></td>
-                      <td>{ticket.status}</td>
-                      <td>{ticket.priority}</td>
+                      <td><StatusBadge status={ticket.status} /></td>
+                      <td><PriorityBadge priority={ticket.priority} /></td>
                       <td>{new Date(ticket.updated_at).toLocaleString()}</td>
                     </tr>
                   ))}

@@ -20,6 +20,26 @@
   --shadow: 0 4px 24px rgba(14, 52, 96, 0.08);
   --shadow-lg: 0 8px 32px rgba(14, 52, 96, 0.14);
   --transition: 0.2s ease;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warn: #ca8a04;
+}
+
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --text: #e2e8f0;
+  --text-strong: #f8fafc;
+  --card: #1e293b;
+  --card-hover: #334155;
+  --muted: #94a3b8;
+  --border: #334155;
+  --border-focus: rgba(56, 189, 248, 0.5);
+  --btn: #0ea5e9;
+  --btn-hover: #38bdf8;
+  --btn-active: #0284c7;
+  --soft: #1e293b;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 html {
@@ -54,6 +74,14 @@ body::before {
   background-size: 100% 100%, min(70vw, 900px) auto, 100% 100%, 100% 100%;
   pointer-events: none;
   z-index: 0;
+}
+
+[data-theme="dark"] body::before {
+  background-image:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%),
+    url("/hydra-tech-logo.svg"),
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(14, 165, 233, 0.12), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 10%, rgba(56, 189, 248, 0.08), transparent 45%);
 }
 
 #root {

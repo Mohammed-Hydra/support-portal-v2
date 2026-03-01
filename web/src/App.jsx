@@ -32,6 +32,7 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("v2Token") || "");
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("v2User") || "null"));
   const [language, setLanguage] = useState(localStorage.getItem("v2Lang") || "en");
+  const [theme, setTheme] = useState(localStorage.getItem("portal.theme") || "light");
 
   const t = useMemo(() => dictionary[language] || dictionary.en, [language]);
 
@@ -40,6 +41,11 @@ function App() {
     document.body.dir = language === "ar" ? "rtl" : "ltr";
     localStorage.setItem("v2Lang", language);
   }, [language]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme === "dark" ? "dark" : "");
+    localStorage.setItem("portal.theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     if (!token) return;
@@ -88,7 +94,7 @@ function App() {
           path="/*"
           element={
             <Protected token={token}>
-              <Layout user={user} t={t} token={token} language={language} setLanguage={setLanguage} onLogout={onLogout}>
+              <Layout user={user} t={t} token={token} language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} onLogout={onLogout}>
                 <Routes>
                   <Route path="/" element={<DashboardPage token={token} user={user} t={t} />} />
                   <Route path="/agent-dashboard" element={<AgentDashboardPage token={token} user={user} t={t} />} />

@@ -4,6 +4,11 @@ import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import App from "./App.jsx";
 
+try {
+  const saved = localStorage.getItem("portal.theme");
+  if (saved === "dark") document.documentElement.setAttribute("data-theme", "dark");
+} catch (e) { /* ignore */ }
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
