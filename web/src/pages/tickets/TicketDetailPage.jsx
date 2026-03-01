@@ -25,6 +25,8 @@ export function TicketDetailPage({ token, user }) {
   const [editRequesterEmail, setEditRequesterEmail] = useState("");
   const [editRequesterPhone, setEditRequesterPhone] = useState("");
   const [editAssignedAgentId, setEditAssignedAgentId] = useState("");
+  const [customFields, setCustomFields] = useState({});
+  const [customFieldDefs, setCustomFieldDefs] = useState([]);
 
   const load = async () => {
     try {
@@ -42,6 +44,21 @@ export function TicketDetailPage({ token, user }) {
   useEffect(() => {
     load();
   }, [ticketId, token]);
+
+  useEffect(() => {
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [ticketId, token]);
+
+  useEffect(() => {
+    if (!ticketId || !token) return;
+    apiRequest(`/api/tickets/${ticketId}/custom-fields`, { token })
+      .then((data) => setCustomFields(data || {}))
+      .catch(() => setCustomFields({}));
+    apiRequest(`/api/custom-fields/definitions?category=${encodeURIComponent(ticket?.category || "")}`, { token })
+      .then((rows) => setCustomFieldDefs(rows || []))
+      .catch(() => setCustomFieldDefs([]));
+  }, [ticketId, token, ticket?.category]);
 
   useEffect(() => {
     if (user?.role !== "admin" && user?.role !== "agent") return;
@@ -153,6 +170,13 @@ export function TicketDetailPage({ token, user }) {
           assignedAgentId: editAssignedAgentId || null,
         }),
       });
+      if (Object.keys(customFields).length > 0 || customFieldDefs.length > 0) {
+        await apiRequest(`/api/tickets/${ticketId}/custom-fields`, {
+          token,
+          method: "PUT",
+          body: JSON.stringify(customFields),
+        });
+      }
       await load();
       setShowEditModal(false);
       toastSuccess("Ticket updated successfully.");
@@ -497,6 +521,23 @@ export function TicketDetailPage({ token, user }) {
                   onChange={(e) => setEditTags(e.target.value)}
                   placeholder="e.g. billing, urgent"
                 />
+                {customFieldDefs.length > 0 && (
+                  <>
+                    <label>Custom Fields</label>
+                    <div className="grid-2">
+                      {customFieldDefs.map((def) => (
+                        <label key={def.id}>
+                          {def.label}
+                          <input
+                            type={def.field_type === "number" ? "number" : "text"}
+                            value={customFields[def.key] ?? ""}
+                            onChange={(e) => setCustomFields((p) => ({ ...p, [def.key]: e.target.value }))}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
                 <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--border)", position: "sticky", bottom: 0, background: "rgba(255,255,255,0.98)" }}>
                   <button type="button" onClick={() => !busyAction && setShowEditModal(false)} disabled={busyAction}>
                     Cancel

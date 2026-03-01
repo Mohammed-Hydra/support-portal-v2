@@ -14,11 +14,20 @@ function helpcenterRoutes() {
 
   router.get("/help-center/articles", async (req, res) => {
     const category = (req.query.category || "").trim();
+    const search = (req.query.search || "").trim();
     const params = [];
     let where = "WHERE is_published = TRUE";
     if (category) {
       params.push(category);
       where += ` AND category = $${params.length}`;
+    }
+    if (search) {
+      const pattern = `%${search}%`;
+      const a = params.length + 1;
+      const b = params.length + 2;
+      const c = params.length + 3;
+      params.push(pattern, pattern, pattern);
+      where += ` AND (title ILIKE $${a} OR body ILIKE $${b} OR category ILIKE $${c})`;
     }
 
     const articles = await getMany(

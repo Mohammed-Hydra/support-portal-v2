@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logoSrc from "../assets/hydra-tech-logo.svg";
+import { NotificationBell } from "./NotificationBell";
 
 const menu = [
   { to: "/", key: "dashboard" },
@@ -10,10 +11,11 @@ const menu = [
   { to: "/contacts", key: "contacts", roles: ["admin"] },
   { to: "/help-center", key: "helpCenter" },
   { to: "/admin/users", key: "userAdmin", roles: ["admin"] },
+  { to: "/admin/audit", key: "auditLog", roles: ["admin"] },
   { to: "/settings", key: "settings" },
 ];
 
-export function Layout({ user, t, language, setLanguage, onLogout, children }) {
+export function Layout({ user, t, language, setLanguage, onLogout, token, children }) {
   const location = useLocation();
   const [copiedLink, setCopiedLink] = useState(null);
   const [menuOpen, setMenuOpen] = useState(() => {
@@ -145,6 +147,9 @@ export function Layout({ user, t, language, setLanguage, onLogout, children }) {
             <strong>{user?.name}</strong> <span className="muted">({user?.role})</span>
           </div>
           <div className="top-actions">
+            {token && (user?.role === "admin" || user?.role === "agent" || user?.role === "requester") && (
+              <NotificationBell token={token} />
+            )}
             <button
               type="button"
               className="icon-btn"

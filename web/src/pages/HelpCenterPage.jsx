@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { apiRequest } from "../api";
 import { toastError, toastSuccess } from "../toast";
 
 export function HelpCenterPage({ token, user, t }) {
+  const location = useLocation();
   const [articles, setArticles] = useState([]);
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState("");
@@ -21,6 +23,11 @@ export function HelpCenterPage({ token, user, t }) {
   useEffect(() => {
     load();
   }, [token]);
+
+  useEffect(() => {
+    const slug = location.state?.openSlug;
+    if (slug) openArticle(slug);
+  }, [location.state?.openSlug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openArticle = async (slug) => {
     try {

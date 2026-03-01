@@ -25,6 +25,9 @@ export function TicketListPage({ token, user, t }) {
     requesterPhone: "",
     requesterCompanyName: "",
   });
+  const [kbSuggestions, setKbSuggestions] = useState([]);
+  const [customFieldDefs, setCustomFieldDefs] = useState([]);
+  const [customFields, setCustomFields] = useState({});
 
   const listFilters = useMemo(() => {
     const qs = new URLSearchParams(location.search || "");
@@ -66,8 +69,34 @@ export function TicketListPage({ token, user, t }) {
   }, [token, listFilters.status, listFilters.priority, listFilters.category, listFilters.agent, listFilters.channel, listFilters.id, listFilters.breached, listFilters.days]);
 
   useEffect(() => {
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [token, listFilters.status, listFilters.priority, listFilters.category, listFilters.agent, listFilters.channel, listFilters.id, listFilters.breached, listFilters.days]);
+
+  useEffect(() => {
     setSearchTicketId(listFilters.id || "");
   }, [listFilters.id]);
+
+  useEffect(() => {
+    const search = (form.subject || "").trim();
+    const category = (form.category || "").trim();
+    if (!search && !category) {
+      setKbSuggestions([]);
+      return;
+    }
+    const qs = new URLSearchParams();
+    if (search) qs.set("search", search);
+    if (category) qs.set("category", category);
+    apiRequest(`/api/help-center/articles?${qs.toString()}`, { token })
+      .then((rows) => setKbSuggestions((rows || []).slice(0, 5)))
+      .catch(() => setKbSuggestions([]));
+  }, [token, form.subject, form.category]);
+
+  useEffect(() => {
+    apiRequest(`/api/custom-fields/definitions?category=${encodeURIComponent(form.category || "")}`, { token })
+      .then((rows) => setCustomFieldDefs(rows || []))
+      .catch(() => setCustomFieldDefs([]));
+  }, [token, form.category]);
 
   useEffect(() => {
     if (user?.role !== "admin" && user?.role !== "agent") return;
@@ -92,11 +121,18 @@ export function TicketListPage({ token, user, t }) {
   const submitTicket = async (event) => {
     event.preventDefault();
     try {
-      await apiRequest("/api/tickets", {
+      const created = await apiRequest("/api/tickets", {
         token,
         method: "POST",
         body: JSON.stringify(form),
       });
+      if (created?.id && Object.keys(customFields).length > 0) {
+        await apiRequest(`/api/tickets/${created.id}/custom-fields`, {
+          token,
+          method: "PUT",
+          body: JSON.stringify(customFields),
+        });
+      }
       setForm({
         subject: "",
         description: "",
@@ -106,6 +142,7 @@ export function TicketListPage({ token, user, t }) {
         requesterPhone: "",
         requesterCompanyName: "",
       });
+      setCustomFields({});
       await load();
       toastSuccess("Ticket created successfully.");
     } catch (err) {
@@ -246,6 +283,34 @@ export function TicketListPage({ token, user, t }) {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
         </label>
+        {kbSuggestions.length > 0 && (
+          <div className="kb-suggestions">
+            <strong>Suggested articles</strong>
+            <ul className="list">
+              {kbSuggestions.map((a) => (
+                <li key={a.id}>
+                  <Link to="/help-center" state={{ openSlug: a.slug }}>
+                    {a.title} ({a.category})
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {customFieldDefs.length > 0 && (
+          <div className="custom-fields-inline">
+            {customFieldDefs.map((def) => (
+              <label key={def.id}>
+                {def.label}
+                <input
+                  type={def.field_type === "number" ? "number" : "text"}
+                  value={customFields[def.key] ?? ""}
+                  onChange={(e) => setCustomFields((p) => ({ ...p, [def.key]: e.target.value }))}
+                />
+              </label>
+            ))}
+          </div>
+        )}
         {user?.role === "requester" ? (
           <div className="grid-2">
             <label>

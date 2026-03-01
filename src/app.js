@@ -13,6 +13,9 @@ const { emailWebhookRoutes } = require("./modules/channels/emailWebhook");
 const { whatsappWebhookRoutes } = require("./modules/channels/whatsappWebhook");
 const { settingsRoutes } = require("./modules/settings/routes");
 const { publicRequesterRoutes } = require("./modules/publicRequester/routes");
+const { notificationsRoutes, createNotification } = require("./modules/notifications/routes");
+const { auditRoutes } = require("./modules/audit/routes");
+const { customFieldsRoutes } = require("./modules/customFields/routes");
 const { pickLeastLoadedAgent, computeSla, calcDueDate } = require("./modules/automations/service");
 const USER_EMAIL_DOMAIN = (process.env.USER_EMAIL_DOMAIN || "hydra-tech.pro").toLowerCase();
 const ENFORCE_USER_EMAIL_DOMAIN = !/^(false|0|no|off)$/i.test(String(process.env.ENFORCE_USER_EMAIL_DOMAIN || "true").trim());
@@ -187,8 +190,11 @@ async function createApp() {
   }
 
   app.use("/api", usersRoutes({ logAudit }));
-  app.use("/api", ticketsRoutes({ logAudit }));
+  app.use("/api", ticketsRoutes({ logAudit, createNotification }));
   app.use("/api", reportsRoutes());
+  app.use("/api", notificationsRoutes());
+  app.use("/api", auditRoutes());
+  app.use("/api", customFieldsRoutes());
   app.use("/api", contactsRoutes());
   app.use("/api", helpcenterRoutes());
   app.use("/api", settingsRoutes({ logAudit }));

@@ -69,6 +69,8 @@ export function SettingsPage({ token, user, t }) {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+  const [customFieldDefs, setCustomFieldDefs] = useState([]);
+  const [customFieldForm, setCustomFieldForm] = useState({ key: "", label: "", field_type: "text", category_filter: "", is_required: false });
 
   const isAdmin = user?.role === "admin";
   const channelHint = useMemo(
@@ -80,16 +82,18 @@ export function SettingsPage({ token, user, t }) {
     if (!isAdmin) return;
     setLoading(true);
     try {
-      const [slas, rules, runs, agentRows] = await Promise.all([
+      const [slas, rules, runs, agentRows, defs] = await Promise.all([
         apiRequest("/api/settings/sla-policies", { token }),
         apiRequest("/api/settings/automation-rules", { token }),
         apiRequest("/api/settings/automation-runs?limit=40", { token }),
         apiRequest("/api/users/agents", { token }),
+        apiRequest("/api/custom-fields/definitions", { token }).catch(() => []),
       ]);
       setSlaPolicies(Array.isArray(slas) ? slas : []);
       setAutomationRules(Array.isArray(rules) ? rules : []);
       setAutomationRuns(Array.isArray(runs) ? runs : []);
       setAgents(Array.isArray(agentRows) ? agentRows : []);
+      setCustomFieldDefs(Array.isArray(defs) ? defs : []);
     } catch (err) {
       toastError(err.message || "Failed to load settings.");
     } finally {
@@ -781,6 +785,104 @@ export function SettingsPage({ token, user, t }) {
           <h3>Channel Settings</h3>
           <p>{channelHint}</p>
         </div>
+
+        {isAdmin ? (
+          <div className="subcard">
+            <h3>Custom Fields</h3>
+            <p className="muted">Add extra fields (e.g. Asset ID, Location) to tickets. Use key like asset_id or location.</p>
+            <form
+              className="stack"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const categoryFilter = (customFieldForm.category_filter || "").trim()
+                    ? (customFieldForm.category_filter || "").split(",").map((s) => s.trim()).filter(Boolean)
+                    : [];
+                  await apiRequest("/api/custom-fields/definitions", {
+                    token,
+                    method: "POST",
+                    body: JSON.stringify({
+                      key: (customFieldForm.key || "").trim().replace(/[^a-z0-9_]/g, "_") || "field",
+                      label: (customFieldForm.label || "").trim() || customFieldForm.key,
+                      field_type: customFieldForm.field_type || "text",
+                      category_filter: categoryFilter,
+                      is_required: Boolean(customFieldForm.is_required),
+                    }),
+                  });
+                  toastSuccess("Custom field added.");
+                  setCustomFieldForm({ key: "", label: "", field_type: "text", category_filter: "", is_required: false });
+                  await loadAll();
+                } catch (err) {
+                  toastError(err.message || "Failed to add field.");
+                }
+              }}
+            >
+              <div className="grid-2">
+                <input
+                  placeholder="Key (e.g. asset_id)"
+                  value={customFieldForm.key}
+                  onChange={(e) => setCustomFieldForm((p) => ({ ...p, key: e.target.value }))}
+                />
+                <input
+                  placeholder="Label (e.g. Asset ID)"
+                  value={customFieldForm.label}
+                  onChange={(e) => setCustomFieldForm((p) => ({ ...p, label: e.target.value }))}
+                />
+              </div>
+              <div className="grid-2">
+                <select
+                  value={customFieldForm.field_type}
+                  onChange={(e) => setCustomFieldForm((p) => ({ ...p, field_type: e.target.value }))}
+                >
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                  <option value="select">Select</option>
+                </select>
+                <input
+                  placeholder="Categories (comma-separated, optional)"
+                  value={customFieldForm.category_filter}
+                  onChange={(e) => setCustomFieldForm((p) => ({ ...p, category_filter: e.target.value }))}
+                />
+              </div>
+              <label className="inline-check">
+                <input
+                  type="checkbox"
+                  checked={customFieldForm.is_required}
+                  onChange={(e) => setCustomFieldForm((p) => ({ ...p, is_required: e.target.checked }))}
+                />
+                Required
+              </label>
+              <button type="submit">Add Custom Field</button>
+            </form>
+            <div className="table-wrap" style={{ marginTop: 12 }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Label</th>
+                    <th>Type</th>
+                    <th>Categories</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customFieldDefs.map((d) => (
+                    <tr key={d.id}>
+                      <td><code>{d.key}</code></td>
+                      <td>{d.label}</td>
+                      <td>{d.field_type}</td>
+                      <td>{(d.category_filter || []).join(", ") || "All"}</td>
+                    </tr>
+                  ))}
+                  {!customFieldDefs.length ? (
+                    <tr>
+                      <td colSpan={4} className="muted">No custom fields defined.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

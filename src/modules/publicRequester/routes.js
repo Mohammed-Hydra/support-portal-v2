@@ -572,6 +572,55 @@ function publicRequesterRoutes({ logAudit }) {
     }
   });
 
+  router.get("/public/requester/email-preferences", requesterSessionRequired, async (req, res) => {
+    try {
+      const row = await getOne(
+        `SELECT notify_on_message, notify_on_status_change, notify_on_assignment FROM requester_email_preferences WHERE email = $1`,
+        [req.requester.email]
+      );
+      res.json(
+        row || {
+          notify_on_message: true,
+          notify_on_status_change: true,
+          notify_on_assignment: true,
+        }
+      );
+    } catch (error) {
+      res.status(500).json({ error: "Failed to load preferences" });
+    }
+  });
+
+  router.patch("/public/requester/email-preferences", requesterSessionRequired, async (req, res) => {
+    try {
+      const notifyOnMessage = req.body.notify_on_message;
+      const notifyOnStatusChange = req.body.notify_on_status_change;
+      const notifyOnAssignment = req.body.notify_on_assignment;
+      const existing = await getOne(`SELECT * FROM requester_email_preferences WHERE email = $1`, [req.requester.email]);
+      const nextMessage = typeof notifyOnMessage === "boolean" ? notifyOnMessage : (existing?.notify_on_message ?? true);
+      const nextStatus = typeof notifyOnStatusChange === "boolean" ? notifyOnStatusChange : (existing?.notify_on_status_change ?? true);
+      const nextAssign = typeof notifyOnAssignment === "boolean" ? notifyOnAssignment : (existing?.notify_on_assignment ?? true);
+      await query(
+        `
+          INSERT INTO requester_email_preferences (email, notify_on_message, notify_on_status_change, notify_on_assignment, updated_at)
+          VALUES ($1, $2, $3, $4, NOW())
+          ON CONFLICT (email) DO UPDATE SET
+            notify_on_message = $2,
+            notify_on_status_change = $3,
+            notify_on_assignment = $4,
+            updated_at = NOW()
+        `,
+        [req.requester.email, nextMessage, nextStatus, nextAssign]
+      );
+      const row = await getOne(
+        `SELECT notify_on_message, notify_on_status_change, notify_on_assignment FROM requester_email_preferences WHERE email = $1`,
+        [req.requester.email]
+      );
+      res.json(row || { notify_on_message: true, notify_on_status_change: true, notify_on_assignment: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update preferences" });
+    }
+  });
+
   router.get("/public/requester/tickets", requesterSessionRequired, async (req, res) => {
     try {
       const rows = await getMany(

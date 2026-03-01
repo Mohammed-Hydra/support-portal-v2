@@ -13,6 +13,7 @@ import { TicketListPage } from "./pages/tickets/TicketListPage";
 import { TicketDetailPage } from "./pages/tickets/TicketDetailPage";
 import { ReportsPage } from "./pages/reports/ReportsPage";
 import { UserAdminPage } from "./pages/admin/UserAdminPage";
+import { AuditLogPage } from "./pages/admin/AuditLogPage";
 import { ContactsPage } from "./pages/ContactsPage";
 import { HelpCenterPage } from "./pages/HelpCenterPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -87,7 +88,7 @@ function App() {
           path="/*"
           element={
             <Protected token={token}>
-              <Layout user={user} t={t} language={language} setLanguage={setLanguage} onLogout={onLogout}>
+              <Layout user={user} t={t} token={token} language={language} setLanguage={setLanguage} onLogout={onLogout}>
                 <Routes>
                   <Route path="/" element={<DashboardPage token={token} user={user} t={t} />} />
                   <Route path="/agent-dashboard" element={<AgentDashboardPage token={token} user={user} t={t} />} />
@@ -97,6 +98,7 @@ function App() {
                   <Route path="/contacts" element={<ContactsPage token={token} t={t} />} />
                   <Route path="/help-center" element={<HelpCenterPage token={token} user={user} t={t} />} />
                   <Route path="/admin/users" element={<UserAdminPage token={token} user={user} t={t} />} />
+                  <Route path="/admin/audit" element={<AuditLogPage token={token} t={t} />} />
                   <Route path="/settings" element={<SettingsPage token={token} user={user} t={t} />} />
                 </Routes>
               </Layout>

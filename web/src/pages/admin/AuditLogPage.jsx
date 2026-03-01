@@ -1,0 +1,151 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { apiRequest } from "../../api";
+
+export function AuditLogPage({ token, t }) {
+  const [logs, setLogs] = useState([]);
+  const [actions, setActions] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState("");
+  const [filters, setFilters] = useState({
+    action: "",
+    ticketId: "",
+    actorId: "",
+    since: "",
+    until: "",
+  });
+
+  const loadLogs = async () => {
+    try {
+      setError("");
+      const qs = new URLSearchParams();
+      if (filters.action) qs.set("action", filters.action);
+      if (filters.ticketId) qs.set("ticketId", filters.ticketId);
+      if (filters.actorId) qs.set("actorId", filters.actorId);
+      if (filters.since) qs.set("since", filters.since);
+      if (filters.until) qs.set("until", filters.until);
+      const url = qs.toString() ? `/api/audit-logs?${qs.toString()}` : "/api/audit-logs";
+      const rows = await apiRequest(url, { token });
+      setLogs(rows || []);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    loadLogs();
+  }, [token, filters.action, filters.ticketId, filters.actorId, filters.since, filters.until]);
+
+  useEffect(() => {
+    apiRequest("/api/audit-logs/actions", { token })
+      .then((a) => setActions(a || []))
+      .catch(() => setActions([]));
+    apiRequest("/api/users", { token })
+      .then((u) => setUsers(u || []))
+      .catch(() => setUsers([]));
+  }, [token]);
+
+  const formatDetails = (details) => {
+    if (!details || typeof details !== "object") return "";
+    const parts = Object.entries(details)
+      .filter(([, v]) => v != null && v !== "")
+      .map(([k, v]) => `${k}: ${v}`);
+    return parts.join(", ");
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <h1>{t.auditLog ?? "Audit Log"}</h1>
+        <p>View who did what and when across the portal.</p>
+      </div>
+      {error ? <p className="error">{error}</p> : null}
+      <div className="card">
+        <h3>Filters</h3>
+        <div className="grid-2" style={{ gap: 12, marginBottom: 12 }}>
+          <label>
+            Action
+            <select
+              value={filters.action}
+              onChange={(e) => setFilters((p) => ({ ...p, action: e.target.value }))}
+            >
+              <option value="">All</option>
+              {actions.map((a) => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Ticket ID
+            <input
+              type="number"
+              placeholder="e.g. 123"
+              value={filters.ticketId}
+              onChange={(e) => setFilters((p) => ({ ...p, ticketId: e.target.value.trim() }))}
+            />
+          </label>
+          <label>
+            Actor
+            <select
+              value={filters.actorId}
+              onChange={(e) => setFilters((p) => ({ ...p, actorId: e.target.value }))}
+            >
+              <option value="">All</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Since
+            <input
+              type="datetime-local"
+              value={filters.since}
+              onChange={(e) => setFilters((p) => ({ ...p, since: e.target.value }))}
+            />
+          </label>
+          <label>
+            Until
+            <input
+              type="datetime-local"
+              value={filters.until}
+              onChange={(e) => setFilters((p) => ({ ...p, until: e.target.value }))}
+            />
+          </label>
+        </div>
+        <button type="button" onClick={loadLogs}>Refresh</button>
+      </div>
+      <div className="card">
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Ticket</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((row) => (
+                <tr key={row.id}>
+                  <td>{new Date(row.created_at).toLocaleString()}</td>
+                  <td>{row.actor_name || row.actor_email || (row.actor_user_id ? `User #${row.actor_user_id}` : "System")}</td>
+                  <td><code>{row.action}</code></td>
+                  <td>{row.ticket_id ? <Link to={`/tickets/${row.ticket_id}`}>#{row.ticket_id}</Link> : "-"}</td>
+                  <td className="muted" style={{ fontSize: 12 }}>{formatDetails(row.details)}</td>
+                </tr>
+              ))}
+              {!logs.length ? (
+                <tr>
+                  <td colSpan={5} className="muted">No audit entries match your filters.</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

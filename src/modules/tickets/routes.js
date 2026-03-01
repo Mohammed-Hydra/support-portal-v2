@@ -114,8 +114,9 @@ function splitTags(value) {
     .filter(Boolean);
 }
 
-function ticketsRoutes({ logAudit }) {
+function ticketsRoutes({ logAudit, createNotification }) {
   const router = express.Router();
+  const noop = () => {};
 
   async function getRequesterNotificationTarget(ticketId) {
     const row = await getOne(
@@ -143,9 +144,25 @@ function ticketsRoutes({ logAudit }) {
     };
   }
 
-  async function notifyRequester({ ticketId, title, bodyLines }) {
+  async function shouldSendEmailToRequester(ticketId, eventType) {
+    const target = await getRequesterNotificationTarget(ticketId);
+    if (!target?.email) return false;
+    const row = await getOne(
+      `SELECT notify_on_message, notify_on_status_change, notify_on_assignment FROM requester_email_preferences WHERE email = $1`,
+      [target.email.toLowerCase()]
+    );
+    if (!row) return true;
+    if (eventType === "message" && !row.notify_on_message) return false;
+    if (eventType === "status_change" && !row.notify_on_status_change) return false;
+    if (eventType === "assignment" && !row.notify_on_assignment) return false;
+    return true;
+  }
+
+  async function notifyRequester({ ticketId, title, bodyLines, eventType = "message" }) {
     const target = await getRequesterNotificationTarget(ticketId);
     if (!target) return;
+    const sendEmail = await shouldSendEmailToRequester(ticketId, eventType);
+    if (!sendEmail) return;
 
     const trackUrl = getRequesterTrackUrl();
     const subject = title || `Update on ticket #${ticketId}`;
@@ -419,6 +436,10 @@ function ticketsRoutes({ logAudit }) {
       }
 
       await logAudit(req.user.sub, ticket.id, "ticket_created", { priority, status });
+      const notify = createNotification || noop;
+      if (autoAgent && Number(autoAgent.id) !== Number(req.user.sub)) {
+        await notify({ userId: autoAgent.id, ticketId: ticket.id, type: "assignment", title: `Assigned to ticket #${ticket.id}`, body: ticket.subject });
+      }
       await runAutomationRules({
         eventName: "ticket_created",
         ticketId: ticket.id,
@@ -560,6 +581,7 @@ function ticketsRoutes({ logAudit }) {
               "Our support team needs more information to proceed.",
               "Please reply in the requester portal with any additional details or screenshots.",
             ],
+            eventType: "status_change",
           });
         }
         if (nextStatus === "Resolved" || nextStatus === "Closed") {
@@ -570,6 +592,29 @@ function ticketsRoutes({ logAudit }) {
               "Your ticket has been marked as resolved.",
               "If the issue is not fixed, you can reopen the ticket from the requester portal.",
             ],
+            eventType: "status_change",
+          });
+        }
+        const ticketRow = await getOne(`SELECT subject, requester_user_id, assigned_agent_id FROM tickets WHERE id = $1`, [ticketId]);
+        const notify = createNotification || noop;
+        if (ticketRow?.requester_user_id) {
+          await notify({ userId: ticketRow.requester_user_id, ticketId, type: "status_change", title: `Ticket #${ticketId} status: ${nextStatus}`, body: ticketRow.subject });
+        }
+        if (ticketRow?.assigned_agent_id && Number(ticketRow.assigned_agent_id) !== Number(req.user.sub)) {
+          await notify({ userId: ticketRow.assigned_agent_id, ticketId, type: "status_change", title: `Ticket #${ticketId} status: ${nextStatus}`, body: ticketRow.subject });
+        }
+      }
+      if (assignedAgentId !== existing.assigned_agent_id && assignedAgentId) {
+        const ticketRow = await getOne(`SELECT subject FROM tickets WHERE id = $1`, [ticketId]);
+        const notify = createNotification || noop;
+        await notify({ userId: assignedAgentId, ticketId, type: "assignment", title: `Assigned to ticket #${ticketId}`, body: ticketRow?.subject });
+        const requesterRow = await getOne(`SELECT requester_user_id FROM tickets WHERE id = $1`, [ticketId]);
+        if (requesterRow?.requester_user_id) {
+          await notifyRequester({
+            ticketId,
+            title: `Ticket #${ticketId} assigned`,
+            bodyLines: ["Your ticket has been assigned to an agent."],
+            eventType: "assignment",
           });
         }
       }
@@ -641,7 +686,23 @@ function ticketsRoutes({ logAudit }) {
           bodyLines: [
             snippet ? `Message: ${snippet}` : "A new update was added to your ticket.",
           ],
+          eventType: "message",
         });
+        const ticketRow = await getOne(`SELECT subject, requester_user_id, assigned_agent_id FROM tickets WHERE id = $1`, [ticketId]);
+        const notify = createNotification || noop;
+        if (ticketRow?.requester_user_id) {
+          await notify({ userId: ticketRow.requester_user_id, ticketId, type: "new_message", title: `New reply on ticket #${ticketId}`, body: snippet || "New update" });
+        }
+        if (ticketRow?.assigned_agent_id && Number(ticketRow.assigned_agent_id) !== Number(req.user.sub)) {
+          await notify({ userId: ticketRow.assigned_agent_id, ticketId, type: "new_message", title: `New reply on ticket #${ticketId}`, body: snippet || "New update" });
+        }
+      }
+      if (req.user.role === "requester") {
+        const ticketRow = await getOne(`SELECT assigned_agent_id FROM tickets WHERE id = $1`, [ticketId]);
+        const notify = createNotification || noop;
+        if (ticketRow?.assigned_agent_id) {
+          await notify({ userId: ticketRow.assigned_agent_id, ticketId, type: "new_message", title: `New reply on ticket #${ticketId}`, body: body ? (body.length > 200 ? body.slice(0, 200) + "…" : body) : "New reply" });
+        }
       }
       res.status(201).json({ success: true });
     } catch (error) {

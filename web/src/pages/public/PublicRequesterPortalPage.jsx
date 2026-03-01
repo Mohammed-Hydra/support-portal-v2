@@ -22,6 +22,8 @@ export function PublicRequesterPortalPage() {
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [loadingTicket, setLoadingTicket] = useState(false);
   const [filters, setFilters] = useState({ q: "", status: "", days: "30", sort: "updated_desc" });
+  const [emailPrefs, setEmailPrefs] = useState({ notify_on_message: true, notify_on_status_change: true, notify_on_assignment: true });
+  const [showEmailPrefs, setShowEmailPrefs] = useState(false);
   const [lastSeenByTicket, setLastSeenByTicket] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(SEEN_KEY) || "{}") || {};
@@ -105,6 +107,26 @@ export function PublicRequesterPortalPage() {
     if (!selectedTicketId) return;
     refreshTicketDetails(selectedTicketId).catch((err) => setError(err.message || "Failed to load ticket details."));
   }, [selectedTicketId]);
+
+  useEffect(() => {
+    if (!requesterToken) return;
+    apiRequest("/api/public/requester/email-preferences", { headers: authHeaders })
+      .then((p) => setEmailPrefs(p || { notify_on_message: true, notify_on_status_change: true, notify_on_assignment: true }))
+      .catch(() => {});
+  }, [requesterToken]);
+
+  const saveEmailPrefs = async () => {
+    try {
+      await apiRequest("/api/public/requester/email-preferences", {
+        headers: authHeaders,
+        method: "PATCH",
+        body: JSON.stringify(emailPrefs),
+      });
+      toastSuccess("Email preferences saved.");
+    } catch (err) {
+      toastError(err.message || "Failed to save preferences.");
+    }
+  };
 
   useEffect(() => {
     try {
@@ -339,8 +361,44 @@ export function PublicRequesterPortalPage() {
           <button type="button" onClick={() => refreshTickets().catch((err) => setError(err.message))}>
             Refresh
           </button>
+          <button type="button" onClick={() => setShowEmailPrefs((v) => !v)}>
+            {showEmailPrefs ? "Hide" : "Email"} preferences
+          </button>
           <button type="button" onClick={logoutSession}>End Session</button>
         </div>
+        {showEmailPrefs && (
+          <div className="card" style={{ marginBottom: 12 }}>
+            <h3>Email notification preferences</h3>
+            <p className="muted">Choose which events trigger email notifications.</p>
+            <div className="grid-2" style={{ gap: 12 }}>
+              <label className="inline-check">
+                <input
+                  type="checkbox"
+                  checked={emailPrefs.notify_on_message}
+                  onChange={(e) => setEmailPrefs((p) => ({ ...p, notify_on_message: e.target.checked }))}
+                />
+                New messages / replies
+              </label>
+              <label className="inline-check">
+                <input
+                  type="checkbox"
+                  checked={emailPrefs.notify_on_status_change}
+                  onChange={(e) => setEmailPrefs((p) => ({ ...p, notify_on_status_change: e.target.checked }))}
+                />
+                Status changes
+              </label>
+              <label className="inline-check">
+                <input
+                  type="checkbox"
+                  checked={emailPrefs.notify_on_assignment}
+                  onChange={(e) => setEmailPrefs((p) => ({ ...p, notify_on_assignment: e.target.checked }))}
+                />
+                Ticket assignment
+              </label>
+            </div>
+            <button type="button" onClick={saveEmailPrefs} style={{ marginTop: 8 }}>Save preferences</button>
+          </div>
+        )}
 
         <div className="grid-2">
           <div className="card">
