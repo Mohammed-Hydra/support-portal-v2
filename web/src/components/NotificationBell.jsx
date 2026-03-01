@@ -23,7 +23,7 @@ export function NotificationBell({ token }) {
     if (!token) return;
     setLoading(true);
     try {
-      const rows = await apiRequest("/api/notifications?limit=20", { token });
+      const rows = await apiRequest("/api/notifications?limit=100", { token });
       setNotifications(rows || []);
       const unread = (rows || []).filter((n) => !n.read_at).length;
       setUnreadCount(unread);
