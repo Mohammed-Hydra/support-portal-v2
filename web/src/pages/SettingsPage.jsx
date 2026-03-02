@@ -5,6 +5,7 @@ import { toastError, toastSuccess } from "../toast";
 const priorities = ["Low", "Medium", "High", "Critical"];
 const channels = ["Portal", "Email", "WhatsApp"];
 const statuses = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
+const categories = ["general", "software", "hardware", "network", "access", "other"];
 const triggers = [
   "ticket_created",
   "ticket_updated",
