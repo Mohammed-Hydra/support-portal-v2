@@ -112,7 +112,11 @@ export function SettingsPage({ token, user, t }) {
   };
 
   useEffect(() => {
-    if (isAdmin) loadAll();
+    if (isAdmin) {
+      loadAll();
+    } else {
+      setLoading(false);
+    }
   }, [token, isAdmin]);
 
   useEffect(() => {
@@ -254,12 +258,25 @@ export function SettingsPage({ token, user, t }) {
     return (
       <div>
         <div className="page-header">
-          <h1>{t.settings}</h1>
+          <h1>{t?.settings ?? "Settings"}</h1>
           <p>Change your account password and preferences.</p>
         </div>
         <div className="card stack">
           {preferencesCard}
           {changePasswordCard}
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <div className="page-header">
+          <h1>{t?.settings ?? "Settings"}</h1>
+        </div>
+        <div className="card">
+          <p className="muted">Loading...</p>
         </div>
       </div>
     );
