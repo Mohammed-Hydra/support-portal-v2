@@ -10,10 +10,12 @@ export function ReportsPage({ token, t }) {
   const [error, setError] = useState("");
   const [agentQuery, setAgentQuery] = useState("");
   const [ticketQuery, setTicketQuery] = useState("");
+  const [periodDays, setPeriodDays] = useState("");
 
   useEffect(() => {
+    const qs = periodDays ? `?days=${encodeURIComponent(periodDays)}` : "";
     Promise.all([
-      apiRequest("/api/reports/overview", { token }),
+      apiRequest(`/api/reports/overview${qs}`, { token }),
       apiRequest("/api/tickets", { token }),
     ])
       .then(([overview, rows]) => {
@@ -21,7 +23,7 @@ export function ReportsPage({ token, t }) {
         setTickets(Array.isArray(rows) ? rows : []);
       })
       .catch((err) => setError(err.message));
-  }, [token]);
+  }, [token, periodDays]);
 
   const filteredTickets = useMemo(() => {
     const q = agentQuery.trim().toLowerCase();
@@ -62,6 +64,17 @@ export function ReportsPage({ token, t }) {
         <p>Operational summary generated from current ticket activity.</p>
       </div>
       {error ? <p className="error">{error}</p> : null}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <label>
+          SLA period
+          <select value={periodDays} onChange={(e) => setPeriodDays(e.target.value)}>
+            <option value="">All time</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+        </label>
+      </div>
       {!report ? (
         <div className="card">
           <p>Loading...</p>

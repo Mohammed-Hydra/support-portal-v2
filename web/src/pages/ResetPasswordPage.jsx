@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../api";
-import logoSrc from "../assets/hydra-tech-logo.svg";
+import { Logo } from "../components/Logo";
 
 export function ResetPasswordPage({ t }) {
   const [searchParams] = useSearchParams();
@@ -48,7 +48,7 @@ export function ResetPasswordPage({ t }) {
       <div className="auth-wrap">
         <div className="card auth-card stack">
           <div className="page-header">
-            <img src={logoSrc} alt="HYDRA-TECH IT SUPPORT PLATFORM" className="login-brand-image" />
+            <Logo className="login-brand-image" alt="HYDRA-TECH IT SUPPORT PLATFORM" />
             <h2>{t.resetPassword ?? "Set new password"}</h2>
             <p className="error">{t.invalidResetLink ?? "Invalid or missing reset link. Please use the link from your email or request a new one."}</p>
           </div>
@@ -63,7 +63,7 @@ export function ResetPasswordPage({ t }) {
     <div className="auth-wrap">
       <form className="card auth-card stack" onSubmit={submit}>
         <div className="page-header">
-          <img src={logoSrc} alt="HYDRA-TECH IT SUPPORT PLATFORM" className="login-brand-image" />
+          <Logo className="login-brand-image" alt="HYDRA-TECH IT SUPPORT PLATFORM" />
           <h2>{t.resetPassword ?? "Set new password"}</h2>
           <p className="muted">{t.resetPasswordHint ?? "Enter your new password below."}</p>
         </div>

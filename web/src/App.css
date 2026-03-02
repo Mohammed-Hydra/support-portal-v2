@@ -292,6 +292,12 @@ body {
   border-radius: 8px;
 }
 
+.sidebar .notification-badge.sidebar-badge {
+  top: 50%;
+  transform: translateY(-50%);
+  right: 8px;
+}
+
 .notification-dropdown {
   position: absolute;
   top: 100%;
@@ -461,6 +467,7 @@ body {
   display: grid;
   place-items: center;
   padding: 16px;
+  position: relative;
 }
 
 .auth-card {
@@ -503,7 +510,7 @@ button {
 input,
 select,
 textarea {
-  background: #ffffff;
+  background: var(--card);
   color: var(--text);
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api";
-import logoSrc from "../assets/hydra-tech-logo.svg";
+import { Logo } from "../components/Logo";
 
 export function LoginPage({ onLogin, t }) {
   const [email, setEmail] = useState("");
@@ -34,7 +34,7 @@ export function LoginPage({ onLogin, t }) {
     <div className="auth-wrap">
       <form className="card auth-card stack" onSubmit={submit}>
         <div className="page-header">
-          <img src={logoSrc} alt="HYDRA-TECH IT SUPPORT PLATFORM" className="login-brand-image" />
+          <Logo className="login-brand-image" alt="HYDRA-TECH IT SUPPORT PLATFORM" />
           <h2>{t.login}</h2>
           <p className="muted">Sign in to continue to the support portal.</p>
         </div>

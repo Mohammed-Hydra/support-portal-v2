@@ -177,6 +177,8 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS actor_name TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(user_id) WHERE read_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
 
@@ -209,4 +211,50 @@ CREATE TABLE IF NOT EXISTS ticket_custom_fields (
   field_value TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(ticket_id, field_key)
+);
+
+-- Canned responses (quick replies) for agents
+CREATE TABLE IF NOT EXISTS canned_responses (
+  id BIGSERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  category_filter TEXT[],
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_by BIGINT REFERENCES users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Ticket templates (pre-filled forms)
+CREATE TABLE IF NOT EXISTS ticket_templates (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  priority TEXT NOT NULL DEFAULT 'Medium',
+  custom_fields_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_by BIGINT REFERENCES users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Track merged tickets (source -> target)
+ALTER TABLE tickets ADD COLUMN IF NOT EXISTS merged_into_ticket_id BIGINT REFERENCES tickets(id) ON DELETE SET NULL;
+
+-- User preferences (sound, etc.)
+CREATE TABLE IF NOT EXISTS user_preferences (
+  user_id BIGINT NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  sound_on_notification BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Slack/Teams webhook config (admin)
+CREATE TABLE IF NOT EXISTS integration_webhooks (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('slack','teams')),
+  webhook_url TEXT NOT NULL,
+  events TEXT[] NOT NULL DEFAULT '{new_ticket,new_message}'::text[],
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

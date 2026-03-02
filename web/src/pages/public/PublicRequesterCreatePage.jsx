@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api";
-import logoSrc from "../../assets/hydra-tech-logo.svg";
+import { Logo } from "../../components/Logo";
+import { ThemeToggle } from "../../components/ThemeToggle";
+import { Collapsible } from "../../components/Collapsible";
 import { toastError, toastSuccess } from "../../toast";
 
 function blobToDataUrl(blob) {
@@ -83,6 +85,7 @@ async function compressImageToDataUrl(file, { maxDim = 1280, maxBytes = 2_000_00
 
 export function PublicRequesterCreatePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     requesterName: "",
     requesterEmail: "",
@@ -98,8 +101,18 @@ export function PublicRequesterCreatePage() {
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [kbArticles, setKbArticles] = useState([]);
+  const [kbSearch, setKbSearch] = useState("");
+  const [estimatedResponse, setEstimatedResponse] = useState(null);
 
   const DRAFT_KEY = "requesterCreateDraftV2";
+
+  useEffect(() => {
+    const emailFromQuery = searchParams.get("email");
+    if (emailFromQuery) {
+      setForm((prev) => ({ ...prev, requesterEmail: emailFromQuery }));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     try {
@@ -201,9 +214,34 @@ export function PublicRequesterCreatePage() {
 
   return (
     <div className="auth-wrap">
+      <div style={{ position: "absolute", top: 16, right: 16 }}>
+        <ThemeToggle />
+      </div>
+      <Collapsible title="Search FAQ / Knowledge Base" defaultOpen={false}>
+        <p className="muted" style={{ marginTop: 0 }}>Find answers before creating a ticket.</p>
+        <input
+          type="text"
+          placeholder="Search articles..."
+          value={kbSearch}
+          onChange={(e) => setKbSearch(e.target.value)}
+          style={{ marginBottom: 12 }}
+        />
+        {kbArticles.length > 0 ? (
+          <ul className="list" style={{ margin: 0, paddingLeft: 20 }}>
+            {kbArticles.map((a) => (
+              <li key={a.id}>
+                <strong>{a.title}</strong>
+                {a.category && <span className="muted"> ({a.category})</span>}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">No articles found. Try a different search or category.</p>
+        )}
+      </Collapsible>
       <form className="card auth-card stack" onSubmit={submit}>
         <div className="page-header">
-          <img src={logoSrc} alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" className="login-brand-image" />
+          <Logo className="login-brand-image" alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" />
           <h2>Requester Portal</h2>
           <p className="muted">Create a support ticket without login credentials.</p>
         </div>
@@ -251,6 +289,23 @@ export function PublicRequesterCreatePage() {
           />
         </label>
         <label>
+          Priority
+          <select
+            value={form.priority}
+            onChange={(e) => setForm({ ...form, priority: e.target.value })}
+          >
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+            <option>Critical</option>
+          </select>
+          {estimatedResponse && (
+            <small className="muted" style={{ display: "block", marginTop: 4 }}>
+              Est. response time: {estimatedResponse.text}
+            </small>
+          )}
+        </label>
+        <label>
           Category
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
             <option value="general">General</option>
@@ -261,7 +316,7 @@ export function PublicRequesterCreatePage() {
             <option value="other">Other</option>
           </select>
         </label>
-        {form.category === "other" ? (
+        {form.category === "other" && (
           <label>
             Other category
             <input
@@ -271,7 +326,7 @@ export function PublicRequesterCreatePage() {
               required
             />
           </label>
-        ) : null}
+        )}
         <label>
           Description
           <textarea
@@ -281,37 +336,14 @@ export function PublicRequesterCreatePage() {
             required
           />
         </label>
-        <div className="grid-2">
-          <label>
-            Priority
-            <select
-              value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value })}
-            >
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-              <option>Critical</option>
-            </select>
-            <small className="muted">
-              {form.priority === "Critical"
-                ? "Critical: business is down"
-                : form.priority === "High"
-                  ? "High: major impact"
-                  : form.priority === "Low"
-                    ? "Low: minor / how-to"
-                    : "Medium: normal request"}
-            </small>
-          </label>
-          <label>
-            Attachment
-            <input
-              type="file"
-              onChange={(e) => setAttachment(e.target.files?.[0] || null)}
-            />
-            <small className="muted">Images only. Large images are automatically compressed.</small>
-          </label>
-        </div>
+        <label>
+          Attachment
+          <input
+            type="file"
+            onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+          />
+          <small className="muted">Images only. Large images are automatically compressed.</small>
+        </label>
         {attachmentPreviewUrl ? (
           <div className="requester-attachment-preview">
             <p className="muted" style={{ margin: 0 }}>

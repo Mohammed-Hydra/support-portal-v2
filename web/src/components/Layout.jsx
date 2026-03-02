@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import logoSrc from "../assets/hydra-tech-logo.svg";
+import { Logo } from "./Logo";
 import { NotificationBell } from "./NotificationBell";
 import { Breadcrumbs } from "./Breadcrumbs";
+import { apiRequest } from "../api";
 
 const menu = [
   { to: "/", key: "dashboard" },
@@ -19,6 +20,7 @@ const menu = [
 export function Layout({ user, t, language, setLanguage, theme, setTheme, onLogout, token, children }) {
   const location = useLocation();
   const [copiedLink, setCopiedLink] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
@@ -44,6 +46,19 @@ export function Layout({ user, t, language, setLanguage, theme, setTheme, onLogo
     return undefined;
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!token) return;
+    apiRequest("/api/notifications/unread-count", { token })
+      .then((r) => setUnreadCount(r?.count ?? 0))
+      .catch(() => setUnreadCount(0));
+    const interval = setInterval(() => {
+      apiRequest("/api/notifications/unread-count", { token })
+        .then((r) => setUnreadCount(r?.count ?? 0))
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [token]);
+
   const copyLink = (url, which) => {
     if (!url) return;
     navigator.clipboard.writeText(url).then(() => {
@@ -65,7 +80,7 @@ export function Layout({ user, t, language, setLanguage, theme, setTheme, onLogo
         }}
       />
       <aside className="sidebar" id="app-sidebar" aria-hidden={menuOpen ? "false" : "true"}>
-        <img src={logoSrc} alt="HYDRA-TECH IT SUPPORT PLATFORM" className="brand-image" />
+        <Logo className="brand-image" alt="HYDRA-TECH IT SUPPORT PLATFORM" />
         <h2>{t.appName}</h2>
         <p className="hint">HYDRA-TECH.PRO support workspace</p>
         {(user?.role === "admin" || user?.role === "agent") && portalUrl && (
@@ -117,13 +132,19 @@ export function Layout({ user, t, language, setLanguage, theme, setTheme, onLogo
                 to={item.to}
                 className={location.pathname === item.to ? "active-link" : ""}
                 onClick={() => window.innerWidth <= 768 && setMenuOpen(false)}
+                style={{ position: "relative" }}
               >
                 {t[item.key]}
+                {item.to === "/tickets" && unreadCount > 0 && (
+                  <span className="notification-badge sidebar-badge" aria-hidden="true">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </Link>
             ))}
         </nav>
       </aside>
-      <div className="main-shell">
+      <div className="main-shell" onClick={() => menuOpen && setMenuOpen(false)}>
         <header className="topbar topbar-sticky">
           <div className="topbar-left">
             <button

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api";
 import { toastError, toastSuccess } from "../../toast";
 import { StatusBadge, PriorityBadge } from "../../components/StatusBadge";
 
 export function TicketDetailPage({ token, user }) {
   const { ticketId } = useParams();
+  const navigate = useNavigate();
   const [ticket, setTicket] = useState(null);
   const [agents, setAgents] = useState([]);
   const [assignedAgentId, setAssignedAgentId] = useState("");
@@ -28,6 +29,10 @@ export function TicketDetailPage({ token, user }) {
   const [editAssignedAgentId, setEditAssignedAgentId] = useState("");
   const [customFields, setCustomFields] = useState({});
   const [customFieldDefs, setCustomFieldDefs] = useState([]);
+  const [cannedResponses, setCannedResponses] = useState([]);
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [mergeTargetId, setMergeTargetId] = useState("");
+  const [merging, setMerging] = useState(false);
 
   const load = async () => {
     try {
@@ -70,6 +75,15 @@ export function TicketDetailPage({ token, user }) {
         toastError(err.message || "Failed to load agents.");
       });
   }, [token, user]);
+
+  useEffect(() => {
+    if (!token || (user?.role !== "admin" && user?.role !== "agent")) return;
+    const cat = ticket?.category?.trim() || "";
+    const qs = cat ? `?category=${encodeURIComponent(cat)}` : "";
+    apiRequest(`/api/canned-responses${qs}`, { token })
+      .then((rows) => setCannedResponses(Array.isArray(rows) ? rows : []))
+      .catch(() => setCannedResponses([]));
+  }, [token, user, ticket?.category]);
 
   const sendMessage = async (event) => {
     event.preventDefault();
@@ -313,6 +327,9 @@ export function TicketDetailPage({ token, user }) {
             <button type="button" disabled={busyAction} onClick={openEditModal}>
               Edit
             </button>
+            <button type="button" disabled={busyAction} onClick={() => setShowMergeModal(true)}>
+              Merge tickets
+            </button>
           </div>
         </form>
       ) : null;
@@ -555,7 +572,29 @@ export function TicketDetailPage({ token, user }) {
 
       <form className="card" onSubmit={sendMessage} style={{ marginBottom: 0 }}>
         <h3>Add Reply / Note</h3>
-        <textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
+        {cannedResponses.length > 0 && (
+          <div style={{ marginBottom: 8 }}>
+            <label className="muted" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>Quick replies</label>
+            <select
+              value=""
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v) {
+                  const item = cannedResponses.find((r) => String(r.id) === v);
+                  if (item) setMessage((prev) => (prev ? `${prev}\n\n${item.body}` : item.body));
+                  e.target.value = "";
+                }
+              }}
+              style={{ maxWidth: 280 }}
+            >
+              <option value="">Insert quick reply...</option>
+              {cannedResponses.map((r) => (
+                <option key={r.id} value={r.id}>{r.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        <textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your reply..." />
         {user?.role !== "requester" ? (
           <label className="inline-check">
             <input type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
@@ -564,6 +603,58 @@ export function TicketDetailPage({ token, user }) {
         ) : null}
         <button type="submit">Send</button>
       </form>
+
+      {showMergeModal && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={() => !merging && setShowMergeModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <strong>Merge tickets</strong>
+              <button type="button" className="icon-close" onClick={() => !merging && setShowMergeModal(false)} aria-label="Close">×</button>
+            </div>
+            <div className="modal-body">
+              <p className="muted">This ticket (#{ticketId}) will be merged into the target. All messages will move to the target, and this ticket will be closed.</p>
+              <label>
+                Target ticket ID (to merge into)
+                <input
+                  type="number"
+                  value={mergeTargetId}
+                  onChange={(e) => setMergeTargetId(e.target.value)}
+                  placeholder="e.g. 42"
+                />
+              </label>
+            </div>
+            <div className="modal-footer">
+              <button type="button" onClick={() => !merging && setShowMergeModal(false)}>Cancel</button>
+              <button
+                type="button"
+                disabled={merging || !mergeTargetId || Number(mergeTargetId) === Number(ticketId)}
+                onClick={async () => {
+                  const targetId = Number(mergeTargetId);
+                  if (!targetId || targetId === Number(ticketId)) return;
+                  setMerging(true);
+                  try {
+                    await apiRequest("/api/tickets/merge", {
+                      token,
+                      method: "POST",
+                      body: JSON.stringify({ sourceTicketId: Number(ticketId), targetTicketId: targetId }),
+                    });
+                    toastSuccess("Tickets merged.");
+                    setShowMergeModal(false);
+                    setMergeTargetId("");
+                    navigate(`/tickets/${targetId}`);
+                  } catch (err) {
+                    toastError(err.message || "Failed to merge.");
+                  } finally {
+                    setMerging(false);
+                  }
+                }}
+              >
+                {merging ? "Merging..." : "Merge"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

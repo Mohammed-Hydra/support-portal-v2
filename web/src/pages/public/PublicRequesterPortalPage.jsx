@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api";
-import logoSrc from "../../assets/hydra-tech-logo.svg";
+import { Logo } from "../../components/Logo";
+import { ThemeToggle } from "../../components/ThemeToggle";
 import { toastError, toastSuccess } from "../../toast";
 
 const STORAGE_KEY = "requesterPortalToken";
@@ -57,25 +58,25 @@ export function PublicRequesterPortalPage() {
     };
   }, [attachmentPreviewUrl]);
 
-  const refreshTickets = async () => {
+  const refreshTickets = async (silent = false) => {
     if (!requesterToken) return;
-    setLoadingTickets(true);
+    if (!silent) setLoadingTickets(true);
     const rows = await apiRequest("/api/public/requester/tickets", { headers: authHeaders });
     setTickets(Array.isArray(rows) ? rows : []);
     if (!selectedTicketId && rows[0]) {
       setSelectedTicketId(String(rows[0].id));
     }
-    setLoadingTickets(false);
+    if (!silent) setLoadingTickets(false);
   };
 
-  const refreshTicketDetails = async (ticketId) => {
+  const refreshTicketDetails = async (ticketId, silent = false) => {
     if (!requesterToken || !ticketId) return;
-    setLoadingTicket(true);
+    if (!silent) setLoadingTicket(true);
     const data = await apiRequest(`/api/public/requester/tickets/${ticketId}`, {
       headers: authHeaders,
     });
     setSelectedTicket(data);
-    setLoadingTicket(false);
+    if (!silent) setLoadingTicket(false);
   };
 
   useEffect(() => {
@@ -107,6 +108,17 @@ export function PublicRequesterPortalPage() {
     if (!selectedTicketId) return;
     refreshTicketDetails(selectedTicketId).catch((err) => setError(err.message || "Failed to load ticket details."));
   }, [selectedTicketId]);
+
+  useEffect(() => {
+    if (!requesterToken) return;
+    const interval = setInterval(() => {
+      refreshTickets(true).catch(() => {});
+      if (selectedTicketId) {
+        refreshTicketDetails(selectedTicketId, true).catch(() => {});
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [selectedTicketId, requesterToken]);
 
   useEffect(() => {
     if (!requesterToken) return;
@@ -280,14 +292,17 @@ export function PublicRequesterPortalPage() {
   if (!requesterToken) {
     return (
       <div className="auth-wrap">
+        <div style={{ position: "absolute", top: 16, right: 16 }}>
+          <ThemeToggle />
+        </div>
         <div className="card auth-card stack">
           <div className="page-header">
-            <img src={logoSrc} alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" className="login-brand-image" />
+            <Logo className="login-brand-image" alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" />
             <h2>Requester Access</h2>
-            <p className="muted">Use your email magic link to access your ticket portal.</p>
+            <p className="muted">Enter your email to access your ticket portal.</p>
           </div>
           {error ? <p className="error">{error}</p> : null}
-          <Link to="/public/requester/track">Request access link</Link>
+          <Link to="/public/requester/track">Track tickets by email</Link>
           <Link to="/public/requester">Create new ticket</Link>
         </div>
       </div>
@@ -348,7 +363,7 @@ export function PublicRequesterPortalPage() {
     <div className="content">
       <div className="container">
         <div className="page-header">
-          <img src={logoSrc} alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" className="login-brand-image" />
+          <Logo className="login-brand-image" alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" />
           <h1>Requester Ticket Portal</h1>
           <p className="muted">
             {requester?.name ? `${requester.name} - ` : ""}
@@ -358,6 +373,7 @@ export function PublicRequesterPortalPage() {
         {error ? <p className="error">{error}</p> : null}
         {info ? <p className="success">{info}</p> : null}
         <div className="top-actions" style={{ marginBottom: "12px" }}>
+          <ThemeToggle />
           <button type="button" onClick={() => refreshTickets().catch((err) => setError(err.message))}>
             Refresh
           </button>
@@ -433,6 +449,7 @@ export function PublicRequesterPortalPage() {
                     <th>Subject</th>
                     <th>Status</th>
                     <th>Priority</th>
+                    <th>Agent</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -451,16 +468,17 @@ export function PublicRequesterPortalPage() {
                       </td>
                       <td>{statusText(ticket.status)}</td>
                       <td>{ticket.priority}</td>
+                      <td>{ticket.assigned_agent_name || "—"}</td>
                     </tr>
                   ))}
                   {loadingTickets ? (
                     <tr>
-                      <td colSpan={4} className="muted">Loading...</td>
+                      <td colSpan={5} className="muted">Loading...</td>
                     </tr>
                   ) : null}
                   {!filteredTickets.length && !loadingTickets ? (
                     <tr>
-                      <td colSpan={4} className="muted">No tickets found.</td>
+                      <td colSpan={5} className="muted">No tickets found.</td>
                     </tr>
                   ) : null}
                 </tbody>
@@ -477,7 +495,7 @@ export function PublicRequesterPortalPage() {
                 <p><strong>Subject:</strong> {selectedTicket.subject}</p>
                 <p><strong>Status:</strong> {statusText(selectedTicket.status)}</p>
                 <p><strong>Priority:</strong> {selectedTicket.priority}</p>
-                <p><strong>Assigned:</strong> {selectedTicket.assigned_agent_name || "Support team"}</p>
+                <p><strong>Agent:</strong> {selectedTicket.assigned_agent_name || "Unassigned"}</p>
                 {expectedFirstResponse ? (
                   <p className="muted" style={{ marginTop: -6 }}>
                     Expected first response by <strong>{expectedFirstResponse}</strong>
@@ -503,7 +521,7 @@ export function PublicRequesterPortalPage() {
                   <button type="button" onClick={reopenTicket}>Reopen Ticket</button>
                 ) : null}
                 <hr />
-                <h4>Conversation</h4>
+                <h4>Conversation <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>(updates automatically)</span></h4>
                 {loadingTicket ? <p className="muted">Loading conversation...</p> : null}
                 {(selectedTicket.messages || []).map((item) => (
                   <div key={item.id} className="timeline-item">

@@ -18,7 +18,7 @@ function notificationsRoutes() {
     params.push(limit);
 
     const rows = await getMany(
-      `SELECT n.id, n.ticket_id, n.type, n.title, n.body, n.read_at, n.created_at, t.subject AS ticket_subject
+      `SELECT n.id, n.ticket_id, n.type, n.title, n.body, n.actor_name, n.read_at, n.created_at, t.subject AS ticket_subject
        FROM notifications n
        LEFT JOIN tickets t ON t.id = n.ticket_id
        ${where}
@@ -58,12 +58,33 @@ function notificationsRoutes() {
   return router;
 }
 
-async function createNotification({ userId, ticketId, type, title, body }) {
-  const { query } = require("../../db/client");
-  await query(
-    `INSERT INTO notifications (user_id, ticket_id, type, title, body) VALUES ($1, $2, $3, $4, $5)`,
-    [userId, ticketId || null, type, title, body || null]
-  );
+async function createNotification({ userId, ticketId, type, title, body, actorName }) {
+  try {
+    const { query } = require("../../db/client");
+    await query(
+      `INSERT INTO notifications (user_id, ticket_id, type, title, body, actor_name) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [userId, ticketId || null, type, title, body || null, actorName || null]
+    );
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn("createNotification failed:", err?.message || err);
+  }
 }
 
-module.exports = { notificationsRoutes, createNotification };
+async function notifyAdmins({ ticketId, type, title, body, actorName }) {
+  const { getMany, query } = require("../../db/client");
+  const admins = await getMany(`SELECT id FROM users WHERE role = 'admin' AND is_active = TRUE`);
+  for (const a of admins) {
+    try {
+      await query(
+        `INSERT INTO notifications (user_id, ticket_id, type, title, body, actor_name) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [a.id, ticketId || null, type, title, body || null, actorName || null]
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("notifyAdmins failed for user", a.id, err?.message || err);
+    }
+  }
+}
+
+module.exports = { notificationsRoutes, createNotification, notifyAdmins };

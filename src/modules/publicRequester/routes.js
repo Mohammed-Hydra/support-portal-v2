@@ -7,6 +7,7 @@ const path = require("path");
 const fs = require("fs");
 const { getMany, getOne, query } = require("../../db/client");
 const { calcDueDate, computeSla, pickLeastLoadedAgent, runAutomationRules } = require("../automations/service");
+const { fireWebhooks } = require("../../lib/webhooks");
 
 const REQUESTER_SESSION_SECRET = process.env.REQUESTER_SESSION_SECRET || process.env.JWT_SECRET || "change-me-v2";
 const REQUESTER_MAGIC_LINK_TTL_MINUTES = Number(process.env.REQUESTER_MAGIC_LINK_TTL_MINUTES || 20);
@@ -340,8 +341,18 @@ async function ensureRequesterOwnsTicket(requesterEmail, ticketId) {
   return ticket;
 }
 
-function publicRequesterRoutes({ logAudit }) {
+function publicRequesterRoutes({ logAudit, createNotification, notifyAdmins }) {
   const router = express.Router();
+
+  router.get("/public/requester/estimated-response", async (req, res) => {
+    const priority = (req.query.priority || "Medium").trim();
+    const category = (req.query.category || "").trim() || null;
+    const sla = await computeSla({ priority, category });
+    const minutes = sla?.first_response_minutes ?? 120;
+    const hours = Math.round(minutes / 6) / 10;
+    const text = hours >= 1 ? `~${hours}h` : `~${minutes}m`;
+    res.json({ minutes, hours, text });
+  });
 
   router.post("/public/requester/tickets", upload.single("attachment"), async (req, res) => {
     try {
@@ -430,6 +441,16 @@ function publicRequesterRoutes({ logAudit }) {
         logAudit,
       });
 
+      fireWebhooks("new_ticket", { ticketId: ticket.id, subject: ticket.subject, priority: ticket.priority }).catch(() => {});
+
+      const notify = createNotification || (() => {});
+      if (ticket.assigned_agent_id) {
+        notify({ userId: ticket.assigned_agent_id, ticketId: ticket.id, type: "assignment", title: `Assigned to ticket #${ticket.id}`, body: ticket.subject, actorName: "Requester" });
+      }
+      if (notifyAdmins) {
+        notifyAdmins({ ticketId: ticket.id, type: "new_ticket", title: `New ticket #${ticket.id}`, body: ticket.subject, actorName: "Requester" });
+      }
+
       let magicLinkSent = false;
       try {
         const rawToken = crypto.randomBytes(32).toString("hex");
@@ -457,6 +478,48 @@ function publicRequesterRoutes({ logAudit }) {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to create requester ticket" });
+    }
+  });
+
+  router.post("/public/requester/access", async (req, res) => {
+    try {
+      const email = normalizeEmail(req.body.email);
+      if (!email) {
+        res.status(400).json({ error: "email is required" });
+        return;
+      }
+
+      const hasTicket = await getOne(
+        `
+          SELECT t.id
+          FROM tickets t
+          LEFT JOIN contacts c ON c.id = t.requester_contact_id
+          WHERE LOWER(COALESCE(t.requester_email, c.email, '')) = $1
+          LIMIT 1
+        `,
+        [email]
+      );
+      if (!hasTicket) {
+        res.status(404).json({ error: "No tickets found for this email.", hasTickets: false });
+        return;
+      }
+
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const tokenHash = hashToken(rawToken);
+      const expiresAt = new Date(Date.now() + REQUESTER_MAGIC_LINK_TTL_MINUTES * 60000).toISOString();
+
+      await query(
+        `
+          INSERT INTO requester_magic_links (email, token_hash, expires_at, created_ip)
+          VALUES ($1, $2, $3, $4)
+        `,
+        [email, tokenHash, expiresAt, String(req.ip || "")]
+      );
+
+      await logAudit(null, null, "requester_instant_access", { email });
+      res.json({ token: rawToken });
+    } catch (error) {
+      res.status(500).json({ error: error.message || "Failed to get access" });
     }
   });
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api";
-import logoSrc from "../assets/hydra-tech-logo.svg";
+import { Logo } from "../components/Logo";
 
 export function ForgotPasswordPage({ t }) {
   const [email, setEmail] = useState("");
@@ -31,7 +31,7 @@ export function ForgotPasswordPage({ t }) {
     <div className="auth-wrap">
       <form className="card auth-card stack" onSubmit={submit}>
         <div className="page-header">
-          <img src={logoSrc} alt="HYDRA-TECH IT SUPPORT PLATFORM" className="login-brand-image" />
+          <Logo className="login-brand-image" alt="HYDRA-TECH IT SUPPORT PLATFORM" />
           <h2>{t.forgotPassword ?? "Reset password"}</h2>
           <p className="muted">{t.forgotPasswordHint ?? "Enter your email to receive a reset link."}</p>
         </div>

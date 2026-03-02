@@ -6,6 +6,8 @@
   --bg: #f8fbff;
   --text: #0f172a;
   --text-strong: #0b1324;
+  --logo-primary: #0f172a;
+  --logo-tagline: #0284c7;
   --card: #ffffff;
   --card-hover: #f3f9ff;
   --muted: #475569;
@@ -29,6 +31,8 @@
   --bg: #0f172a;
   --text: #e2e8f0;
   --text-strong: #f8fafc;
+  --logo-primary: #f8fafc;
+  --logo-tagline: #7dd3fc;
   --card: #1e293b;
   --card-hover: #334155;
   --muted: #94a3b8;
@@ -40,6 +44,34 @@
   --soft: #1e293b;
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  color: #f8fafc;
+  background-color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+[data-theme="dark"] select option {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover,
+[data-theme="dark"] input:-webkit-autofill:focus,
+[data-theme="dark"] input:-webkit-autofill:active {
+  -webkit-text-fill-color: #f8fafc;
+  -webkit-box-shadow: 0 0 0 30px #1e293b inset;
+  caret-color: #f8fafc;
 }
 
 html {

@@ -13,10 +13,13 @@ const { emailWebhookRoutes } = require("./modules/channels/emailWebhook");
 const { whatsappWebhookRoutes } = require("./modules/channels/whatsappWebhook");
 const { settingsRoutes } = require("./modules/settings/routes");
 const { publicRequesterRoutes } = require("./modules/publicRequester/routes");
-const { notificationsRoutes, createNotification } = require("./modules/notifications/routes");
+const { notificationsRoutes, createNotification, notifyAdmins } = require("./modules/notifications/routes");
 const { auditRoutes } = require("./modules/audit/routes");
 const { customFieldsRoutes } = require("./modules/customFields/routes");
+const { cannedResponsesRoutes } = require("./modules/cannedResponses/routes");
+const { ticketTemplatesRoutes } = require("./modules/ticketTemplates/routes");
 const { pickLeastLoadedAgent, computeSla, calcDueDate } = require("./modules/automations/service");
+const { fireWebhooks } = require("./lib/webhooks");
 const USER_EMAIL_DOMAIN = (process.env.USER_EMAIL_DOMAIN || "hydra-tech.pro").toLowerCase();
 const ENFORCE_USER_EMAIL_DOMAIN = !/^(false|0|no|off)$/i.test(String(process.env.ENFORCE_USER_EMAIL_DOMAIN || "true").trim());
 
@@ -187,6 +190,8 @@ async function createApp() {
       [ticketId, source, body || "", attachmentUrl || ""]
     );
     await query(`UPDATE tickets SET updated_at = NOW() WHERE id = $1`, [ticketId]);
+    const ticket = await getOne(`SELECT subject FROM tickets WHERE id = $1`, [ticketId]);
+    fireWebhooks("new_message", { ticketId, subject: ticket?.subject || "", bodyPreview: (body || "").slice(0, 200) }).catch(() => {});
   }
 
   app.use("/api", usersRoutes({ logAudit }));
@@ -195,10 +200,12 @@ async function createApp() {
   app.use("/api", notificationsRoutes());
   app.use("/api", auditRoutes());
   app.use("/api", customFieldsRoutes());
+  app.use("/api", cannedResponsesRoutes());
+  app.use("/api", ticketTemplatesRoutes());
   app.use("/api", contactsRoutes());
   app.use("/api", helpcenterRoutes());
   app.use("/api", settingsRoutes({ logAudit }));
-  app.use("/api", publicRequesterRoutes({ logAudit }));
+  app.use("/api", publicRequesterRoutes({ logAudit, createNotification, notifyAdmins }));
   app.use("/api", emailWebhookRoutes({ createInboundTicket, appendInboundMessage, logAudit }));
   app.use("/api", whatsappWebhookRoutes({ createInboundTicket, appendInboundMessage, logAudit }));
 

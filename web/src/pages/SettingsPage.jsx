@@ -71,6 +71,10 @@ export function SettingsPage({ token, user, t }) {
   const [changingPassword, setChangingPassword] = useState(false);
   const [customFieldDefs, setCustomFieldDefs] = useState([]);
   const [customFieldForm, setCustomFieldForm] = useState({ key: "", label: "", field_type: "text", category_filter: "", is_required: false });
+  const [soundOnNotification, setSoundOnNotification] = useState(false);
+  const [cannedResponses, setCannedResponses] = useState([]);
+  const [ticketTemplates, setTicketTemplates] = useState([]);
+  const [webhooks, setWebhooks] = useState([]);
 
   const isAdmin = user?.role === "admin";
   const channelHint = useMemo(
@@ -82,18 +86,24 @@ export function SettingsPage({ token, user, t }) {
     if (!isAdmin) return;
     setLoading(true);
     try {
-      const [slas, rules, runs, agentRows, defs] = await Promise.all([
+      const [slas, rules, runs, agentRows, defs, canned, templates, wh] = await Promise.all([
         apiRequest("/api/settings/sla-policies", { token }),
         apiRequest("/api/settings/automation-rules", { token }),
         apiRequest("/api/settings/automation-runs?limit=40", { token }),
         apiRequest("/api/users/agents", { token }),
         apiRequest("/api/custom-fields/definitions", { token }).catch(() => []),
+        apiRequest("/api/canned-responses", { token }).catch(() => []),
+        apiRequest("/api/ticket-templates", { token }).catch(() => []),
+        apiRequest("/api/settings/webhooks", { token }).catch(() => []),
       ]);
       setSlaPolicies(Array.isArray(slas) ? slas : []);
       setAutomationRules(Array.isArray(rules) ? rules : []);
       setAutomationRuns(Array.isArray(runs) ? runs : []);
       setAgents(Array.isArray(agentRows) ? agentRows : []);
       setCustomFieldDefs(Array.isArray(defs) ? defs : []);
+      setCannedResponses(Array.isArray(canned) ? canned : []);
+      setTicketTemplates(Array.isArray(templates) ? templates : []);
+      setWebhooks(Array.isArray(wh) ? wh : []);
     } catch (err) {
       toastError(err.message || "Failed to load settings.");
     } finally {
@@ -104,6 +114,27 @@ export function SettingsPage({ token, user, t }) {
   useEffect(() => {
     if (isAdmin) loadAll();
   }, [token, isAdmin]);
+
+  useEffect(() => {
+    apiRequest("/api/user/preferences", { token })
+      .then((p) => setSoundOnNotification(p?.sound_on_notification === true))
+      .catch(() => {});
+  }, [token]);
+
+  const saveSoundPref = async (checked) => {
+    setSoundOnNotification(checked);
+    try {
+      await apiRequest("/api/user/preferences", {
+        token,
+        method: "PATCH",
+        body: JSON.stringify({ sound_on_notification: checked }),
+      });
+      toastSuccess("Preferences saved.");
+    } catch (err) {
+      toastError(err.message || "Failed to save.");
+      setSoundOnNotification(!checked);
+    }
+  };
 
   const changePassword = async (event) => {
     event.preventDefault();
@@ -135,6 +166,49 @@ export function SettingsPage({ token, user, t }) {
       setChangingPassword(false);
     }
   };
+
+  const preferencesCard = (
+    <div className="subcard">
+      <h3>Notifications</h3>
+      <label className="inline-check">
+        <input
+          type="checkbox"
+          checked={soundOnNotification}
+          onChange={(e) => saveSoundPref(e.target.checked)}
+        />
+        Play sound when new ticket or reply arrives
+      </label>
+      {typeof Notification !== "undefined" && (
+        <label className="inline-check" style={{ marginTop: 8 }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={async () => {
+              try {
+                const perm = await Notification.requestPermission();
+                if (perm === "granted") {
+                  toastSuccess("Browser notifications enabled. You'll get alerts for new tickets and replies.");
+                } else if (perm === "denied") {
+                  toastError("Notifications blocked. Enable them in your browser settings.");
+                }
+              } catch (e) {
+                toastError("Could not request notification permission.");
+              }
+            }}
+          >
+            {Notification.permission === "granted"
+              ? "Browser notifications enabled"
+              : "Enable browser notifications"}
+          </button>
+          <span className="muted" style={{ marginLeft: 8 }}>
+            {Notification.permission === "granted"
+              ? "You'll receive alerts when the tab is open."
+              : "Get desktop alerts for new tickets and replies."}
+          </span>
+        </label>
+      )}
+    </div>
+  );
 
   const changePasswordCard = (
     <div className="subcard">
@@ -182,9 +256,12 @@ export function SettingsPage({ token, user, t }) {
       <div>
         <div className="page-header">
           <h1>{t.settings}</h1>
-          <p>Change your account password.</p>
+          <p>Change your account password and preferences.</p>
         </div>
-        <div className="card">{changePasswordCard}</div>
+        <div className="card stack">
+          {preferencesCard}
+          {changePasswordCard}
+        </div>
       </div>
     );
   }
@@ -283,6 +360,7 @@ export function SettingsPage({ token, user, t }) {
       </div>
 
       <div className="card">
+        {preferencesCard}
         {changePasswordCard}
         <div className="subcard">
           <h3>{editingSlaId ? "Edit SLA Policy" : "Create SLA Policy"}</h3>
@@ -785,6 +863,146 @@ export function SettingsPage({ token, user, t }) {
           <h3>Channel Settings</h3>
           <p>{channelHint}</p>
         </div>
+
+        {(user?.role === "admin" || user?.role === "agent") ? (
+          <div className="subcard">
+            <h3>Quick replies (canned responses)</h3>
+            <p className="muted">Pre-defined replies for common issues. Use in ticket replies via the dropdown.</p>
+            <form className="stack" onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.target;
+              const title = (form.title?.value || "").trim();
+              const body = (form.body?.value || "").trim();
+              if (!title || !body) return;
+              try {
+                await apiRequest("/api/canned-responses", { token, method: "POST", body: JSON.stringify({ title, body }) });
+                toastSuccess("Quick reply added.");
+                form.reset();
+                await loadAll();
+              } catch (err) { toastError(err.message); }
+            }}>
+              <div className="grid-2">
+                <input name="title" placeholder="Title (e.g. Password reset)" required />
+                <textarea name="body" rows={2} placeholder="Reply text..." required />
+              </div>
+              <button type="submit">Add quick reply</button>
+            </form>
+            <ul className="list" style={{ marginTop: 12 }}>
+              {cannedResponses.map((r) => (
+                <li key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <span><strong>{r.title}</strong> — {String(r.body).slice(0, 50)}…</span>
+                  <button type="button" className="btn-secondary" onClick={async () => {
+                    if (confirm("Delete this quick reply?")) {
+                      await apiRequest(`/api/canned-responses/${r.id}`, { token, method: "DELETE" });
+                      toastSuccess("Deleted.");
+                      await loadAll();
+                    }
+                  }}>Delete</button>
+                </li>
+              ))}
+              {!cannedResponses.length && <li className="muted">No quick replies yet.</li>}
+            </ul>
+          </div>
+        ) : null}
+
+        {(user?.role === "admin" || user?.role === "agent") ? (
+          <div className="subcard">
+            <h3>Ticket templates</h3>
+            <p className="muted">Pre-filled forms for common request types. Select when creating a ticket.</p>
+            <form className="stack" onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.target;
+              const name = (form.tplName?.value || "").trim();
+              const subject = (form.tplSubject?.value || "").trim();
+              const description = (form.tplDesc?.value || "").trim();
+              const category = form.tplCategory?.value || "general";
+              const priority = form.tplPriority?.value || "Medium";
+              if (!name || !subject) return;
+              try {
+                await apiRequest("/api/ticket-templates", { token, method: "POST", body: JSON.stringify({ name, subject, description, category, priority }) });
+                toastSuccess("Template added.");
+                form.reset();
+                await loadAll();
+              } catch (err) { toastError(err.message); }
+            }}>
+              <div className="grid-2">
+                <input name="tplName" placeholder="Template name" required />
+                <input name="tplSubject" placeholder="Default subject" required />
+              </div>
+              <textarea name="tplDesc" rows={2} placeholder="Default description (optional)" />
+              <div className="grid-2">
+                <select name="tplCategory">
+                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <select name="tplPriority">
+                  {priorities.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <button type="submit">Add template</button>
+            </form>
+            <ul className="list" style={{ marginTop: 12 }}>
+              {ticketTemplates.map((t) => (
+                <li key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <span><strong>{t.name}</strong> — {t.subject}</span>
+                  <button type="button" className="btn-secondary" onClick={async () => {
+                    if (confirm("Delete this template?")) {
+                      await apiRequest(`/api/ticket-templates/${t.id}`, { token, method: "DELETE" });
+                      toastSuccess("Deleted.");
+                      await loadAll();
+                    }
+                  }}>Delete</button>
+                </li>
+              ))}
+              {!ticketTemplates.length && <li className="muted">No templates yet.</li>}
+            </ul>
+          </div>
+        ) : null}
+
+        {isAdmin ? (
+          <div className="subcard">
+            <h3>Slack / Teams webhooks</h3>
+            <p className="muted">Get notified when new tickets or messages arrive. Add your incoming webhook URL.</p>
+            <form className="stack" onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.target;
+              const name = (form.whName?.value || "").trim();
+              const url = (form.whUrl?.value || "").trim();
+              const type = form.whType?.value || "slack";
+              if (!name || !url) return;
+              try {
+                await apiRequest("/api/settings/webhooks", { token, method: "POST", body: JSON.stringify({ name, webhook_url: url, type }) });
+                toastSuccess("Webhook added.");
+                form.reset();
+                await loadAll();
+              } catch (err) { toastError(err.message); }
+            }}>
+              <div className="grid-2">
+                <input name="whName" placeholder="Name (e.g. Support channel)" required />
+                <select name="whType">
+                  <option value="slack">Slack</option>
+                  <option value="teams">Teams</option>
+                </select>
+              </div>
+              <input name="whUrl" type="url" placeholder="Webhook URL" required />
+              <button type="submit">Add webhook</button>
+            </form>
+            <ul className="list" style={{ marginTop: 12 }}>
+              {webhooks.map((w) => (
+                <li key={w.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>{w.name} ({w.type})</span>
+                  <button type="button" className="btn-secondary" onClick={async () => {
+                    if (confirm("Remove this webhook?")) {
+                      await apiRequest(`/api/settings/webhooks/${w.id}`, { token, method: "DELETE" });
+                      toastSuccess("Removed.");
+                      await loadAll();
+                    }
+                  }}>Remove</button>
+                </li>
+              ))}
+              {!webhooks.length && <li className="muted">No webhooks configured.</li>}
+            </ul>
+          </div>
+        ) : null}
 
         {isAdmin ? (
           <div className="subcard">

@@ -9,11 +9,47 @@ export function NotificationBell({ token }) {
   const [loading, setLoading] = useState(false);
   const ref = useRef(null);
 
+  const prevUnreadRef = useRef(0);
+
   const fetchUnreadCount = async () => {
     if (!token) return;
     try {
       const { count } = await apiRequest("/api/notifications/unread-count", { token });
-      setUnreadCount(count ?? 0);
+      const next = count ?? 0;
+      if (next > prevUnreadRef.current && next > 0) {
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          try {
+            new Notification("New notification", {
+              body: `You have ${next} unread notification${next > 1 ? "s" : ""}`,
+              tag: "portal-notification",
+            });
+          } catch (e) {
+            // ignore
+          }
+        }
+        apiRequest("/api/user/preferences", { token })
+          .then((p) => {
+            if (p?.sound_on_notification && next > 0) {
+              try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 800;
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.15);
+              } catch (e) {
+                // ignore
+              }
+            }
+          })
+          .catch(() => {});
+      }
+      prevUnreadRef.current = next;
+      setUnreadCount(next);
     } catch {
       // ignore
     }
@@ -77,6 +113,7 @@ export function NotificationBell({ token }) {
   const typeLabel = (type) => {
     const map = {
       new_message: "New message",
+      new_ticket: "New ticket",
       assignment: "Assigned",
       status_change: "Status change",
     };
@@ -147,6 +184,9 @@ export function NotificationBell({ token }) {
                 >
                   <div className="notification-item-type">{typeLabel(n.type)}</div>
                   <div className="notification-item-title">{n.title}</div>
+                  {n.actor_name && (
+                    <div className="notification-item-actor muted">by {n.actor_name}</div>
+                  )}
                   {n.body && <div className="notification-item-body">{n.body}</div>}
                   <div className="notification-item-time">{formatTime(n.created_at)}</div>
                 </Link>

@@ -19,6 +19,8 @@ export function TicketListPage({ token, user, t }) {
   const [busyTicketId, setBusyTicketId] = useState("");
   const [agents, setAgents] = useState([]);
   const [searchTicketId, setSearchTicketId] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const [estimatedResponse, setEstimatedResponse] = useState(null);
   const [form, setForm] = useState({
     subject: "",
     description: "",
@@ -35,6 +37,7 @@ export function TicketListPage({ token, user, t }) {
   const [kbSuggestions, setKbSuggestions] = useState([]);
   const [customFieldDefs, setCustomFieldDefs] = useState([]);
   const [customFields, setCustomFields] = useState({});
+  const [ticketTemplates, setTicketTemplates] = useState([]);
 
   const listFilters = useMemo(() => {
     const qs = new URLSearchParams(location.search || "");
@@ -48,7 +51,8 @@ export function TicketListPage({ token, user, t }) {
     const daysParsed = Number(daysRaw);
     const days = Number.isFinite(daysParsed) && daysParsed > 0 ? String(Math.floor(daysParsed)) : "";
     const breached = qs.get("breached") === "1" || qs.get("breached") === "true";
-    return { status, priority, category, agent, channel, id, days, breached };
+    const search = String(qs.get("search") || "").trim();
+    return { status, priority, category, agent, channel, id, days, breached, search };
   }, [location.search]);
 
   const load = async () => {
@@ -63,6 +67,7 @@ export function TicketListPage({ token, user, t }) {
       if (listFilters.id) qs.set("id", listFilters.id);
       if (listFilters.breached) qs.set("breached", "1");
       if (listFilters.days) qs.set("days", listFilters.days);
+      if (listFilters.search) qs.set("search", listFilters.search);
       const url = qs.toString() ? `/api/tickets?${qs.toString()}` : "/api/tickets";
       const rows = await apiRequest(url, { token });
       setTickets(rows);
@@ -73,16 +78,34 @@ export function TicketListPage({ token, user, t }) {
 
   useEffect(() => {
     load();
-  }, [token, listFilters.status, listFilters.priority, listFilters.category, listFilters.agent, listFilters.channel, listFilters.id, listFilters.breached, listFilters.days]);
+  }, [token, listFilters.status, listFilters.priority, listFilters.category, listFilters.agent, listFilters.channel, listFilters.id, listFilters.breached, listFilters.days, listFilters.search]);
 
   useEffect(() => {
     const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
-  }, [token, listFilters.status, listFilters.priority, listFilters.category, listFilters.agent, listFilters.channel, listFilters.id, listFilters.breached, listFilters.days]);
+  }, [token, listFilters.status, listFilters.priority, listFilters.category, listFilters.agent, listFilters.channel, listFilters.id, listFilters.breached, listFilters.days, listFilters.search]);
 
   useEffect(() => {
     setSearchTicketId(listFilters.id || "");
-  }, [listFilters.id]);
+    setSearchText(listFilters.search || "");
+  }, [listFilters.id, listFilters.search]);
+
+  useEffect(() => {
+    if (!token || (user?.role !== "admin" && user?.role !== "agent" && user?.role !== "requester")) return;
+    const qs = new URLSearchParams();
+    qs.set("priority", form.priority || "Medium");
+    if (form.category && form.category !== "other") qs.set("category", form.category);
+    apiRequest(`/api/settings/estimated-response?${qs.toString()}`, { token })
+      .then((r) => setEstimatedResponse(r))
+      .catch(() => setEstimatedResponse(null));
+  }, [token, user?.role, form.priority, form.category]);
+
+  useEffect(() => {
+    if (user?.role !== "admin" && user?.role !== "agent") return;
+    apiRequest("/api/ticket-templates", { token })
+      .then((rows) => setTicketTemplates(Array.isArray(rows) ? rows : []))
+      .catch(() => setTicketTemplates([]));
+  }, [token, user]);
 
   useEffect(() => {
     const search = (form.subject || "").trim();
@@ -122,7 +145,7 @@ export function TicketListPage({ token, user, t }) {
   };
 
   const handleSearch = () => {
-    applyFilters({ id: searchTicketId.trim() || null });
+    applyFilters({ id: searchTicketId.trim() || null, search: searchText.trim() || null });
   };
 
   const submitTicket = async (event) => {
@@ -268,7 +291,7 @@ export function TicketListPage({ token, user, t }) {
       </div>
       {error ? <p className="error">{error}</p> : null}
 
-      {(listFilters.status || listFilters.priority || listFilters.category || listFilters.agent || listFilters.channel || listFilters.id || listFilters.breached || listFilters.days) ? (
+      {(listFilters.status || listFilters.priority || listFilters.category || listFilters.agent || listFilters.channel || listFilters.id || listFilters.breached || listFilters.days || listFilters.search) ? (
         <div className="card">
           <div className="tickets-header">
             <h3>Active Filters</h3>
@@ -284,6 +307,7 @@ export function TicketListPage({ token, user, t }) {
               listFilters.channel ? `Type: ${listFilters.channel}` : null,
               listFilters.id ? `Ticket #${listFilters.id}` : null,
               listFilters.days ? `Last ${listFilters.days} days` : null,
+              listFilters.search ? `Search: "${listFilters.search}"` : null,
             ].filter(Boolean).join(" • ")}
           </p>
         </div>
@@ -291,6 +315,37 @@ export function TicketListPage({ token, user, t }) {
 
       <Collapsible title="Create Ticket" defaultOpen={true}>
       <form className="card stack" onSubmit={submitTicket}>
+        {ticketTemplates.length > 0 && (user?.role === "admin" || user?.role === "agent") && (
+          <label>
+            Use template
+            <select
+              value=""
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v) {
+                  const tpl = ticketTemplates.find((t) => String(t.id) === v);
+                  if (tpl) {
+                    setForm((prev) => ({
+                      ...prev,
+                      subject: tpl.subject,
+                      description: tpl.description || "",
+                      category: tpl.category || "general",
+                      priority: tpl.priority || "Medium",
+                    }));
+                    const cf = tpl.custom_fields_json;
+                    setCustomFields(typeof cf === "string" ? (() => { try { return JSON.parse(cf || "{}"); } catch { return {}; } })() : (cf || {}));
+                  }
+                  e.target.value = "";
+                }
+              }}
+            >
+              <option value="">Select template (optional)</option>
+              {ticketTemplates.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </label>
+        )}
         {(user?.role === "admin" || user?.role === "agent") && (
           <>
             <div className="grid-2">
@@ -341,14 +396,19 @@ export function TicketListPage({ token, user, t }) {
               required
             />
           </label>
-          <label>
-            Priority
-            <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
-              {priorities.map((priority) => (
-                <option key={priority}>{priority}</option>
-              ))}
-            </select>
-          </label>
+        <label>
+          Priority
+          <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+            {priorities.map((priority) => (
+              <option key={priority}>{priority}</option>
+            ))}
+          </select>
+          {estimatedResponse && (
+            <small className="muted" style={{ display: "block", marginTop: 4 }}>
+              Est. response time: {estimatedResponse.text}
+            </small>
+          )}
+        </label>
         </div>
         <div className="grid-2">
           <label>
@@ -536,7 +596,17 @@ export function TicketListPage({ token, user, t }) {
             </label>
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "flex-end", flexWrap: "wrap" }}>
-            <label style={{ margin: 0, flex: "1 1 120px", minWidth: "120px" }}>
+            <label style={{ margin: 0, flex: "1 1 140px", minWidth: "140px" }}>
+              <span style={{ display: "block", marginBottom: "4px" }}>Search text</span>
+              <input
+                type="text"
+                placeholder="Subject or description..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+            </label>
+            <label style={{ margin: 0, flex: "1 1 100px", minWidth: "100px" }}>
               <span style={{ display: "block", marginBottom: "4px" }}>Ticket #</span>
               <input
                 type="text"

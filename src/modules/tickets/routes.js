@@ -6,6 +6,8 @@ const { authRequired, roleRequired } = require("../../middleware/auth");
 const { getMany, getOne, query } = require("../../db/client");
 const { pickLeastLoadedAgent, computeSla, calcDueDate, runAutomationRules } = require("../automations/service");
 const { sendNotificationEmail, getRequesterTrackUrl } = require("../../lib/mailer");
+const { fireWebhooks } = require("../../lib/webhooks");
+const { createNotification, notifyAdmins } = require("../notifications/routes");
 
 function escapeHtml(value) {
   return String(value || "")
@@ -114,8 +116,9 @@ function splitTags(value) {
     .filter(Boolean);
 }
 
-function ticketsRoutes({ logAudit, createNotification }) {
+function ticketsRoutes({ logAudit, createNotification: createNotificationFromApp }) {
   const router = express.Router();
+  const notify = createNotificationFromApp || createNotification;
   const noop = () => {};
 
   async function getRequesterNotificationTarget(ticketId) {
@@ -236,6 +239,15 @@ function ticketsRoutes({ logAudit, createNotification }) {
       if (Number.isFinite(ticketId)) {
         filters.push(`t.id = $${idx}`);
         params.push(ticketId);
+        idx += 1;
+      }
+    }
+    if (req.query.search) {
+      const search = String(req.query.search).trim();
+      if (search) {
+        const pattern = `%${search}%`;
+        filters.push(`(t.subject ILIKE $${idx} OR t.description ILIKE $${idx})`);
+        params.push(pattern);
         idx += 1;
       }
     }
@@ -443,10 +455,10 @@ function ticketsRoutes({ logAudit, createNotification }) {
       }
 
       await logAudit(req.user.sub, ticket.id, "ticket_created", { priority, status });
-      const notify = createNotification || noop;
       if (autoAgent && Number(autoAgent.id) !== Number(req.user.sub)) {
-        await notify({ userId: autoAgent.id, ticketId: ticket.id, type: "assignment", title: `Assigned to ticket #${ticket.id}`, body: ticket.subject });
+        await notify({ userId: autoAgent.id, ticketId: ticket.id, type: "assignment", title: `Assigned to ticket #${ticket.id}`, body: ticket.subject, actorName: req.user?.name });
       }
+      await notifyAdmins({ ticketId: ticket.id, type: "new_ticket", title: `New ticket #${ticket.id}`, body: ticket.subject, actorName: req.user?.name });
       await runAutomationRules({
         eventName: "ticket_created",
         ticketId: ticket.id,
@@ -454,6 +466,7 @@ function ticketsRoutes({ logAudit, createNotification }) {
         context: {},
         logAudit,
       });
+      fireWebhooks("new_ticket", { ticketId: ticket.id, subject: ticket.subject, priority: ticket.priority }).catch(() => {});
       res.status(201).json(ticket);
     } catch (error) {
       res.status(500).json({ error: "Failed to create ticket" });
@@ -603,18 +616,16 @@ function ticketsRoutes({ logAudit, createNotification }) {
           });
         }
         const ticketRow = await getOne(`SELECT subject, requester_user_id, assigned_agent_id FROM tickets WHERE id = $1`, [ticketId]);
-        const notify = createNotification || noop;
         if (ticketRow?.requester_user_id) {
-          await notify({ userId: ticketRow.requester_user_id, ticketId, type: "status_change", title: `Ticket #${ticketId} status: ${nextStatus}`, body: ticketRow.subject });
+          await notify({ userId: ticketRow.requester_user_id, ticketId, type: "status_change", title: `Ticket #${ticketId} status: ${nextStatus}`, body: ticketRow.subject, actorName: req.user?.name });
         }
         if (ticketRow?.assigned_agent_id && Number(ticketRow.assigned_agent_id) !== Number(req.user.sub)) {
-          await notify({ userId: ticketRow.assigned_agent_id, ticketId, type: "status_change", title: `Ticket #${ticketId} status: ${nextStatus}`, body: ticketRow.subject });
+          await notify({ userId: ticketRow.assigned_agent_id, ticketId, type: "status_change", title: `Ticket #${ticketId} status: ${nextStatus}`, body: ticketRow.subject, actorName: req.user?.name });
         }
       }
       if (assignedAgentId !== existing.assigned_agent_id && assignedAgentId) {
         const ticketRow = await getOne(`SELECT subject FROM tickets WHERE id = $1`, [ticketId]);
-        const notify = createNotification || noop;
-        await notify({ userId: assignedAgentId, ticketId, type: "assignment", title: `Assigned to ticket #${ticketId}`, body: ticketRow?.subject });
+        await notify({ userId: assignedAgentId, ticketId, type: "assignment", title: `Assigned to ticket #${ticketId}`, body: ticketRow?.subject, actorName: req.user?.name });
         const requesterRow = await getOne(`SELECT requester_user_id FROM tickets WHERE id = $1`, [ticketId]);
         if (requesterRow?.requester_user_id) {
           await notifyRequester({
@@ -696,20 +707,21 @@ function ticketsRoutes({ logAudit, createNotification }) {
           eventType: "message",
         });
         const ticketRow = await getOne(`SELECT subject, requester_user_id, assigned_agent_id FROM tickets WHERE id = $1`, [ticketId]);
-        const notify = createNotification || noop;
         if (ticketRow?.requester_user_id) {
-          await notify({ userId: ticketRow.requester_user_id, ticketId, type: "new_message", title: `New reply on ticket #${ticketId}`, body: snippet || "New update" });
+          await notify({ userId: ticketRow.requester_user_id, ticketId, type: "new_message", title: `New reply on ticket #${ticketId}`, body: snippet || "New update", actorName: req.user?.name });
         }
         if (ticketRow?.assigned_agent_id && Number(ticketRow.assigned_agent_id) !== Number(req.user.sub)) {
-          await notify({ userId: ticketRow.assigned_agent_id, ticketId, type: "new_message", title: `New reply on ticket #${ticketId}`, body: snippet || "New update" });
+          await notify({ userId: ticketRow.assigned_agent_id, ticketId, type: "new_message", title: `New reply on ticket #${ticketId}`, body: snippet || "New update", actorName: req.user?.name });
         }
       }
       if (req.user.role === "requester") {
         const ticketRow = await getOne(`SELECT assigned_agent_id FROM tickets WHERE id = $1`, [ticketId]);
-        const notify = createNotification || noop;
         if (ticketRow?.assigned_agent_id) {
-          await notify({ userId: ticketRow.assigned_agent_id, ticketId, type: "new_message", title: `New reply on ticket #${ticketId}`, body: body ? (body.length > 200 ? body.slice(0, 200) + "…" : body) : "New reply" });
+          await notify({ userId: ticketRow.assigned_agent_id, ticketId, type: "new_message", title: `New reply on ticket #${ticketId}`, body: body ? (body.length > 200 ? body.slice(0, 200) + "…" : body) : "New reply", actorName: req.user?.name });
         }
+      }
+      if (!isInternal) {
+        fireWebhooks("new_message", { ticketId, subject: ticket.subject, bodyPreview: body ? body.slice(0, 200) : "" }).catch(() => {});
       }
       res.status(201).json({ success: true });
     } catch (error) {
@@ -743,6 +755,42 @@ function ticketsRoutes({ logAudit, createNotification }) {
     await query(`UPDATE tickets SET status = $1, updated_at = NOW() WHERE id = ANY($2::bigint[])`, [status, ticketIds]);
     await logAudit(req.user.sub, null, "tickets_bulk_status_update", { status, ticketIds });
     res.json({ success: true, updated: ticketIds.length });
+  });
+
+  router.post("/tickets/merge", authRequired, roleRequired("admin", "agent"), async (req, res) => {
+    const sourceId = Number(req.body.sourceTicketId);
+    const targetId = Number(req.body.targetTicketId);
+    if (!sourceId || !targetId || sourceId === targetId) {
+      res.status(400).json({ error: "sourceTicketId and targetTicketId required and must differ" });
+      return;
+    }
+    const source = await getOne(`SELECT * FROM tickets WHERE id = $1`, [sourceId]);
+    const target = await getOne(`SELECT * FROM tickets WHERE id = $1`, [targetId]);
+    if (!source || !target) {
+      res.status(404).json({ error: "One or both tickets not found" });
+      return;
+    }
+    const messages = await getMany(`SELECT * FROM ticket_messages WHERE ticket_id = $1 ORDER BY created_at ASC`, [sourceId]);
+    for (const m of messages) {
+      await query(
+        `INSERT INTO ticket_messages (ticket_id, author_user_id, source, body, attachment_url, is_internal, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [targetId, m.author_user_id, m.source, m.body, m.attachment_url, m.is_internal, m.created_at]
+      );
+    }
+    const customFields = await getMany(`SELECT * FROM ticket_custom_fields WHERE ticket_id = $1`, [sourceId]);
+    for (const cf of customFields) {
+      await query(
+        `INSERT INTO ticket_custom_fields (ticket_id, field_key, field_value, created_at)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (ticket_id, field_key) DO UPDATE SET field_value = EXCLUDED.field_value`,
+        [targetId, cf.field_key, cf.field_value, cf.created_at]
+      ).catch(() => {});
+    }
+    await query(`UPDATE tickets SET status = 'Closed', merged_into_ticket_id = $1, updated_at = NOW() WHERE id = $2`, [targetId, sourceId]);
+    await query(`UPDATE tickets SET updated_at = NOW() WHERE id = $1`, [targetId]);
+    await logAudit(req.user.sub, targetId, "tickets_merged", { sourceTicketId: sourceId, targetTicketId: targetId });
+    res.json({ success: true, targetTicketId: targetId });
   });
 
   return router;

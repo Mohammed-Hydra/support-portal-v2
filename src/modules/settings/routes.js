@@ -1,6 +1,7 @@
 const express = require("express");
 const { authRequired, roleRequired } = require("../../middleware/auth");
 const { getMany, getOne, query } = require("../../db/client");
+const { computeSla } = require("../automations/service");
 const { runAutomationRules } = require("../automations/service");
 
 function toJson(value) {
@@ -278,6 +279,64 @@ function settingsRoutes({ logAudit }) {
         actions_applied: toJson(row.actions_applied),
       }))
     );
+  });
+
+  router.get("/settings/estimated-response", authRequired, async (req, res) => {
+    const priority = (req.query.priority || "Medium").trim();
+    const category = (req.query.category || "").trim() || null;
+    const sla = await computeSla({ priority, category });
+    const minutes = sla?.first_response_minutes ?? 120;
+    const hours = Math.round(minutes / 6) / 10;
+    const text = hours >= 1 ? `~${hours}h` : `~${minutes}m`;
+    res.json({ minutes, hours, text });
+  });
+
+  router.get("/user/preferences", authRequired, async (req, res) => {
+    const row = await getOne(`SELECT * FROM user_preferences WHERE user_id = $1`, [req.user.sub]);
+    res.json(row || { sound_on_notification: false });
+  });
+
+  router.patch("/user/preferences", authRequired, async (req, res) => {
+    const sound = req.body.sound_on_notification === true;
+    await query(
+      `INSERT INTO user_preferences (user_id, sound_on_notification, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET sound_on_notification = $2, updated_at = NOW()`,
+      [req.user.sub, sound]
+    );
+    res.json({ sound_on_notification: sound });
+  });
+
+  router.get("/settings/webhooks", authRequired, roleRequired("admin"), async (req, res) => {
+    const rows = await getMany(`SELECT id, name, type, events, is_active FROM integration_webhooks ORDER BY id`);
+    res.json(rows);
+  });
+
+  router.post("/settings/webhooks", authRequired, roleRequired("admin"), async (req, res) => {
+    const body = req.body || {};
+    if (!body.name || !body.webhook_url || !body.type) {
+      res.status(400).json({ error: "name, webhook_url, and type are required" });
+      return;
+    }
+    const events = Array.isArray(body.events) ? body.events : ["new_ticket", "new_message"];
+    const created = await query(
+      `INSERT INTO integration_webhooks (name, type, webhook_url, events, is_active)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, name, type, events, is_active`,
+      [String(body.name).trim(), body.type, String(body.webhook_url).trim(), events, body.is_active !== false]
+    );
+    res.status(201).json(created.rows[0]);
+  });
+
+  router.delete("/settings/webhooks/:id", authRequired, roleRequired("admin"), async (req, res) => {
+    const id = Number(req.params.id);
+    const existing = await getOne(`SELECT * FROM integration_webhooks WHERE id = $1`, [id]);
+    if (!existing) {
+      res.status(404).json({ error: "Webhook not found" });
+      return;
+    }
+    await query(`DELETE FROM integration_webhooks WHERE id = $1`, [id]);
+    res.status(204).send();
   });
 
   return router;
