@@ -65,6 +65,12 @@ async function createNotification({ userId, ticketId, type, title, body, actorNa
       `INSERT INTO notifications (user_id, ticket_id, type, title, body, actor_name) VALUES ($1, $2, $3, $4, $5, $6)`,
       [userId, ticketId || null, type, title, body || null, actorName || null]
     );
+    try {
+      const { sendPushToUser } = require("../../lib/push");
+      await sendPushToUser(userId, { title, body: body || "", ticketId, type });
+    } catch (e) {
+      // ignore push errors
+    }
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn("createNotification failed:", err?.message || err);
@@ -73,6 +79,7 @@ async function createNotification({ userId, ticketId, type, title, body, actorNa
 
 async function notifyAdmins({ ticketId, type, title, body, actorName }) {
   const { getMany, query } = require("../../db/client");
+  const { sendPushToUser } = require("../../lib/push");
   const admins = await getMany(`SELECT id FROM users WHERE role = 'admin' AND is_active = TRUE`);
   for (const a of admins) {
     try {
@@ -80,6 +87,11 @@ async function notifyAdmins({ ticketId, type, title, body, actorName }) {
         `INSERT INTO notifications (user_id, ticket_id, type, title, body, actor_name) VALUES ($1, $2, $3, $4, $5, $6)`,
         [a.id, ticketId || null, type, title, body || null, actorName || null]
       );
+      try {
+        await sendPushToUser(a.id, { title, body: body || "", ticketId, type });
+      } catch (e) {
+        // ignore push errors
+      }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.warn("notifyAdmins failed for user", a.id, err?.message || err);

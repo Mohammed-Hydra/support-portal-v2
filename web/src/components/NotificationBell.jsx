@@ -36,11 +36,11 @@ export function NotificationBell({ token }) {
                 const gain = ctx.createGain();
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-                osc.frequency.value = 800;
-                gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0.6, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
                 osc.start(ctx.currentTime);
-                osc.stop(ctx.currentTime + 0.15);
+                osc.stop(ctx.currentTime + 0.25);
               } catch (e) {
                 // ignore
               }

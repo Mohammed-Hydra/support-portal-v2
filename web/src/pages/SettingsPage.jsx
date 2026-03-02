@@ -179,31 +179,30 @@ export function SettingsPage({ token, user, t }) {
         Play sound when new ticket or reply arrives
       </label>
       {typeof Notification !== "undefined" && (
-        <label className="inline-check" style={{ marginTop: 8 }}>
+        <label className="inline-check" style={{ marginTop: 8, display: "block" }}>
           <button
             type="button"
             className="btn-secondary"
             onClick={async () => {
               try {
-                const perm = await Notification.requestPermission();
-                if (perm === "granted") {
-                  toastSuccess("Browser notifications enabled. You'll get alerts for new tickets and replies.");
-                } else if (perm === "denied") {
-                  toastError("Notifications blocked. Enable them in your browser settings.");
-                }
+                const { registerPushSubscription } = await import("../utils/pushRegistration");
+                await registerPushSubscription(token);
+                toastSuccess("Push enabled! You'll get alerts even when the portal tab is closed.");
               } catch (e) {
-                toastError("Could not request notification permission.");
+                if (e.message?.includes("permission denied")) {
+                  toastError("Notifications blocked. Enable them in your browser settings.");
+                } else if (e.message?.includes("not configured")) {
+                  toastError("Push not configured. Admin: set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in Vercel.");
+                } else {
+                  toastError(e.message || "Could not enable push notifications.");
+                }
               }
             }}
           >
-            {Notification.permission === "granted"
-              ? "Browser notifications enabled"
-              : "Enable browser notifications"}
+            Enable push (alerts when tab closed)
           </button>
-          <span className="muted" style={{ marginLeft: 8 }}>
-            {Notification.permission === "granted"
-              ? "You'll receive alerts when the tab is open."
-              : "Get desktop alerts for new tickets and replies."}
+          <span className="muted" style={{ display: "block", marginTop: 4 }}>
+            Get desktop alerts even when the portal is closed. Requires HTTPS.
           </span>
         </label>
       )}

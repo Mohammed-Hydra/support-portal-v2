@@ -14,6 +14,7 @@ const { whatsappWebhookRoutes } = require("./modules/channels/whatsappWebhook");
 const { settingsRoutes } = require("./modules/settings/routes");
 const { publicRequesterRoutes } = require("./modules/publicRequester/routes");
 const { notificationsRoutes, createNotification, notifyAdmins } = require("./modules/notifications/routes");
+const { pushRoutes } = require("./modules/push/routes");
 const { auditRoutes } = require("./modules/audit/routes");
 const { customFieldsRoutes } = require("./modules/customFields/routes");
 const { cannedResponsesRoutes } = require("./modules/cannedResponses/routes");
@@ -198,6 +199,7 @@ async function createApp() {
   app.use("/api", ticketsRoutes({ logAudit, createNotification }));
   app.use("/api", reportsRoutes());
   app.use("/api", notificationsRoutes());
+  app.use("/api", pushRoutes());
   app.use("/api", auditRoutes());
   app.use("/api", customFieldsRoutes());
   app.use("/api", cannedResponsesRoutes());
