@@ -706,9 +706,13 @@ button:hover {
   border: none;
   border-bottom: 1px solid var(--border);
   border-right: 1px solid var(--border);
-  padding: 10px 12px;
+  padding: 8px 12px;
   text-align: left;
   vertical-align: middle;
+}
+
+.table.tickets-table th {
+  white-space: nowrap;
 }
 
 .table.tickets-table th:last-child,
@@ -790,11 +794,16 @@ button:hover {
 .table.tickets-table-with-checkbox th:nth-child(11),
 .table.tickets-table-with-checkbox td:nth-child(11) { width: 10%; min-width: 140px; } /* Updated */
 
-/* Prevent wrapping - truncate long content with ellipsis */
+/* Keep all cell content horizontal - single line, truncate with ellipsis */
 .table.tickets-table td:not(.action-cell) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.4;
+}
+
+.table.tickets-table td.action-cell {
+  white-space: normal;
 }
 .table.tickets-table .ticket-subject-link {
   display: inline-block;
