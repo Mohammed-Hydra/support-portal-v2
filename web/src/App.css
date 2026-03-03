@@ -188,6 +188,12 @@ body {
   font-weight: 500;
 }
 
+.table.tickets-table .status-badge,
+.table.tickets-table .priority-badge {
+  padding: 1px 6px;
+  font-size: 11px;
+}
+
 .status-badge.status-new { background: #dbeafe; color: #1d4ed8; }
 .status-badge.status-progress { background: #fef3c7; color: #b45309; }
 .status-badge.status-waiting { background: #e0e7ff; color: #4338ca; }
@@ -697,9 +703,9 @@ button:hover {
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .table.tickets-table th,
@@ -707,10 +713,10 @@ button:hover {
   border: none;
   border-bottom: 1px solid var(--border);
   border-right: 1px solid var(--border);
-  padding: 6px 10px;
+  padding: 4px 8px;
   text-align: left;
   vertical-align: middle;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .table.tickets-table th {
@@ -805,7 +811,7 @@ button:hover {
 
 .table.tickets-table td.action-cell {
   white-space: normal;
-  padding: 6px 8px;
+  padding: 4px 6px;
 }
 .table.tickets-table .ticket-subject-link {
   display: inline-block;
@@ -817,7 +823,7 @@ button:hover {
 
 .table.tickets-table .ticket-subject-link {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--btn);
   text-decoration: none;
 }
@@ -930,28 +936,28 @@ a.attachment-link:active,
 }
 
 .action-cell {
-  min-width: 260px;
+  min-width: 220px;
 }
 
 .action-cell .stack {
-  gap: 6px;
+  gap: 4px;
 }
 
 .action-cell .top-actions {
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .action-buttons-compact button {
-  min-width: 52px;
-  padding: 4px 8px;
+  min-width: 48px;
+  padding: 3px 6px;
   font-size: 11px;
 }
 
 .action-cell select {
-  padding: 4px 8px;
-  font-size: 12px;
-  min-height: 28px;
+  padding: 3px 6px;
+  font-size: 11px;
+  min-height: 24px;
 }
 
 .report-pre {
