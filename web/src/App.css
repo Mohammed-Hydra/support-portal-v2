@@ -190,8 +190,8 @@ body {
 
 .table.tickets-table .status-badge,
 .table.tickets-table .priority-badge {
-  padding: 1px 6px;
-  font-size: 11px;
+  padding: 1px 4px;
+  font-size: 10px;
 }
 
 .status-badge.status-new { background: #dbeafe; color: #1d4ed8; }
@@ -705,7 +705,7 @@ button:hover {
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .table.tickets-table th,
@@ -713,10 +713,10 @@ button:hover {
   border: none;
   border-bottom: 1px solid var(--border);
   border-right: 1px solid var(--border);
-  padding: 4px 8px;
+  padding: 2px 6px;
   text-align: left;
   vertical-align: middle;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
 .table.tickets-table th {
@@ -811,7 +811,7 @@ button:hover {
 
 .table.tickets-table td.action-cell {
   white-space: normal;
-  padding: 4px 6px;
+  padding: 2px 4px;
 }
 .table.tickets-table .ticket-subject-link {
   display: inline-block;
@@ -823,7 +823,7 @@ button:hover {
 
 .table.tickets-table .ticket-subject-link {
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--btn);
   text-decoration: none;
 }
@@ -842,8 +842,8 @@ button:hover {
 }
 .table.tickets-table th.sortable .sort-icon {
   opacity: 0.5;
-  margin-left: 4px;
-  font-size: 12px;
+  margin-left: 2px;
+  font-size: 10px;
 }
 .table.tickets-table th.sortable.active .sort-icon {
   opacity: 1;
@@ -936,28 +936,28 @@ a.attachment-link:active,
 }
 
 .action-cell {
-  min-width: 220px;
+  min-width: 200px;
 }
 
 .action-cell .stack {
-  gap: 4px;
+  gap: 2px;
 }
 
 .action-cell .top-actions {
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 2px;
 }
 
 .action-buttons-compact button {
-  min-width: 48px;
-  padding: 3px 6px;
-  font-size: 11px;
+  min-width: 40px;
+  padding: 2px 4px;
+  font-size: 10px;
 }
 
 .action-cell select {
-  padding: 3px 6px;
-  font-size: 11px;
-  min-height: 24px;
+  padding: 2px 4px;
+  font-size: 10px;
+  min-height: 20px;
 }
 
 .report-pre {
@@ -970,10 +970,15 @@ a.attachment-link:active,
 
 .sla-badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   border: 1px solid var(--border);
+}
+
+.table.tickets-table .sla-badge {
+  padding: 1px 4px;
+  font-size: 10px;
 }
 
 .sla-ok {
