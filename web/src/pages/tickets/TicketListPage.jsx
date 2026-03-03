@@ -803,20 +803,20 @@ export function TicketListPage({ token, user, t }) {
                     </td>
                   ) : null}
                   <td>{ticket.id}</td>
-                  <td><Link to={`/tickets/${ticket.id}`} className="ticket-subject-link">{ticket.subject}</Link></td>
+                  <td title={ticket.subject}><Link to={`/tickets/${ticket.id}`} className="ticket-subject-link">{ticket.subject}</Link></td>
                   <td><StatusBadge status={ticket.status} /></td>
                   <td><PriorityBadge priority={ticket.priority} /></td>
-                  <td>{getRequesterName(ticket)}</td>
-                  <td>{getRequesterContact(ticket)}</td>
-                  <td>{getCompanyName(ticket)}</td>
+                  <td title={getRequesterName(ticket)}>{getRequesterName(ticket)}</td>
+                  <td title={getRequesterContact(ticket)}>{getRequesterContact(ticket)}</td>
+                  <td title={getCompanyName(ticket)}>{getCompanyName(ticket)}</td>
                   <td>{ticket.assigned_agent_name || "Unassigned"}</td>
                   <td>
                     {(() => {
                       const sla = getSlaCountdown(ticket);
-                      return <span className={`sla-badge sla-${sla.tone}`}>{sla.text}</span>;
+                      return <span className={`sla-badge sla-${sla.tone}`} title={sla.text}>{sla.text}</span>;
                     })()}
                   </td>
-                  <td>{new Date(ticket.updated_at).toLocaleString()}</td>
+                  <td title={new Date(ticket.updated_at).toLocaleString()}>{new Date(ticket.updated_at).toLocaleString()}</td>
                   <td className="action-cell">
                     {user?.role === "requester" ? (
                       "-"

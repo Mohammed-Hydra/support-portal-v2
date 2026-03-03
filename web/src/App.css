@@ -692,6 +692,10 @@ button:hover {
   font-size: 15px;
 }
 
+.table.tickets-table {
+  table-layout: fixed;
+}
+
 .table th,
 .table td {
   border: 1px solid var(--border);
@@ -705,27 +709,27 @@ button:hover {
   font-weight: 600;
 }
 
-/* Ticket queue column widths */
+/* Ticket queue column widths - balanced for readability */
 .table.tickets-table th:nth-child(1),
 .table.tickets-table td:nth-child(1) { min-width: 48px; width: 48px; }   /* ID */
 .table.tickets-table th:nth-child(2),
-.table.tickets-table td:nth-child(2) { min-width: 180px; }              /* Subject */
+.table.tickets-table td:nth-child(2) { min-width: 200px; }               /* Subject */
 .table.tickets-table th:nth-child(3),
-.table.tickets-table td:nth-child(3) { min-width: 100px; }               /* Status */
+.table.tickets-table td:nth-child(3) { min-width: 110px; }               /* Status */
 .table.tickets-table th:nth-child(4),
-.table.tickets-table td:nth-child(4) { min-width: 88px; }                /* Priority */
+.table.tickets-table td:nth-child(4) { min-width: 95px; }                 /* Priority */
 .table.tickets-table th:nth-child(5),
-.table.tickets-table td:nth-child(5) { min-width: 100px; }              /* Requester */
+.table.tickets-table td:nth-child(5) { min-width: 120px; }               /* Requester */
 .table.tickets-table th:nth-child(6),
-.table.tickets-table td:nth-child(6) { min-width: 160px; }               /* Contact */
+.table.tickets-table td:nth-child(6) { min-width: 220px; }               /* Contact */
 .table.tickets-table th:nth-child(7),
-.table.tickets-table td:nth-child(7) { min-width: 100px; }              /* Company */
+.table.tickets-table td:nth-child(7) { min-width: 120px; }               /* Company */
 .table.tickets-table th:nth-child(8),
-.table.tickets-table td:nth-child(8) { min-width: 100px; }              /* Agent */
+.table.tickets-table td:nth-child(8) { min-width: 110px; }              /* Agent */
 .table.tickets-table th:nth-child(9),
-.table.tickets-table td:nth-child(9) { min-width: 100px; }              /* SLA */
+.table.tickets-table td:nth-child(9) { min-width: 120px; }               /* SLA */
 .table.tickets-table th:nth-child(10),
-.table.tickets-table td:nth-child(10) { min-width: 140px; }              /* Updated */
+.table.tickets-table td:nth-child(10) { min-width: 165px; }              /* Updated */
 
 /* With checkbox column (admin/agent) */
 .table.tickets-table-with-checkbox th:nth-child(1),
@@ -733,23 +737,37 @@ button:hover {
 .table.tickets-table-with-checkbox th:nth-child(2),
 .table.tickets-table-with-checkbox td:nth-child(2) { min-width: 48px; width: 48px; }  /* ID */
 .table.tickets-table-with-checkbox th:nth-child(3),
-.table.tickets-table-with-checkbox td:nth-child(3) { min-width: 180px; }             /* Subject */
+.table.tickets-table-with-checkbox td:nth-child(3) { min-width: 200px; }             /* Subject */
 .table.tickets-table-with-checkbox th:nth-child(4),
-.table.tickets-table-with-checkbox td:nth-child(4) { min-width: 100px; }              /* Status */
+.table.tickets-table-with-checkbox td:nth-child(4) { min-width: 110px; }             /* Status */
 .table.tickets-table-with-checkbox th:nth-child(5),
-.table.tickets-table-with-checkbox td:nth-child(5) { min-width: 88px; }               /* Priority */
+.table.tickets-table-with-checkbox td:nth-child(5) { min-width: 95px; }              /* Priority */
 .table.tickets-table-with-checkbox th:nth-child(6),
-.table.tickets-table-with-checkbox td:nth-child(6) { min-width: 100px; }              /* Requester */
+.table.tickets-table-with-checkbox td:nth-child(6) { min-width: 120px; }             /* Requester */
 .table.tickets-table-with-checkbox th:nth-child(7),
-.table.tickets-table-with-checkbox td:nth-child(7) { min-width: 160px; }              /* Contact */
+.table.tickets-table-with-checkbox td:nth-child(7) { min-width: 220px; }             /* Contact */
 .table.tickets-table-with-checkbox th:nth-child(8),
-.table.tickets-table-with-checkbox td:nth-child(8) { min-width: 100px; }              /* Company */
+.table.tickets-table-with-checkbox td:nth-child(8) { min-width: 120px; }             /* Company */
 .table.tickets-table-with-checkbox th:nth-child(9),
-.table.tickets-table-with-checkbox td:nth-child(9) { min-width: 100px; }              /* Agent */
+.table.tickets-table-with-checkbox td:nth-child(9) { min-width: 110px; }             /* Agent */
 .table.tickets-table-with-checkbox th:nth-child(10),
-.table.tickets-table-with-checkbox td:nth-child(10) { min-width: 100px; }             /* SLA */
+.table.tickets-table-with-checkbox td:nth-child(10) { min-width: 120px; }            /* SLA */
 .table.tickets-table-with-checkbox th:nth-child(11),
-.table.tickets-table-with-checkbox td:nth-child(11) { min-width: 140px; }              /* Updated */
+.table.tickets-table-with-checkbox td:nth-child(11) { min-width: 165px; }            /* Updated */
+
+/* Prevent wrapping - truncate long content with ellipsis */
+.table.tickets-table td:not(.action-cell) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.table.tickets-table .ticket-subject-link {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .table.tickets-table .ticket-subject-link {
   font-weight: 600;
