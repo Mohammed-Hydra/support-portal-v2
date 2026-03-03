@@ -532,6 +532,32 @@ body {
   width: 100%;
 }
 
+/* Dark mode: chart tooltip and area - avoid empty gray, ensure readable preview */
+[data-theme="dark"] .dashboard-chart-wrap .recharts-default-tooltip {
+  background: #1e293b !important;
+  border: 1px solid #475569 !important;
+  border-radius: 8px;
+  color: #f8fafc !important;
+  padding: 10px 12px;
+}
+
+[data-theme="dark"] .dashboard-chart-wrap .recharts-default-tooltip .recharts-tooltip-label {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .dashboard-chart-wrap .recharts-default-tooltip .recharts-tooltip-item {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .dashboard-chart-wrap .recharts-cartesian-grid-horizontal line,
+[data-theme="dark"] .dashboard-chart-wrap .recharts-cartesian-grid-vertical line {
+  stroke: #475569;
+}
+
+[data-theme="dark"] .dashboard-chart-wrap .recharts-surface {
+  overflow: visible;
+}
+
 .card {
   background: var(--card);
   border-radius: 10px;

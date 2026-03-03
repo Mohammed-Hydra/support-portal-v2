@@ -259,7 +259,7 @@ export function DashboardPage({ token, user, t }) {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--muted)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
-                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)" }} />
                   <Bar dataKey="count" fill="var(--btn)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -287,7 +287,7 @@ export function DashboardPage({ token, user, t }) {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--muted)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
-                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)" }} />
                   <Bar dataKey="count" fill="var(--btn)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -316,7 +316,7 @@ export function DashboardPage({ token, user, t }) {
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted)" />
                     <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
-                    <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+                    <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)" }} />
                     <Line type="monotone" dataKey="count" stroke="var(--btn)" strokeWidth={2} dot={{ fill: "var(--btn)" }} />
                   </LineChart>
                 </ResponsiveContainer>
