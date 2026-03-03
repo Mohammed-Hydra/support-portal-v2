@@ -366,6 +366,10 @@ body {
   max-height: 340px;
 }
 
+.notification-dropdown-list > .muted {
+  padding: 12px 14px;
+}
+
 .notification-item {
   display: block;
   padding: 12px 14px;
@@ -408,6 +412,56 @@ body {
   font-size: 11px;
   color: var(--muted);
   margin-top: 4px;
+}
+
+/* Dark mode: improve notification dropdown visibility */
+[data-theme="dark"] .notification-dropdown {
+  background: #1e293b;
+  border-color: #475569;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .notification-dropdown-header {
+  color: #f8fafc;
+  border-bottom-color: #475569;
+}
+
+[data-theme="dark"] .notification-dropdown-header .text-btn {
+  color: #7dd3fc;
+}
+
+[data-theme="dark"] .notification-dropdown-header .text-btn:hover {
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .notification-item {
+  color: #e2e8f0;
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .notification-item:hover {
+  background: #334155;
+}
+
+[data-theme="dark"] .notification-item.unread {
+  background: rgba(56, 189, 248, 0.15);
+}
+
+[data-theme="dark"] .notification-item-type {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .notification-item-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .notification-item-body,
+[data-theme="dark"] .notification-item-time {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .notification-dropdown-list .muted {
+  color: #94a3b8;
 }
 
 .kb-suggestions {
