@@ -13,6 +13,15 @@ body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .app-shell {
   min-height: 100vh;
   min-height: 100dvh;
@@ -679,6 +688,15 @@ button:hover {
   color: #1d4ed8;
   text-align: left;
   padding: 0;
+}
+
+/* Prevent text selection when clicking "View attachment" links/buttons */
+.attachment-link,
+a.attachment-link,
+.text-btn.attachment-link,
+.attachment-block {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .tickets-header {

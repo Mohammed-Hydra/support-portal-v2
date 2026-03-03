@@ -10,6 +10,7 @@ const { reportsRoutes } = require("./modules/reports/routes");
 const { contactsRoutes } = require("./modules/contacts/routes");
 const { helpcenterRoutes } = require("./modules/helpcenter/routes");
 const { emailWebhookRoutes } = require("./modules/channels/emailWebhook");
+const { createResendWebhookHandler } = require("./modules/channels/resendInboundWebhook");
 const { whatsappWebhookRoutes } = require("./modules/channels/whatsappWebhook");
 const { settingsRoutes } = require("./modules/settings/routes");
 const { publicRequesterRoutes } = require("./modules/publicRequester/routes");
@@ -106,6 +107,20 @@ async function createApp() {
 
   const app = express();
   app.use(cors());
+
+  // Capture raw body for Resend webhook (must run before express.json)
+  app.use((req, res, next) => {
+    if (req.path === "/api/webhooks/email/resend" && req.method === "POST") {
+      const chunks = [];
+      req.on("data", (chunk) => chunks.push(chunk));
+      req.on("end", () => {
+        req.rawBody = Buffer.concat(chunks);
+        next();
+      });
+    } else {
+      next();
+    }
+  });
   app.use(express.json({ limit: "8mb" }));
   app.use(express.urlencoded({ extended: true }));
 
@@ -209,6 +224,10 @@ async function createApp() {
   app.use("/api", settingsRoutes({ logAudit }));
   app.use("/api", publicRequesterRoutes({ logAudit, createNotification, notifyAdmins }));
   app.use("/api", emailWebhookRoutes({ createInboundTicket, appendInboundMessage, logAudit }));
+  app.post(
+    "/api/webhooks/email/resend",
+    createResendWebhookHandler({ createInboundTicket, appendInboundMessage, logAudit })
+  );
   app.use("/api", whatsappWebhookRoutes({ createInboundTicket, appendInboundMessage, logAudit }));
 
   app.get("/api/health", (req, res) => {

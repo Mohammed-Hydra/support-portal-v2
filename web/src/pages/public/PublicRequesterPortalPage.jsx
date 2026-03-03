@@ -528,13 +528,13 @@ export function PublicRequesterPortalPage() {
                     <small>{new Date(item.created_at).toLocaleString()} - {messageAuthor(item)}</small>
                     <p style={{ whiteSpace: "pre-wrap" }}>{item.body || (item.attachment_url ? "(attachment)" : "")}</p>
                     {item.attachment_url ? (
-                      <div className="requester-attachment">
+                      <div className="requester-attachment attachment-block">
                         {String(item.attachment_url).startsWith("data:image/") ? (
                           <a href={item.attachment_url} target="_blank" rel="noreferrer">
                             <img src={item.attachment_url} alt="Attachment" />
                           </a>
                         ) : (
-                          <a href={item.attachment_url} target="_blank" rel="noreferrer">View attachment</a>
+                          <a href={item.attachment_url} target="_blank" rel="noreferrer" className="attachment-link">View attachment</a>
                         )}
                       </div>
                     ) : null}

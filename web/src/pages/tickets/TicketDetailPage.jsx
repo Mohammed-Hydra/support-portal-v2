@@ -342,17 +342,17 @@ export function TicketDetailPage({ token, user }) {
             <small>{new Date(item.created_at).toLocaleString()} - {item.author_name || item.source}</small>
             <p>{item.body || "(attachment only)"}</p>
             {item.attachment_url ? (
-              <div style={{ marginTop: "6px" }}>
+              <div className="attachment-block" style={{ marginTop: "6px" }}>
                 {isImageAttachment(item.attachment_url) ? (
                   <button
                     type="button"
-                    className="text-btn"
+                    className="text-btn attachment-link"
                     onClick={() => setPreview({ url: item.attachment_url, title: "Attachment" })}
                   >
                     View attachment
                   </button>
                 ) : (
-                  <a href={item.attachment_url} target="_blank" rel="noreferrer">
+                  <a href={item.attachment_url} target="_blank" rel="noreferrer" className="attachment-link">
                     View attachment
                   </a>
                 )}

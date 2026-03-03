@@ -1,26 +1,28 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { apiRequest } from "./api";
 import { dictionary } from "./i18n";
 import { Layout } from "./components/Layout";
-import { LoginPage } from "./pages/LoginPage";
-import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "./pages/ResetPasswordPage";
-import { DashboardPage } from "./pages/DashboardPage";
-import { AgentDashboardPage } from "./pages/AgentDashboardPage";
-import { TicketListPage } from "./pages/tickets/TicketListPage";
-import { TicketDetailPage } from "./pages/tickets/TicketDetailPage";
-import { ReportsPage } from "./pages/reports/ReportsPage";
-import { UserAdminPage } from "./pages/admin/UserAdminPage";
-import { AuditLogPage } from "./pages/admin/AuditLogPage";
-import { ContactsPage } from "./pages/ContactsPage";
-import { HelpCenterPage } from "./pages/HelpCenterPage";
-import { SettingsPage } from "./pages/SettingsPage";
 import { ToastHost } from "./components/ToastHost";
-import { PublicRequesterCreatePage } from "./pages/public/PublicRequesterCreatePage";
-import { PublicRequesterTrackPage } from "./pages/public/PublicRequesterTrackPage";
-import { PublicRequesterPortalPage } from "./pages/public/PublicRequesterPortalPage";
+
+const LoginPage = lazy(() => import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage").then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage").then((m) => ({ default: m.ResetPasswordPage })));
+const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const AgentDashboardPage = lazy(() => import("./pages/AgentDashboardPage").then((m) => ({ default: m.AgentDashboardPage })));
+const TicketListPage = lazy(() => import("./pages/tickets/TicketListPage").then((m) => ({ default: m.TicketListPage })));
+const TicketDetailPage = lazy(() => import("./pages/tickets/TicketDetailPage").then((m) => ({ default: m.TicketDetailPage })));
+const ReportsPage = lazy(() => import("./pages/reports/ReportsPage").then((m) => ({ default: m.ReportsPage })));
+const UserAdminPage = lazy(() => import("./pages/admin/UserAdminPage").then((m) => ({ default: m.UserAdminPage })));
+const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage").then((m) => ({ default: m.AuditLogPage })));
+const ContactsPage = lazy(() => import("./pages/ContactsPage").then((m) => ({ default: m.ContactsPage })));
+const HelpCenterPage = lazy(() => import("./pages/HelpCenterPage").then((m) => ({ default: m.HelpCenterPage })));
+const SettingsPage = lazy(() => import("./pages/SettingsPage").then((m) => ({ default: m.SettingsPage })));
+const PublicRequesterCreatePage = lazy(() => import("./pages/public/PublicRequesterCreatePage").then((m) => ({ default: m.PublicRequesterCreatePage })));
+const PublicRequesterTrackPage = lazy(() => import("./pages/public/PublicRequesterTrackPage").then((m) => ({ default: m.PublicRequesterTrackPage })));
+const PublicRequesterPortalPage = lazy(() => import("./pages/public/PublicRequesterPortalPage").then((m) => ({ default: m.PublicRequesterPortalPage })));
 
 function Protected({ token, children }) {
   if (!token) return <Navigate to="/login" replace />;
@@ -81,8 +83,11 @@ function App() {
     navigate("/login");
   };
 
+  const PageFallback = () => <div className="page-loading" aria-hidden="true">Loading…</div>;
+
   return (
     <>
+      <Suspense fallback={<PageFallback />}>
       <Routes>
         <Route path="/login" element={<LoginPage onLogin={onLogin} t={t} />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage t={t} />} />
@@ -112,6 +117,7 @@ function App() {
           }
         />
       </Routes>
+      </Suspense>
       <ToastHost />
     </>
   );
