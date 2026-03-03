@@ -727,6 +727,30 @@ button:hover {
 .table.tickets-table th:nth-child(10),
 .table.tickets-table td:nth-child(10) { min-width: 140px; }              /* Updated */
 
+/* With checkbox column (admin/agent) */
+.table.tickets-table-with-checkbox th:nth-child(1),
+.table.tickets-table-with-checkbox td:nth-child(1) { min-width: 40px; width: 40px; }  /* Checkbox */
+.table.tickets-table-with-checkbox th:nth-child(2),
+.table.tickets-table-with-checkbox td:nth-child(2) { min-width: 48px; width: 48px; }  /* ID */
+.table.tickets-table-with-checkbox th:nth-child(3),
+.table.tickets-table-with-checkbox td:nth-child(3) { min-width: 180px; }             /* Subject */
+.table.tickets-table-with-checkbox th:nth-child(4),
+.table.tickets-table-with-checkbox td:nth-child(4) { min-width: 100px; }              /* Status */
+.table.tickets-table-with-checkbox th:nth-child(5),
+.table.tickets-table-with-checkbox td:nth-child(5) { min-width: 88px; }               /* Priority */
+.table.tickets-table-with-checkbox th:nth-child(6),
+.table.tickets-table-with-checkbox td:nth-child(6) { min-width: 100px; }              /* Requester */
+.table.tickets-table-with-checkbox th:nth-child(7),
+.table.tickets-table-with-checkbox td:nth-child(7) { min-width: 160px; }              /* Contact */
+.table.tickets-table-with-checkbox th:nth-child(8),
+.table.tickets-table-with-checkbox td:nth-child(8) { min-width: 100px; }              /* Company */
+.table.tickets-table-with-checkbox th:nth-child(9),
+.table.tickets-table-with-checkbox td:nth-child(9) { min-width: 100px; }              /* Agent */
+.table.tickets-table-with-checkbox th:nth-child(10),
+.table.tickets-table-with-checkbox td:nth-child(10) { min-width: 100px; }             /* SLA */
+.table.tickets-table-with-checkbox th:nth-child(11),
+.table.tickets-table-with-checkbox td:nth-child(11) { min-width: 140px; }              /* Updated */
+
 .table.tickets-table .ticket-subject-link {
   font-weight: 600;
   font-size: 15px;

@@ -40,6 +40,10 @@ export function TicketListPage({ token, user, t }) {
   const [ticketTemplates, setTicketTemplates] = useState([]);
   const [sortBy, setSortBy] = useState("updated");
   const [sortDir, setSortDir] = useState("desc");
+  const [mergeSelected, setMergeSelected] = useState(new Set());
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [mergeMainId, setMergeMainId] = useState(null);
+  const [merging, setMerging] = useState(false);
 
   const listFilters = useMemo(() => {
     const qs = new URLSearchParams(location.search || "");
@@ -708,12 +712,52 @@ export function TicketListPage({ token, user, t }) {
             <button type="button" onClick={handleSearch}>
               Search
             </button>
+            {(user?.role === "admin" || user?.role === "agent") && (
+              <button
+                type="button"
+                disabled={mergeSelected.size < 2}
+                onClick={() => {
+                  if (mergeSelected.size >= 2) {
+                    setMergeMainId([...mergeSelected][0]);
+                    setShowMergeModal(true);
+                  }
+                }}
+              >
+                Merge
+              </button>
+            )}
           </div>
         </div>
         <div className="table-wrap">
-          <table className="table tickets-table">
+          <table className={`table tickets-table${user?.role === "admin" || user?.role === "agent" ? " tickets-table-with-checkbox" : ""}`}>
             <thead>
               <tr>
+                {(user?.role === "admin" || user?.role === "agent") ? (
+                  <th style={{ width: 40, minWidth: 40 }}>
+                    <label className="merge-select-all" style={{ margin: 0, cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={(() => {
+                          const mergeable = sortedTickets.filter((t) => !t.merged_into_ticket_id);
+                          return mergeable.length > 0 && mergeable.every((t) => mergeSelected.has(t.id));
+                        })()}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            const next = new Set(mergeSelected);
+                            sortedTickets.forEach((t) => {
+                              if (!t.merged_into_ticket_id) next.add(t.id);
+                            });
+                            setMergeSelected(next);
+                            if (next.size && !mergeMainId) setMergeMainId([...next][0]);
+                          } else {
+                            setMergeSelected(new Set());
+                            setMergeMainId(null);
+                          }
+                        }}
+                      />
+                    </label>
+                  </th>
+                ) : null}
                 <th>ID</th>
                 <th>Subject</th>
                 <SortHeader col="status" label="Status" />
@@ -730,6 +774,29 @@ export function TicketListPage({ token, user, t }) {
             <tbody>
               {sortedTickets.map((ticket) => (
                 <tr key={ticket.id}>
+                  {(user?.role === "admin" || user?.role === "agent") ? (
+                    <td style={{ width: 40, minWidth: 40 }}>
+                      {!ticket.merged_into_ticket_id ? (
+                        <label style={{ margin: 0, cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={mergeSelected.has(ticket.id)}
+                            onChange={(e) => {
+                              const next = new Set(mergeSelected);
+                              if (e.target.checked) {
+                                next.add(ticket.id);
+                                if (!mergeMainId) setMergeMainId(ticket.id);
+                              } else {
+                                next.delete(ticket.id);
+                                if (mergeMainId === ticket.id) setMergeMainId(next.size ? [...next][0] : null);
+                              }
+                              setMergeSelected(next);
+                            }}
+                          />
+                        </label>
+                      ) : null}
+                    </td>
+                  ) : null}
                   <td>{ticket.id}</td>
                   <td><Link to={`/tickets/${ticket.id}`} className="ticket-subject-link">{ticket.subject}</Link></td>
                   <td><StatusBadge status={ticket.status} /></td>
@@ -805,6 +872,78 @@ export function TicketListPage({ token, user, t }) {
           </table>
         </div>
       </div>
+
+      {showMergeModal && (user?.role === "admin" || user?.role === "agent") && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={() => !merging && setShowMergeModal(false)}>
+          <div className="modal merge-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
+            <div className="modal-header">
+              <strong>Merge tickets</strong>
+              <button type="button" className="icon-close" onClick={() => !merging && setShowMergeModal(false)} aria-label="Close">×</button>
+            </div>
+            <div className="modal-body">
+              <p className="muted">Choose which ticket will be the main one. All messages from the others will move to it.</p>
+              <div className="merge-ticket-list">
+                {[...mergeSelected]
+                  .map((id) => sortedTickets.find((t) => t.id === id))
+                  .filter(Boolean)
+                  .map((t) => {
+                    const id = t.id;
+                    const isMain = mergeMainId === id;
+                    const requesterName = t.requester_name || t.requester_name_from_user || t.requester_name_from_contact || "-";
+                    return (
+                      <div key={id} className={`merge-ticket-row selected${isMain ? " main" : ""}`}>
+                        <span className="merge-ticket-id">#{id}</span>
+                        <span className="merge-ticket-subject">{t.subject || "(no subject)"}</span>
+                        <span className="merge-ticket-meta">
+                          <StatusBadge status={t.status} /> · {requesterName}
+                        </span>
+                        <button
+                          type="button"
+                          className="text-btn merge-set-main"
+                          onClick={() => setMergeMainId(id)}
+                        >
+                          {isMain ? "Main ticket" : "Set as main"}
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" onClick={() => !merging && setShowMergeModal(false)}>Cancel</button>
+              <button
+                type="button"
+                disabled={merging || !mergeMainId || mergeSelected.size < 2}
+                onClick={async () => {
+                  const targetId = mergeMainId;
+                  const sourceIds = [...mergeSelected].filter((id) => id !== targetId);
+                  if (!targetId || sourceIds.length === 0) return;
+                  setMerging(true);
+                  try {
+                    await apiRequest("/api/tickets/merge", {
+                      token,
+                      method: "POST",
+                      body: JSON.stringify({ targetTicketId: targetId, sourceTicketIds: sourceIds }),
+                    });
+                    toastSuccess("Tickets merged.");
+                    setShowMergeModal(false);
+                    setMergeSelected(new Set());
+                    setMergeMainId(null);
+                    load();
+                    navigate(`/tickets/${targetId}`);
+                  } catch (err) {
+                    toastError(err.message || "Failed to merge.");
+                  } finally {
+                    setMerging(false);
+                  }
+                }}
+              >
+                {merging ? "Merging..." : "Merge"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
