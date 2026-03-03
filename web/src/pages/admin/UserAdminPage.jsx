@@ -144,18 +144,20 @@ export function UserAdminPage({ token, user, t }) {
           <form className="stack" onSubmit={createUser}>
             <h3>Create User</h3>
             <div className="grid-2">
-              <input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-              <input placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+              <input id="user-name" name="name" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <input id="user-email" name="email" type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
             </div>
             <div className="grid-2">
               <input
+                id="user-password"
+                name="password"
                 placeholder="Password"
                 type="password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 required
               />
-              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+              <select id="user-role" name="role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
                 <option value="requester">Requester</option>
                 <option value="agent">Agent</option>
                 <option value="admin">Admin</option>
@@ -164,12 +166,16 @@ export function UserAdminPage({ token, user, t }) {
             {form.role === "requester" ? (
               <div className="grid-2">
                 <input
+                  id="user-phone"
+                  name="phone"
                   placeholder="Phone Number"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   required
                 />
                 <input
+                  id="user-company"
+                  name="companyName"
                   placeholder="Company Name"
                   value={form.companyName}
                   onChange={(e) => setForm({ ...form, companyName: e.target.value })}
@@ -185,7 +191,7 @@ export function UserAdminPage({ token, user, t }) {
           <form className="stack" onSubmit={resetPassword}>
             <h3>Reset Password</h3>
             <div className="grid-2">
-              <select value={resetUserId} onChange={(e) => setResetUserId(e.target.value)}>
+              <select id="reset-user" name="resetUserId" value={resetUserId} onChange={(e) => setResetUserId(e.target.value)}>
                 {users.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name} ({item.email})
@@ -193,6 +199,8 @@ export function UserAdminPage({ token, user, t }) {
                 ))}
               </select>
               <input
+                id="reset-new-password"
+                name="newPassword"
                 type="password"
                 placeholder="New Password"
                 value={newPassword}
@@ -215,6 +223,8 @@ export function UserAdminPage({ token, user, t }) {
                 <p style={{ margin: "0 0 8px 0", fontSize: 14 }}>{label}</p>
                 <p style={{ margin: "0 0 8px 0", fontSize: 13, color: "var(--muted, #666)" }}>This cannot be undone. Type the user&apos;s email below to confirm.</p>
                 <input
+                  id="delete-confirm-email"
+                  name="confirmEmail"
                   type="text"
                   placeholder="Type user's email to confirm"
                   value={deleteConfirm.confirmEmail}

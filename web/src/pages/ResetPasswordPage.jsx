@@ -67,24 +67,30 @@ export function ResetPasswordPage({ t }) {
           <h2>{t.resetPassword ?? "Set new password"}</h2>
           <p className="muted">{t.resetPasswordHint ?? "Enter your new password below."}</p>
         </div>
-        <label>
+        <label htmlFor="reset-new-password">
           {t.newPassword ?? "New password"}
           <input
+            id="reset-new-password"
+            name="newPassword"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
             minLength={6}
+            autoComplete="new-password"
           />
         </label>
-        <label>
+        <label htmlFor="reset-confirm-password">
           {t.confirmPassword ?? "Confirm password"}
           <input
+            id="reset-confirm-password"
+            name="confirmPassword"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={6}
+            autoComplete="new-password"
           />
         </label>
         {error ? <p className="error">{error}</p> : null}

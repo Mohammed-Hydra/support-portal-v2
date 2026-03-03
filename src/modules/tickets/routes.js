@@ -411,7 +411,7 @@ function ticketsRoutes({ logAudit, createNotification: createNotificationFromApp
             requester_user_id, requester_contact_id, requester_phone, requester_company_name, requester_name, requester_email,
             assigned_agent_id, first_response_due_at, resolution_due_at
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7::text[], $8, $9, $10, $11, $12, $13, $14, $15)
+          VALUES ($1, $2, $3, $4, $5, $6, $7::text[], $8, $9, $10, $11, $12, $13, $14, $15, $16)
           RETURNING *
         `,
         [
@@ -469,7 +469,19 @@ function ticketsRoutes({ logAudit, createNotification: createNotificationFromApp
       fireWebhooks("new_ticket", { ticketId: ticket.id, subject: ticket.subject, priority: ticket.priority }).catch(() => {});
       res.status(201).json(ticket);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create ticket" });
+      // eslint-disable-next-line no-console
+      console.error("Ticket create error:", error);
+      const code = error?.code || "";
+      const msg = error?.message || "";
+      if (code === "23505") {
+        res.status(400).json({ error: "A contact with this email already exists. Use a different requester email." });
+        return;
+      }
+      if (code === "23502" || msg.includes("violates not-null")) {
+        res.status(400).json({ error: "Missing required field. Please check subject, requester email, and other required fields." });
+        return;
+      }
+      res.status(500).json({ error: error?.message || "Failed to create ticket" });
     }
   });
 

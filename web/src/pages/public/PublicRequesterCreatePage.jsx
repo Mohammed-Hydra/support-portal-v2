@@ -220,6 +220,8 @@ export function PublicRequesterCreatePage() {
       <Collapsible title="Search FAQ / Knowledge Base" defaultOpen={false}>
         <p className="muted" style={{ marginTop: 0 }}>Find answers before creating a ticket.</p>
         <input
+          id="kb-search"
+          name="kbSearch"
           type="text"
           placeholder="Search articles..."
           value={kbSearch}
@@ -246,51 +248,67 @@ export function PublicRequesterCreatePage() {
           <p className="muted">Create a support ticket without login credentials.</p>
         </div>
         <div className="grid-2">
-          <label>
+          <label htmlFor="requester-name">
             Name
             <input
+              id="requester-name"
+              name="requesterName"
               value={form.requesterName}
               onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
               required
+              autoComplete="name"
             />
           </label>
-          <label>
+          <label htmlFor="requester-email">
             Email
             <input
+              id="requester-email"
+              name="requesterEmail"
               type="email"
               value={form.requesterEmail}
               onChange={(e) => setForm({ ...form, requesterEmail: e.target.value })}
               required
+              autoComplete="email"
             />
           </label>
         </div>
         <div className="grid-2">
-          <label>
+          <label htmlFor="requester-phone">
             Phone
             <input
+              id="requester-phone"
+              name="requesterPhone"
               value={form.requesterPhone}
               onChange={(e) => setForm({ ...form, requesterPhone: e.target.value })}
+              autoComplete="tel"
             />
           </label>
-          <label>
+          <label htmlFor="requester-company">
             Company
             <input
+              id="requester-company"
+              name="requesterCompanyName"
               value={form.requesterCompanyName}
               onChange={(e) => setForm({ ...form, requesterCompanyName: e.target.value })}
+              autoComplete="organization"
             />
           </label>
         </div>
-        <label>
+        <label htmlFor="requester-subject">
           Subject
           <input
+            id="requester-subject"
+            name="subject"
             value={form.subject}
             onChange={(e) => setForm({ ...form, subject: e.target.value })}
             required
           />
         </label>
-        <label>
+        <label htmlFor="requester-priority">
           Priority
           <select
+            id="requester-priority"
+            name="priority"
             value={form.priority}
             onChange={(e) => setForm({ ...form, priority: e.target.value })}
           >
@@ -305,9 +323,9 @@ export function PublicRequesterCreatePage() {
             </small>
           )}
         </label>
-        <label>
+        <label htmlFor="requester-category">
           Category
-          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+          <select id="requester-category" name="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
             <option value="general">General</option>
             <option value="software">Software</option>
             <option value="hardware">Hardware</option>
@@ -317,9 +335,11 @@ export function PublicRequesterCreatePage() {
           </select>
         </label>
         {form.category === "other" && (
-          <label>
+          <label htmlFor="requester-category-other">
             Other category
             <input
+              id="requester-category-other"
+              name="categoryOther"
               value={form.categoryOther}
               onChange={(e) => setForm({ ...form, categoryOther: e.target.value })}
               placeholder="e.g. Printer, VPN, Email..."
@@ -327,18 +347,22 @@ export function PublicRequesterCreatePage() {
             />
           </label>
         )}
-        <label>
+        <label htmlFor="requester-description">
           Description
           <textarea
+            id="requester-description"
+            name="description"
             rows={4}
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             required
           />
         </label>
-        <label>
+        <label htmlFor="requester-attachment">
           Attachment
           <input
+            id="requester-attachment"
+            name="attachment"
             type="file"
             onChange={(e) => setAttachment(e.target.files?.[0] || null)}
           />

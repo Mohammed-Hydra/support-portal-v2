@@ -91,18 +91,24 @@ export function HelpCenterPage({ token, user, t }) {
         <form className="card" onSubmit={createArticle}>
           <h3>Create Article</h3>
           <input
+            id="article-title"
+            name="title"
             placeholder="Title"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             required
           />
           <input
+            id="article-category"
+            name="category"
             placeholder="Category"
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
             required
           />
           <textarea
+            id="article-body"
+            name="body"
             rows={6}
             placeholder="Body"
             value={form.body}

@@ -65,9 +65,9 @@ export function ReportsPage({ token, t }) {
       </div>
       {error ? <p className="error">{error}</p> : null}
       <div className="card" style={{ marginBottom: 16 }}>
-        <label>
+        <label htmlFor="report-period">
           SLA period
-          <select value={periodDays} onChange={(e) => setPeriodDays(e.target.value)}>
+          <select id="report-period" name="periodDays" value={periodDays} onChange={(e) => setPeriodDays(e.target.value)}>
             <option value="">All time</option>
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
@@ -152,6 +152,8 @@ export function ReportsPage({ token, t }) {
             </div>
             <div className="grid-2">
               <select
+                id="report-agent"
+                name="agentQuery"
                 value={agentQuery}
                 onChange={(e) => setAgentQuery(e.target.value)}
               >
@@ -162,6 +164,8 @@ export function ReportsPage({ token, t }) {
                 ))}
               </select>
               <input
+                id="report-ticket-search"
+                name="ticketQuery"
                 placeholder="Search by ticket number"
                 value={ticketQuery}
                 onChange={(e) => setTicketQuery(e.target.value)}

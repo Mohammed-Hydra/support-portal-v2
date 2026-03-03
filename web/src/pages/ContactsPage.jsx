@@ -44,12 +44,12 @@ export function ContactsPage({ token, t }) {
       {error ? <p className="error">{error}</p> : null}
       <form className="card" onSubmit={submit}>
         <div className="grid-2">
-          <input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          <input placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <input id="contact-name" name="name" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          <input id="contact-email" name="email" type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         </div>
         <div className="grid-2">
-          <input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-          <input placeholder="Company" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
+          <input id="contact-phone" name="phone" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <input id="contact-company" name="company" placeholder="Company" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
         </div>
         <button type="submit">Add Contact</button>
       </form>

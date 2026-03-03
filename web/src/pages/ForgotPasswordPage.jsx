@@ -35,13 +35,16 @@ export function ForgotPasswordPage({ t }) {
           <h2>{t.forgotPassword ?? "Reset password"}</h2>
           <p className="muted">{t.forgotPasswordHint ?? "Enter your email to receive a reset link."}</p>
         </div>
-        <label>
+        <label htmlFor="forgot-email">
           {t.email}
           <input
+            id="forgot-email"
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
           />
         </label>
         {error ? <p className="error">{error}</p> : null}

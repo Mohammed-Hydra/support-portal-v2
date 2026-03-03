@@ -291,7 +291,7 @@ export function TicketDetailPage({ token, user }) {
           <form className="card" onSubmit={updateAssignment}>
             <h3>Assign to Agent</h3>
           <div className="grid-2">
-            <select value={assignedAgentId} onChange={(e) => setAssignedAgentId(e.target.value)}>
+            <select id="assign-agent" name="assignedAgentId" value={assignedAgentId} onChange={(e) => setAssignedAgentId(e.target.value)}>
               <option value="">Unassigned</option>
               {/* Include current user if not already in agents list (e.g. admin) */}
               {user?.id != null && !agents.some((a) => String(a.id) === String(user.id)) ? (
@@ -445,18 +445,22 @@ export function TicketDetailPage({ token, user }) {
                 </button>
               </div>
               <div className="modal-body">
-                <label>
+                <label htmlFor="edit-subject">
                   Subject <span style={{ color: "var(--danger, #c00)" }}>*</span>
                 </label>
                 <input
+                  id="edit-subject"
+                  name="subject"
                   type="text"
                   value={editSubject}
                   onChange={(e) => setEditSubject(e.target.value)}
                   required
                   placeholder="Ticket subject"
                 />
-                <label>Description</label>
+                <label htmlFor="edit-description">Description</label>
                 <textarea
+                  id="edit-description"
+                  name="description"
                   rows={4}
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
@@ -464,8 +468,8 @@ export function TicketDetailPage({ token, user }) {
                 />
                 <div className="grid-2">
                   <div>
-                    <label>Status</label>
-                    <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)}>
+                    <label htmlFor="edit-status">Status</label>
+                    <select id="edit-status" name="status" value={editStatus} onChange={(e) => setEditStatus(e.target.value)}>
                       <option value="New">New</option>
                       <option value="In Progress">In Progress</option>
                       <option value="Waiting User">Waiting User</option>
@@ -474,8 +478,8 @@ export function TicketDetailPage({ token, user }) {
                     </select>
                   </div>
                   <div>
-                    <label>Priority</label>
-                    <select value={editPriority} onChange={(e) => setEditPriority(e.target.value)}>
+                    <label htmlFor="edit-priority">Priority</label>
+                    <select id="edit-priority" name="priority" value={editPriority} onChange={(e) => setEditPriority(e.target.value)}>
                       <option value="Low">Low</option>
                       <option value="Medium">Medium</option>
                       <option value="High">High</option>
@@ -483,35 +487,41 @@ export function TicketDetailPage({ token, user }) {
                     </select>
                   </div>
                 </div>
-                <label>Channel</label>
-                <select value={editChannel} onChange={(e) => setEditChannel(e.target.value)}>
+                <label htmlFor="edit-channel">Channel</label>
+                <select id="edit-channel" name="channel" value={editChannel} onChange={(e) => setEditChannel(e.target.value)}>
                   <option value="Portal">Portal</option>
                   <option value="Email">Email</option>
                   <option value="WhatsApp">WhatsApp</option>
                 </select>
-                <label>Requester Name</label>
+                <label htmlFor="edit-requester-name">Requester Name</label>
                 <input
+                  id="edit-requester-name"
+                  name="requesterName"
                   type="text"
                   value={editRequesterName}
                   onChange={(e) => setEditRequesterName(e.target.value)}
                   placeholder="Requester name"
                 />
-                <label>Requester Email</label>
+                <label htmlFor="edit-requester-email">Requester Email</label>
                 <input
+                  id="edit-requester-email"
+                  name="requesterEmail"
                   type="email"
                   value={editRequesterEmail}
                   onChange={(e) => setEditRequesterEmail(e.target.value)}
                   placeholder="Requester email"
                 />
-                <label>Requester Phone</label>
+                <label htmlFor="edit-requester-phone">Requester Phone</label>
                 <input
+                  id="edit-requester-phone"
+                  name="requesterPhone"
                   type="text"
                   value={editRequesterPhone}
                   onChange={(e) => setEditRequesterPhone(e.target.value)}
                   placeholder="Requester phone"
                 />
-                <label>Assigned Agent</label>
-                <select value={editAssignedAgentId} onChange={(e) => setEditAssignedAgentId(e.target.value)}>
+                <label htmlFor="edit-assigned-agent">Assigned Agent</label>
+                <select id="edit-assigned-agent" name="assignedAgentId" value={editAssignedAgentId} onChange={(e) => setEditAssignedAgentId(e.target.value)}>
                   <option value="">Unassigned</option>
                   {user?.id != null && !agents.some((a) => String(a.id) === String(user.id)) ? (
                     <option value={String(user.id)}>{user.name || user.email} (you)</option>
@@ -520,8 +530,10 @@ export function TicketDetailPage({ token, user }) {
                     <option key={a.id} value={String(a.id)}>{a.name} ({a.email})</option>
                   ))}
                 </select>
-                <label>Category</label>
+                <label htmlFor="edit-category">Category</label>
                 <select
+                  id="edit-category"
+                  name="category"
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
                 >
@@ -532,8 +544,10 @@ export function TicketDetailPage({ token, user }) {
                   <option value="access">Access</option>
                   <option value="other">Other</option>
                 </select>
-                <label>Tags (comma-separated)</label>
+                <label htmlFor="edit-tags">Tags (comma-separated)</label>
                 <input
+                  id="edit-tags"
+                  name="tags"
                   type="text"
                   value={editTags}
                   onChange={(e) => setEditTags(e.target.value)}
@@ -544,9 +558,11 @@ export function TicketDetailPage({ token, user }) {
                     <label>Custom Fields</label>
                     <div className="grid-2">
                       {customFieldDefs.map((def) => (
-                        <label key={def.id}>
+                        <label key={def.id} htmlFor={`edit-custom-${def.key}`}>
                           {def.label}
                           <input
+                            id={`edit-custom-${def.key}`}
+                            name={def.key}
                             type={def.field_type === "number" ? "number" : "text"}
                             value={customFields[def.key] ?? ""}
                             onChange={(e) => setCustomFields((p) => ({ ...p, [def.key]: e.target.value }))}
@@ -576,6 +592,8 @@ export function TicketDetailPage({ token, user }) {
           <div style={{ marginBottom: 8 }}>
             <label className="muted" style={{ fontSize: 12, display: "block", marginBottom: 4 }}>Quick replies</label>
             <select
+              id="quick-reply"
+              name="quickReply"
               value=""
               onChange={(e) => {
                 const v = e.target.value;
@@ -594,10 +612,10 @@ export function TicketDetailPage({ token, user }) {
             </select>
           </div>
         )}
-        <textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your reply..." />
+        <textarea id="reply-body" name="message" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your reply..." />
         {user?.role !== "requester" ? (
-          <label className="inline-check">
-            <input type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
+          <label className="inline-check" htmlFor="reply-internal">
+            <input id="reply-internal" name="isInternal" type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
             Internal Note
           </label>
         ) : null}
@@ -613,9 +631,11 @@ export function TicketDetailPage({ token, user }) {
             </div>
             <div className="modal-body">
               <p className="muted">This ticket (#{ticketId}) will be merged into the target. All messages will move to the target, and this ticket will be closed.</p>
-              <label>
+              <label htmlFor="merge-target-id">
                 Target ticket ID (to merge into)
                 <input
+                  id="merge-target-id"
+                  name="mergeTargetId"
                   type="number"
                   value={mergeTargetId}
                   onChange={(e) => setMergeTargetId(e.target.value)}

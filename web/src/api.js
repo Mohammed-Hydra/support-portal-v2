@@ -16,6 +16,9 @@ export async function apiRequest(path, options = {}) {
     const err = new Error(data.error || "Request failed");
     err.code = data.code;
     err.status = response.status;
+    if (response.status >= 500 && data.error) {
+      console.error(`API ${path} error (${response.status}):`, data.error);
+    }
     throw err;
   }
   return data;

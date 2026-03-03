@@ -387,24 +387,30 @@ export function PublicRequesterPortalPage() {
             <h3>Email notification preferences</h3>
             <p className="muted">Choose which events trigger email notifications.</p>
             <div className="grid-2" style={{ gap: 12 }}>
-              <label className="inline-check">
+              <label className="inline-check" htmlFor="pref-notify-message">
                 <input
+                  id="pref-notify-message"
+                  name="notify_on_message"
                   type="checkbox"
                   checked={emailPrefs.notify_on_message}
                   onChange={(e) => setEmailPrefs((p) => ({ ...p, notify_on_message: e.target.checked }))}
                 />
                 New messages / replies
               </label>
-              <label className="inline-check">
+              <label className="inline-check" htmlFor="pref-notify-status">
                 <input
+                  id="pref-notify-status"
+                  name="notify_on_status_change"
                   type="checkbox"
                   checked={emailPrefs.notify_on_status_change}
                   onChange={(e) => setEmailPrefs((p) => ({ ...p, notify_on_status_change: e.target.checked }))}
                 />
                 Status changes
               </label>
-              <label className="inline-check">
+              <label className="inline-check" htmlFor="pref-notify-assignment">
                 <input
+                  id="pref-notify-assignment"
+                  name="notify_on_assignment"
                   type="checkbox"
                   checked={emailPrefs.notify_on_assignment}
                   onChange={(e) => setEmailPrefs((p) => ({ ...p, notify_on_assignment: e.target.checked }))}
@@ -421,22 +427,24 @@ export function PublicRequesterPortalPage() {
             <h3>Your Tickets</h3>
             <div className="grid-2" style={{ marginBottom: 10 }}>
               <input
+                id="portal-search"
+                name="q"
                 placeholder="Search by ticket # or subject"
                 value={filters.q}
                 onChange={(e) => setFilters((p) => ({ ...p, q: e.target.value }))}
               />
-              <select value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
+              <select id="portal-filter-status" name="status" value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
                 <option value="">All statuses</option>
                 {statusSteps.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div className="grid-2" style={{ marginBottom: 10 }}>
-              <select value={filters.days} onChange={(e) => setFilters((p) => ({ ...p, days: e.target.value }))}>
+              <select id="portal-filter-days" name="days" value={filters.days} onChange={(e) => setFilters((p) => ({ ...p, days: e.target.value }))}>
                 <option value="0">All time</option>
                 <option value="7">Last 7 days</option>
                 <option value="30">Last 30 days</option>
               </select>
-              <select value={filters.sort} onChange={(e) => setFilters((p) => ({ ...p, sort: e.target.value }))}>
+              <select id="portal-filter-sort" name="sort" value={filters.sort} onChange={(e) => setFilters((p) => ({ ...p, sort: e.target.value }))}>
                 <option value="updated_desc">Newest updated</option>
                 <option value="updated_asc">Oldest updated</option>
               </select>
@@ -542,14 +550,18 @@ export function PublicRequesterPortalPage() {
                 ))}
                 <form className="stack" onSubmit={sendMessage}>
                   <textarea
+                    id="portal-reply-body"
+                    name="messageBody"
                     rows={3}
                     placeholder="Type your reply"
                     value={messageBody}
                     onChange={(e) => setMessageBody(e.target.value)}
                   />
-                  <label className="muted" style={{ marginTop: -4 }}>
+                  <label className="muted" style={{ marginTop: -4 }} htmlFor="portal-reply-attachment">
                     Attach image (optional)
                     <input
+                      id="portal-reply-attachment"
+                      name="attachment"
                       type="file"
                       onChange={(e) => setMessageAttachment(e.target.files?.[0] || null)}
                     />

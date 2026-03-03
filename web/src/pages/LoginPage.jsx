@@ -38,13 +38,13 @@ export function LoginPage({ onLogin, t }) {
           <h2>{t.login}</h2>
           <p className="muted">Sign in to continue to the support portal.</p>
         </div>
-        <label>
+        <label htmlFor="login-email">
           {t.email}
-          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
+          <input id="login-email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required autoComplete="email" />
         </label>
-        <label>
+        <label htmlFor="login-password">
           {t.password}
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
+          <input id="login-password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" required autoComplete="current-password" />
         </label>
         <p className="muted" style={{ marginTop: "-8px" }}>
           <Link to="/forgot-password">{t.forgotPassword ?? "Forgot password?"}</Link>

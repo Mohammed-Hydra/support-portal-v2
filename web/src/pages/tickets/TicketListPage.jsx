@@ -316,9 +316,11 @@ export function TicketListPage({ token, user, t }) {
       <Collapsible title="Create Ticket" defaultOpen={true}>
       <form className="card stack" onSubmit={submitTicket}>
         {ticketTemplates.length > 0 && (user?.role === "admin" || user?.role === "agent") && (
-          <label>
+          <label htmlFor="ticket-template">
             Use template
             <select
+              id="ticket-template"
+              name="template"
               value=""
               onChange={(e) => {
                 const v = e.target.value;
@@ -349,36 +351,45 @@ export function TicketListPage({ token, user, t }) {
         {(user?.role === "admin" || user?.role === "agent") && (
           <>
             <div className="grid-2">
-              <label>
+              <label htmlFor="ticket-requester-name">
                 Requester Name
                 <input
+                  id="ticket-requester-name"
+                  name="requesterName"
                   value={form.requesterName}
                   onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
                   placeholder="Full name"
                 />
               </label>
-              <label>
+              <label htmlFor="ticket-requester-email">
                 Requester Email
                 <input
+                  id="ticket-requester-email"
+                  name="requesterEmail"
                   type="email"
                   value={form.requesterEmail}
                   onChange={(e) => setForm({ ...form, requesterEmail: e.target.value })}
                   placeholder="email@example.com"
+                  autoComplete="email"
                 />
               </label>
             </div>
             <div className="grid-2">
-              <label>
+              <label htmlFor="ticket-requester-phone">
                 Requester Phone
                 <input
+                  id="ticket-requester-phone"
+                  name="requesterPhone"
                   value={form.requesterPhone}
                   onChange={(e) => setForm({ ...form, requesterPhone: e.target.value })}
                   placeholder="Phone number"
                 />
               </label>
-              <label>
+              <label htmlFor="ticket-requester-company">
                 Company
                 <input
+                  id="ticket-requester-company"
+                  name="requesterCompanyName"
                   value={form.requesterCompanyName}
                   onChange={(e) => setForm({ ...form, requesterCompanyName: e.target.value })}
                   placeholder="Company name"
@@ -388,17 +399,19 @@ export function TicketListPage({ token, user, t }) {
           </>
         )}
         <div className="grid-2">
-          <label>
+          <label htmlFor="ticket-subject">
             Subject
             <input
+              id="ticket-subject"
+              name="subject"
               value={form.subject}
               onChange={(e) => setForm({ ...form, subject: e.target.value })}
               required
             />
           </label>
-        <label>
+        <label htmlFor="ticket-priority">
           Priority
-          <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+          <select id="ticket-priority" name="priority" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
             {priorities.map((priority) => (
               <option key={priority}>{priority}</option>
             ))}
@@ -411,9 +424,9 @@ export function TicketListPage({ token, user, t }) {
         </label>
         </div>
         <div className="grid-2">
-          <label>
+          <label htmlFor="ticket-category">
             Category
-            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            <select id="ticket-category" name="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               <option value="general">General</option>
               <option value="software">Software</option>
               <option value="hardware">Hardware</option>
@@ -422,9 +435,9 @@ export function TicketListPage({ token, user, t }) {
               <option value="other">Other</option>
             </select>
           </label>
-          <label>
+          <label htmlFor="ticket-channel">
             Channel
-            <select value={form.channel} onChange={(e) => setForm({ ...form, channel: e.target.value })}>
+            <select id="ticket-channel" name="channel" value={form.channel} onChange={(e) => setForm({ ...form, channel: e.target.value })}>
               {channels.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -432,27 +445,33 @@ export function TicketListPage({ token, user, t }) {
           </label>
         </div>
         {form.category === "other" && (
-          <label>
+          <label htmlFor="ticket-category-other">
             Other category
             <input
+              id="ticket-category-other"
+              name="categoryOther"
               value={form.categoryOther}
               onChange={(e) => setForm({ ...form, categoryOther: e.target.value })}
               placeholder="e.g. Printer, VPN, Email..."
             />
           </label>
         )}
-        <label>
+        <label htmlFor="ticket-description">
           Description
           <textarea
+            id="ticket-description"
+            name="description"
             rows={4}
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
         </label>
         {(user?.role === "admin" || user?.role === "agent") && (
-          <label>
+          <label htmlFor="ticket-attachment">
             Attachment
             <input
+              id="ticket-attachment"
+              name="attachment"
               type="file"
               onChange={(e) => setAttachment(e.target.files?.[0] || null)}
             />
@@ -480,9 +499,11 @@ export function TicketListPage({ token, user, t }) {
         {customFieldDefs.length > 0 && (
           <div className="custom-fields-inline">
             {customFieldDefs.map((def) => (
-              <label key={def.id}>
+              <label key={def.id} htmlFor={`custom-${def.key}`}>
                 {def.label}
                 <input
+                  id={`custom-${def.key}`}
+                  name={def.key}
                   type={def.field_type === "number" ? "number" : "text"}
                   value={customFields[def.key] ?? ""}
                   onChange={(e) => setCustomFields((p) => ({ ...p, [def.key]: e.target.value }))}
@@ -493,17 +514,21 @@ export function TicketListPage({ token, user, t }) {
         )}
         {user?.role === "requester" && (
           <div className="grid-2">
-            <label>
+            <label htmlFor="ticket-requester-phone-req">
               Phone Number
               <input
+                id="ticket-requester-phone-req"
+                name="requesterPhone"
                 value={form.requesterPhone}
                 onChange={(e) => setForm({ ...form, requesterPhone: e.target.value })}
                 required
               />
             </label>
-            <label>
+            <label htmlFor="ticket-requester-company-req">
               Company Name (optional)
               <input
+                id="ticket-requester-company-req"
+                name="requesterCompanyName"
                 value={form.requesterCompanyName}
                 onChange={(e) => setForm({ ...form, requesterCompanyName: e.target.value })}
               />
@@ -532,9 +557,11 @@ export function TicketListPage({ token, user, t }) {
         </div>
         <div className="stack" style={{ marginBottom: "16px", gap: "12px" }}>
           <div className="grid-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
-            <label>
+            <label htmlFor="filter-status">
               Status
               <select
+                id="filter-status"
+                name="status"
                 value={listFilters.status}
                 onChange={(e) => applyFilters({ status: e.target.value || null })}
               >
@@ -544,9 +571,11 @@ export function TicketListPage({ token, user, t }) {
                 ))}
               </select>
             </label>
-            <label>
+            <label htmlFor="filter-priority">
               Priority
               <select
+                id="filter-priority"
+                name="priority"
                 value={listFilters.priority}
                 onChange={(e) => applyFilters({ priority: e.target.value || null })}
               >
@@ -556,9 +585,11 @@ export function TicketListPage({ token, user, t }) {
                 ))}
               </select>
             </label>
-            <label>
+            <label htmlFor="filter-category">
               Category
               <select
+                id="filter-category"
+                name="category"
                 value={listFilters.category}
                 onChange={(e) => applyFilters({ category: e.target.value || null })}
               >
@@ -569,9 +600,11 @@ export function TicketListPage({ token, user, t }) {
               </select>
             </label>
             {(user?.role === "admin" || user?.role === "agent") && (
-              <label>
+              <label htmlFor="filter-agent">
                 Agent
                 <select
+                  id="filter-agent"
+                  name="agent"
                   value={listFilters.agent}
                   onChange={(e) => applyFilters({ agent: e.target.value || null })}
                 >
@@ -582,9 +615,11 @@ export function TicketListPage({ token, user, t }) {
                 </select>
               </label>
             )}
-            <label>
+            <label htmlFor="filter-channel">
               Ticket type
               <select
+                id="filter-channel"
+                name="channel"
                 value={listFilters.channel}
                 onChange={(e) => applyFilters({ channel: e.target.value || null })}
               >
@@ -596,9 +631,11 @@ export function TicketListPage({ token, user, t }) {
             </label>
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "flex-end", flexWrap: "wrap" }}>
-            <label style={{ margin: 0, flex: "1 1 140px", minWidth: "140px" }}>
+            <label style={{ margin: 0, flex: "1 1 140px", minWidth: "140px" }} htmlFor="search-text">
               <span style={{ display: "block", marginBottom: "4px" }}>Search text</span>
               <input
+                id="search-text"
+                name="search"
                 type="text"
                 placeholder="Subject or description..."
                 value={searchText}
@@ -606,9 +643,11 @@ export function TicketListPage({ token, user, t }) {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </label>
-            <label style={{ margin: 0, flex: "1 1 100px", minWidth: "100px" }}>
+            <label style={{ margin: 0, flex: "1 1 100px", minWidth: "100px" }} htmlFor="search-ticket-id">
               <span style={{ display: "block", marginBottom: "4px" }}>Ticket #</span>
               <input
+                id="search-ticket-id"
+                name="ticketId"
                 type="text"
                 placeholder="e.g. 22"
                 value={searchTicketId}
@@ -697,6 +736,8 @@ export function TicketListPage({ token, user, t }) {
                           </button>
                         </div>
                         <select
+                          id={`status-${ticket.id}`}
+                          name="status"
                           value={ticket.status}
                           disabled={busyTicketId === String(ticket.id)}
                           onChange={(e) => updateStatus(ticket.id, e.target.value)}

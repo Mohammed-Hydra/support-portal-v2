@@ -690,13 +690,27 @@ button:hover {
   padding: 0;
 }
 
-/* Prevent text selection when clicking "View attachment" links/buttons */
+/* Prevent text selection and blue highlight when clicking "View attachment" */
 .attachment-link,
 a.attachment-link,
 .text-btn.attachment-link,
 .attachment-block {
   -webkit-user-select: none;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+a.attachment-link,
+.text-btn.attachment-link {
+  outline: none;
+  background: transparent;
+}
+a.attachment-link:focus,
+a.attachment-link:active,
+.text-btn.attachment-link:focus,
+.text-btn.attachment-link:active {
+  outline: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .tickets-header {

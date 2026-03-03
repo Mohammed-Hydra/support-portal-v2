@@ -175,8 +175,10 @@ export function SettingsPage({ token, user, t }) {
   const preferencesCard = (
     <div className="subcard">
       <h3>Notifications</h3>
-      <label className="inline-check">
+      <label className="inline-check" htmlFor="pref-sound">
         <input
+          id="pref-sound"
+          name="soundOnNotification"
           type="checkbox"
           checked={soundOnNotification}
           onChange={(e) => saveSoundPref(e.target.checked)}
@@ -219,33 +221,42 @@ export function SettingsPage({ token, user, t }) {
       <h3>Change password</h3>
       <p className="muted">Update your login password. You do not need an admin to reset it.</p>
       <form className="stack" onSubmit={changePassword}>
-        <label>
+        <label htmlFor="password-current">
           Current password
           <input
+            id="password-current"
+            name="currentPassword"
             type="password"
             value={passwordForm.currentPassword}
             onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
             required
+            autoComplete="current-password"
           />
         </label>
-        <label>
+        <label htmlFor="password-new">
           New password
           <input
+            id="password-new"
+            name="newPassword"
             type="password"
             value={passwordForm.newPassword}
             onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
             required
             minLength={6}
+            autoComplete="new-password"
           />
         </label>
-        <label>
+        <label htmlFor="password-confirm">
           Confirm new password
           <input
+            id="password-confirm"
+            name="confirmPassword"
             type="password"
             value={passwordForm.confirmPassword}
             onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
             required
             minLength={6}
+            autoComplete="new-password"
           />
         </label>
         {passwordError ? <p className="error">{passwordError}</p> : null}
@@ -384,12 +395,16 @@ export function SettingsPage({ token, user, t }) {
           <form className="stack" onSubmit={saveSlaPolicy}>
             <div className="grid-2">
               <input
+                id="sla-name"
+                name="name"
                 placeholder="Policy Name"
                 value={slaForm.name}
                 onChange={(e) => setSlaForm({ ...slaForm, name: e.target.value })}
                 required
               />
               <select
+                id="sla-priority"
+                name="priority"
                 value={slaForm.priority}
                 onChange={(e) => setSlaForm({ ...slaForm, priority: e.target.value })}
               >
@@ -400,6 +415,8 @@ export function SettingsPage({ token, user, t }) {
             </div>
             <div className="grid-2">
               <input
+                id="sla-first-response"
+                name="first_response_minutes"
                 type="number"
                 min="1"
                 placeholder="First response (minutes)"
@@ -408,6 +425,8 @@ export function SettingsPage({ token, user, t }) {
                 required
               />
               <input
+                id="sla-resolution"
+                name="resolution_minutes"
                 type="number"
                 min="1"
                 placeholder="Resolution (minutes)"
@@ -418,34 +437,42 @@ export function SettingsPage({ token, user, t }) {
             </div>
             <div className="grid-2">
               <input
+                id="sla-category"
+                name="category"
                 placeholder="Category (optional)"
                 value={slaForm.category}
                 onChange={(e) => setSlaForm({ ...slaForm, category: e.target.value })}
               />
               <input
+                id="sla-department"
+                name="department"
                 placeholder="Department (optional)"
                 value={slaForm.department}
                 onChange={(e) => setSlaForm({ ...slaForm, department: e.target.value })}
               />
             </div>
             <div className="grid-2">
-              <select value={slaForm.channel} onChange={(e) => setSlaForm({ ...slaForm, channel: e.target.value })}>
+              <select id="sla-channel" name="channel" value={slaForm.channel} onChange={(e) => setSlaForm({ ...slaForm, channel: e.target.value })}>
                 <option value="">Any Channel</option>
                 {channels.map((item) => (
                   <option key={item}>{item}</option>
                 ))}
               </select>
               <div className="inline-check">
-                <label className="inline-check">
+                <label className="inline-check" htmlFor="sla-is-default">
                   <input
+                    id="sla-is-default"
+                    name="is_default"
                     type="checkbox"
                     checked={slaForm.is_default}
                     onChange={(e) => setSlaForm({ ...slaForm, is_default: e.target.checked })}
                   />
                   Default policy
                 </label>
-                <label className="inline-check">
+                <label className="inline-check" htmlFor="sla-is-active">
                   <input
+                    id="sla-is-active"
+                    name="is_active"
                     type="checkbox"
                     checked={slaForm.is_active}
                     onChange={(e) => setSlaForm({ ...slaForm, is_active: e.target.checked })}
@@ -531,12 +558,16 @@ export function SettingsPage({ token, user, t }) {
           <form className="stack" onSubmit={saveAutomationRule}>
             <div className="grid-2">
               <input
+                id="rule-name"
+                name="name"
                 placeholder="Rule Name"
                 value={ruleForm.name}
                 onChange={(e) => setRuleForm({ ...ruleForm, name: e.target.value })}
                 required
               />
               <select
+                id="rule-trigger"
+                name="trigger_event"
                 value={ruleForm.trigger_event}
                 onChange={(e) => setRuleForm({ ...ruleForm, trigger_event: e.target.value })}
               >
@@ -756,6 +787,8 @@ export function SettingsPage({ token, user, t }) {
 
           <div className="grid-2" style={{ marginTop: "10px" }}>
             <input
+              id="test-ticket-id"
+              name="testTicketId"
               type="number"
               placeholder="Ticket ID for testing"
               value={testTicketId}

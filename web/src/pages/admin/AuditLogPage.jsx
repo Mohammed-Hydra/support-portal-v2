@@ -63,9 +63,11 @@ export function AuditLogPage({ token, t }) {
       <div className="card">
         <h3>Filters</h3>
         <div className="grid-2" style={{ gap: 12, marginBottom: 12 }}>
-          <label>
+          <label htmlFor="audit-action">
             Action
             <select
+              id="audit-action"
+              name="action"
               value={filters.action}
               onChange={(e) => setFilters((p) => ({ ...p, action: e.target.value }))}
             >
@@ -75,18 +77,22 @@ export function AuditLogPage({ token, t }) {
               ))}
             </select>
           </label>
-          <label>
+          <label htmlFor="audit-ticket-id">
             Ticket ID
             <input
+              id="audit-ticket-id"
+              name="ticketId"
               type="number"
               placeholder="e.g. 123"
               value={filters.ticketId}
               onChange={(e) => setFilters((p) => ({ ...p, ticketId: e.target.value.trim() }))}
             />
           </label>
-          <label>
+          <label htmlFor="audit-actor">
             Actor
             <select
+              id="audit-actor"
+              name="actorId"
               value={filters.actorId}
               onChange={(e) => setFilters((p) => ({ ...p, actorId: e.target.value }))}
             >
@@ -96,17 +102,21 @@ export function AuditLogPage({ token, t }) {
               ))}
             </select>
           </label>
-          <label>
+          <label htmlFor="audit-since">
             Since
             <input
+              id="audit-since"
+              name="since"
               type="datetime-local"
               value={filters.since}
               onChange={(e) => setFilters((p) => ({ ...p, since: e.target.value }))}
             />
           </label>
-          <label>
+          <label htmlFor="audit-until">
             Until
             <input
+              id="audit-until"
+              name="until"
               type="datetime-local"
               value={filters.until}
               onChange={(e) => setFilters((p) => ({ ...p, until: e.target.value }))}

@@ -57,9 +57,9 @@ export function PublicRequesterTrackPage() {
           <h2>Track Your Tickets</h2>
           <p className="muted">Enter your email to view your tickets.</p>
         </div>
-        <label>
+        <label htmlFor="track-email">
           Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input id="track-email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         </label>
         {error ? <p className="error">{error}</p> : null}
         <button type="submit" disabled={loading}>{loading ? "Loading..." : "View My Tickets"}</button>
