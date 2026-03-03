@@ -44,6 +44,7 @@ export function TicketListPage({ token, user, t }) {
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [mergeMainId, setMergeMainId] = useState(null);
   const [merging, setMerging] = useState(false);
+  const [selectAllActive, setSelectAllActive] = useState(false);
 
   const listFilters = useMemo(() => {
     const qs = new URLSearchParams(location.search || "");
@@ -737,19 +738,22 @@ export function TicketListPage({ token, user, t }) {
                     <label className="merge-select-all" style={{ margin: 0, cursor: "pointer" }}>
                       <input
                         type="checkbox"
-                        checked={(() => {
-                          const mergeable = sortedTickets.filter((t) => !t.merged_into_ticket_id);
-                          return mergeable.length > 0 && mergeable.every((t) => mergeSelected.has(t.id));
-                        })()}
-                        onChange={(e) => {
+                        checked={selectAllActive}
+                        onChange={async (e) => {
                           if (e.target.checked) {
-                            const next = new Set(mergeSelected);
-                            sortedTickets.forEach((t) => {
-                              if (!t.merged_into_ticket_id) next.add(t.id);
-                            });
-                            setMergeSelected(next);
-                            if (next.size && !mergeMainId) setMergeMainId([...next][0]);
+                            setSelectAllActive(true);
+                            try {
+                              const rows = await apiRequest("/api/tickets", { token });
+                              const all = Array.isArray(rows) ? rows : [];
+                              const mergeable = all.filter((t) => !t.merged_into_ticket_id);
+                              const ids = new Set(mergeable.map((t) => t.id));
+                              setMergeSelected(ids);
+                              if (ids.size) setMergeMainId([...ids][0]);
+                            } catch {
+                              setSelectAllActive(false);
+                            }
                           } else {
+                            setSelectAllActive(false);
                             setMergeSelected(new Set());
                             setMergeMainId(null);
                           }
@@ -788,6 +792,7 @@ export function TicketListPage({ token, user, t }) {
                                 if (!mergeMainId) setMergeMainId(ticket.id);
                               } else {
                                 next.delete(ticket.id);
+                                setSelectAllActive(false);
                                 if (mergeMainId === ticket.id) setMergeMainId(next.size ? [...next][0] : null);
                               }
                               setMergeSelected(next);
@@ -929,6 +934,7 @@ export function TicketListPage({ token, user, t }) {
                     setShowMergeModal(false);
                     setMergeSelected(new Set());
                     setMergeMainId(null);
+                    setSelectAllActive(false);
                     load();
                     navigate(`/tickets/${targetId}`);
                   } catch (err) {
