@@ -1,0 +1,15 @@
+Status of your requested features
+Feature	Status
+Quick replies (canned responses)	Done
+Pre-filled ticket templates (editable)	Done
+Merge duplicate tickets	Done
+Webhooks DELETE	Done
+New ticket/reply alerts (browser push)	Not implemented
+Optional sound for new messages	Done
+Unread tickets count in sidebar	Partial (bell only, no sidebar badge)
+Advanced search	Not implemented
+SLA metrics (response/resolution times)	Not implemented
+Knowledge base before create ticket	Not implemented
+Estimated response time on create	Not implemented
+Extra fields per category	Schema exists; UI may need checks
+Slack/Teams webhook firing	Webhooks stored but not 

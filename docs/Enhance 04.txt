@@ -1,0 +1,32 @@
+Implemented features
+1. Browser push notifications
+Desktop notifications when new tickets/replies arrive (when the tab is open and permission is granted)
+Settings → "Enable browser notifications" to request permission
+Notifications show when unread count increases
+2. Unread tickets count in sidebar
+Badge on the "Tickets" link in the sidebar with unread notification count
+Updates every 30 seconds
+3. Advanced search
+New "Search text" field on the ticket queue (subject and description)
+Backend: search query param with ILIKE on subject and description
+4. SLA metrics
+Reports page: period filter (All time, Last 7/30/90 days)
+Existing metrics: avg response time, avg resolution time, SLA breaches
+5. Knowledge base before create ticket
+Public requester create page: collapsible "Search FAQ / Knowledge Base" above the form
+Search by text and category
+Shows up to 8 matching articles
+6. Estimated response time
+Shown when creating a ticket (portal and public requester)
+Based on SLA policies for selected priority and category
+API: /api/settings/estimated-response (auth) and /api/public/requester/estimated-response (public)
+7. Custom fields per category
+Custom fields filtered by category (already supported)
+Template custom_fields_json parsed correctly when it comes as a string
+8. Slack/Teams webhook firing
+New src/lib/webhooks.js service
+Webhooks called on new_ticket and new_message
+Used for: portal tickets, public requester tickets, inbound email/WhatsApp, and new messages
+Files changed/added
+Backend: src/lib/webhooks.js, src/app.js, src/modules/settings/routes.js, src/modules/tickets/routes.js, src/modules/publicRequester/routes.js
+Frontend: Layout.jsx, NotificationBell.jsx, TicketListPage.jsx, PublicRequesterCreatePage.jsx, ReportsPage.jsx, SettingsPage.jsx, App.css

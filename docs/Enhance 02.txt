@@ -1,0 +1,28 @@
+Here are some enhancements that could make the portal more useful for agents:
+Ticket management
+Canned responses – Quick replies for common issues
+Bulk actions – Change status or assign multiple tickets at once
+Ticket templates – Pre-filled forms for common request types
+Ticket merging – Combine duplicate tickets
+Notifications & alerts
+Browser push notifications – New ticket or reply alerts
+Sound alerts – Optional sound for new messages
+Unread badge – Count of unread tickets in the sidebar
+Search & filters
+Advanced search – By requester, date range, tags, etc.
+Saved filters – “My open tickets”, “Urgent”, etc.
+Export to CSV – Export filtered ticket lists
+Dashboard
+SLA metrics – Response and resolution times
+Agent workload – Tickets per agent
+Trend charts – Volume over time
+Requester experience
+Knowledge base / FAQ – Self-service before creating a ticket
+Estimated response time – Shown when creating a ticket
+UX
+Keyboard shortcuts – e.g. N for new ticket, Esc to close
+Dark mode for agent portal – Same as requester portal
+Custom ticket fields – Extra fields per category
+Integrations
+Slack/Teams – Notifications for new tickets
+Email – Create tickets from incoming emails

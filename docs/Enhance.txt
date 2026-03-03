@@ -1,0 +1,84 @@
+High impact, relatively quick
+1. Bulk actions UI
+You already have POST /api/tickets/bulk/status. Add:
+Checkboxes on the ticket list
+“Select all” / “Clear selection”
+Bulk actions bar: change status, assign agent, resolve
+2. Export to CSV
+Add an export button on the ticket list and reports page to download filtered tickets as CSV (ID, subject, status, priority, agent, dates, etc.).
+3. Dashboard charts
+Keep the existing KPIs and add simple charts (e.g. with Chart.js or Recharts):
+Tickets by status (bar/pie)
+Tickets over time (line)
+Priority distribution
+User experience
+4. Dark mode
+Theme toggle (light/dark) with preference stored in localStorage and applied via CSS variables.
+5. Ticket templates
+Pre-filled forms for common issues (e.g. “Password reset”, “Printer not working”) so agents can create tickets faster.
+6. Quick replies / canned responses
+Saved snippets for agents (e.g. “Please try restarting your computer”) that can be inserted into replies.
+7. KB article suggestions
+When creating a ticket, suggest Help Center articles based on subject/category to deflect simple questions.
+Notifications & communication
+8. In-app notifications
+Bell icon in the header with unread ticket updates (new messages, assignments, status changes) and a simple list/dropdown.
+9. Email notification preferences
+Let requesters choose which events trigger emails (e.g. new message, status change, assignment).
+Admin & configuration
+10. Audit log UI
+You already call logAudit. Add an admin page to view and filter the audit log (who did what, when).
+11. Category & tag management
+Admin UI to create/edit categories and tags instead of hardcoding them.
+12. Custom fields
+Configurable extra fields per ticket type (e.g. “Asset ID”, “Location”).
+Integrations (you have docs for these)
+13. M365 Graph integration
+Password reset via Graph API
+User lookup for auto-filling requester info
+14. Slack/Teams
+Create tickets from messages
+Notify channels when tickets are created or updated
+Performance & reliability
+15. Real-time updates
+Polling or WebSockets so ticket list and detail updates without manual refresh.
+16. Offline support
+Service worker for basic offline viewing and queuing of actions.
+Suggested next steps
+Bulk actions UI – uses the existing API and improves agent workflow.
+Export to CSV – simple to add and useful for reporting.
+Dashboard charts – makes the dashboard more informative and easier to scan.
+
+
+
+
+
+Here are ways to make the portal more attractive:
+Visual design
+Dark mode – Theme toggle with a polished dark palette
+Color accents – Use your brand colors for buttons, links, and status badges
+Typography – Clear hierarchy and a modern font (e.g. Inter, DM Sans)
+Spacing & layout – More whitespace, consistent padding, and clearer sections
+Card shadows & borders – Subtle depth and hover states for cards and buttons
+UI polish
+Loading states – Skeletons or spinners instead of plain “Loading…”
+Empty states – Friendly illustrations or messages when lists are empty
+Micro-interactions – Hover effects, smooth transitions, and small animations
+Status badges – Color-coded pills (e.g. green Resolved, blue In Progress)
+Icons – Small icons for menu items, actions, and statuses
+Navigation & layout
+Sticky header – Keep main actions visible while scrolling
+Breadcrumbs – Show current location (e.g. Tickets > #123)
+Quick actions – “New ticket” or “Assign to me” in the header
+Collapsible sections – For long forms or detail pages
+User experience
+Dashboard widgets – Draggable cards or customizable layout
+Welcome message – Brief greeting or tips on the dashboard
+Progress indicators – Clear steps for ticket status (e.g. New → In Progress → Resolved)
+Confirmation feedback – Toasts or success messages for important actions
+Quick wins
+Dark mode – Theme toggle and CSS variables
+Status badges – Color-coded pills for status and priority
+Loading skeletons – For ticket list and detail views
+Refined typography – Better fonts and spacing
+If you choose one or two areas (e.g. dark mode + status badges), I can outline concrete steps and code changes.

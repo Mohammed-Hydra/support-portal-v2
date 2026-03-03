@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Portal Services &amp; Stack — Support Portal v2</title>
+    <style>
+      body { margin: 24px; font-family: system-ui, sans-serif; line-height: 1.45; color: #111; font-size: 13px; }
+      h1 { font-size: 20px; margin: 0 0 8px 0; }
+      .sub { color: #444; margin-bottom: 16px; }
+      pre { margin: 0; padding: 16px; background: #fafafa; border: 1px solid #e5e5e5; border-radius: 8px; white-space: pre-wrap; word-break: break-word; font-size: 11.5px; line-height: 1.4; }
+      @media print { body { margin: 14px; } pre { font-size: 10px; } }
+    </style>
+  </head>
+  <body>
+    <h1>Portal Services &amp; Stack — Support Portal v2</h1>
+    <p class="sub">Export of docs/Portal-Services-and-Stack.md</p>
+    <pre># HYDRA-TECH Support Portal v2 — Services &amp; Stack Reference
+
+1. DATABASE (you choose one)
+   Neon (neon.tech) — PostgreSQL; set DATABASE_URL.
+   Supabase (supabase.com) — PostgreSQL; set DATABASE_URL. App uses only Postgres, not Supabase Auth/Realtime.
+   Other Postgres — Any host; set DATABASE_URL.
+   Code: src/db/client.js, pg package.
+
+2. EMAIL (you choose one)
+   Resend (resend.com) — RESEND_API_KEY, RESEND_FROM. Password reset + requester magic links.
+   Microsoft Graph (graph.microsoft.com, login.microsoftonline.com) — M365_* vars. Same emails.
+   SMTP (e.g. smtp.office365.com) — SMTP_* vars. Fallback.
+   Code: src/modules/users/routes.js, src/modules/publicRequester/routes.js
+
+3. API
+   This app's backend (Node.js + Express in src/). Runs on Vercel. Frontend calls it via web/src/api.js.
+   No separate third-party API — the API is this app's server.
+
+4. FRONTEND (coding)
+   React (react.dev) — UI. React Router — routing. Vite (vitejs.dev) — build. npm (npmjs.com) — packages.
+   Repo: web/
+
+5. BACKEND (coding)
+   Node.js (nodejs.org), Express (expressjs.com), pg (PostgreSQL), npm. Repo: src/, root package.json
+
+6. HOSTING
+   Vercel (vercel.com) — whole app (backend + frontend). GitHub (github.com) — code repo.
+
+7. EDITOR
+   Cursor (cursor.com) — IDE; not part of running app.
+
+8. OPTIONAL
+   WhatsApp — inbound webhook only. Email ingestion — inbound webhook only.
+
+QUICK REFERENCE
+Database: Neon / Supabase — set DATABASE_URL
+Email: Resend / M365 / SMTP — set respective env vars
+API: This app on Vercel
+Frontend: React, Vite, npm
+Backend: Node, Express, npm
+Hosting: Vercel. Repo: GitHub. IDE: Cursor.</pre>
+  </body>
+</html>

@@ -7,3 +7,5 @@ RESEND_API_KEY=*.env
 RESEND_API_KEY=*.env.txt
 postgresql*.txt
 *secret*.txt
+App registrations AZURE.txt
+docs/Outlook App Password.txt
