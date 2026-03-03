@@ -291,7 +291,7 @@ export function PublicRequesterPortalPage() {
 
   if (!requesterToken) {
     return (
-      <div className="auth-wrap">
+      <div className="auth-wrap requester-portal-wrap">
         <div style={{ position: "absolute", top: 16, right: 16 }}>
           <ThemeToggle />
         </div>

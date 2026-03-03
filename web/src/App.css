@@ -343,6 +343,18 @@ body {
   font-weight: 600;
 }
 
+.notification-dropdown-header .text-btn {
+  -webkit-tap-highlight-color: transparent;
+}
+.notification-dropdown-header .text-btn:hover,
+.notification-dropdown-header .text-btn:focus,
+.notification-dropdown-header .text-btn:active,
+.notification-dropdown-header .text-btn:focus-visible {
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+}
+
 .notification-dropdown-list {
   overflow-y: auto;
   max-height: 340px;
@@ -500,6 +512,10 @@ body {
   max-width: 420px;
   display: grid;
   gap: 12px;
+}
+
+.requester-portal-wrap .auth-card {
+  max-width: 100%;
 }
 
 .login-brand-image {
@@ -758,10 +774,13 @@ button:hover {
   outline: none;
   -webkit-tap-highlight-color: transparent;
 }
+.text-btn:hover,
 .text-btn:focus,
-.text-btn:active {
+.text-btn:active,
+.text-btn:focus-visible {
   outline: none;
   box-shadow: none;
+  background: transparent;
 }
 
 /* Prevent text selection and blue highlight when clicking "View attachment" */
