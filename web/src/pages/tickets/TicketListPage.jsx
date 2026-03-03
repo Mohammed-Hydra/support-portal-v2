@@ -38,6 +38,8 @@ export function TicketListPage({ token, user, t }) {
   const [customFieldDefs, setCustomFieldDefs] = useState([]);
   const [customFields, setCustomFields] = useState({});
   const [ticketTemplates, setTicketTemplates] = useState([]);
+  const [sortBy, setSortBy] = useState("updated");
+  const [sortDir, setSortDir] = useState("desc");
 
   const listFilters = useMemo(() => {
     const qs = new URLSearchParams(location.search || "");
@@ -282,6 +284,54 @@ export function TicketListPage({ token, user, t }) {
     if (diffMinutes <= 60) return { text: `Due in ${formatDuration(diffMinutes)}`, tone: "warn" };
     return { text: `Due in ${formatDuration(diffMinutes)}`, tone: "ok" };
   };
+
+  const statusOrder = { New: 1, "In Progress": 2, "Waiting User": 3, Resolved: 4, Closed: 5 };
+  const priorityOrder = { Critical: 1, High: 2, Medium: 3, Low: 4 };
+
+  const sortedTickets = useMemo(() => {
+    const list = [...tickets];
+    const dir = sortDir === "asc" ? 1 : -1;
+    const slaVal = (t) => {
+      if (t.status === "Resolved" || t.status === "Closed") return Number.MAX_SAFE_INTEGER;
+      const due = t.resolution_due_at || t.first_response_due_at;
+      return due ? new Date(due).getTime() : Number.MAX_SAFE_INTEGER - 1;
+    };
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "status") {
+        cmp = (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
+      } else if (sortBy === "priority") {
+        cmp = (priorityOrder[a.priority] || 99) - (priorityOrder[b.priority] || 99);
+      } else if (sortBy === "sla") {
+        cmp = slaVal(a) - slaVal(b);
+      } else {
+        cmp = new Date(a.updated_at || 0).getTime() - new Date(b.updated_at || 0).getTime();
+      }
+      return dir * cmp;
+    });
+    return list;
+  }, [tickets, sortBy, sortDir]);
+
+  const toggleSort = (col) => {
+    if (sortBy === col) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortBy(col);
+      setSortDir(col === "updated" ? "desc" : "asc");
+    }
+  };
+
+  const SortHeader = ({ col, label }) => (
+    <th
+      className={`sortable ${sortBy === col ? "active" : ""}`}
+      onClick={() => toggleSort(col)}
+      scope="col"
+    >
+      {label}
+      <span className="sort-icon" aria-hidden="true">
+        {sortBy === col ? (sortDir === "asc" ? " ↑" : " ↓") : " ↕"}
+      </span>
+    </th>
+  );
 
   return (
     <div>
@@ -661,27 +711,27 @@ export function TicketListPage({ token, user, t }) {
           </div>
         </div>
         <div className="table-wrap">
-          <table className="table">
+          <table className="table tickets-table">
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Subject</th>
-                <th>Status</th>
-                <th>Priority</th>
+                <SortHeader col="status" label="Status" />
+                <SortHeader col="priority" label="Priority" />
                 <th>Requester</th>
                 <th>Contact</th>
                 <th>Company Name</th>
                 <th>Agent</th>
-                <th>SLA</th>
-                <th>Updated</th>
+                <SortHeader col="sla" label="SLA" />
+                <SortHeader col="updated" label="Updated" />
                 <th className="action-cell">Action</th>
               </tr>
             </thead>
             <tbody>
-              {tickets.map((ticket) => (
+              {sortedTickets.map((ticket) => (
                 <tr key={ticket.id}>
                   <td>{ticket.id}</td>
-                  <td><Link to={`/tickets/${ticket.id}`}>{ticket.subject}</Link></td>
+                  <td><Link to={`/tickets/${ticket.id}`} className="ticket-subject-link">{ticket.subject}</Link></td>
                   <td><StatusBadge status={ticket.status} /></td>
                   <td><PriorityBadge priority={ticket.priority} /></td>
                   <td>{getRequesterName(ticket)}</td>

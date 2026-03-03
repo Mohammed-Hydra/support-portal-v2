@@ -657,19 +657,70 @@ button:hover {
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .table th,
 .table td {
   border: 1px solid var(--border);
-  padding: 8px;
+  padding: 10px 12px;
   text-align: left;
   vertical-align: top;
 }
 
 .table th {
   background: var(--soft);
+  font-weight: 600;
+}
+
+/* Ticket queue column widths */
+.table.tickets-table th:nth-child(1),
+.table.tickets-table td:nth-child(1) { min-width: 48px; width: 48px; }   /* ID */
+.table.tickets-table th:nth-child(2),
+.table.tickets-table td:nth-child(2) { min-width: 180px; }              /* Subject */
+.table.tickets-table th:nth-child(3),
+.table.tickets-table td:nth-child(3) { min-width: 100px; }               /* Status */
+.table.tickets-table th:nth-child(4),
+.table.tickets-table td:nth-child(4) { min-width: 88px; }                /* Priority */
+.table.tickets-table th:nth-child(5),
+.table.tickets-table td:nth-child(5) { min-width: 100px; }              /* Requester */
+.table.tickets-table th:nth-child(6),
+.table.tickets-table td:nth-child(6) { min-width: 160px; }               /* Contact */
+.table.tickets-table th:nth-child(7),
+.table.tickets-table td:nth-child(7) { min-width: 100px; }              /* Company */
+.table.tickets-table th:nth-child(8),
+.table.tickets-table td:nth-child(8) { min-width: 100px; }              /* Agent */
+.table.tickets-table th:nth-child(9),
+.table.tickets-table td:nth-child(9) { min-width: 100px; }              /* SLA */
+.table.tickets-table th:nth-child(10),
+.table.tickets-table td:nth-child(10) { min-width: 140px; }              /* Updated */
+
+.table.tickets-table .ticket-subject-link {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--btn);
+  text-decoration: none;
+}
+.table.tickets-table .ticket-subject-link:hover {
+  text-decoration: underline;
+  color: var(--btn-hover);
+}
+
+.table.tickets-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.table.tickets-table th.sortable:hover {
+  color: var(--btn);
+}
+.table.tickets-table th.sortable .sort-icon {
+  opacity: 0.5;
+  margin-left: 4px;
+  font-size: 12px;
+}
+.table.tickets-table th.sortable.active .sort-icon {
+  opacity: 1;
 }
 
 .timeline-item {
