@@ -408,10 +408,14 @@ body {
 
 .content {
   padding: 16px;
+  max-width: min(50vw, 1000px);
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -421,6 +425,9 @@ body {
 
 .page-header h1 {
   margin: 0 0 4px;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .page-header p {
@@ -455,6 +462,8 @@ body {
   -webkit-backdrop-filter: blur(16px) saturate(120%);
   backdrop-filter: blur(16px) saturate(120%);
   margin-bottom: 16px;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .subcard {
@@ -657,7 +666,7 @@ button:hover {
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .table th,
@@ -697,7 +706,7 @@ button:hover {
 
 .table.tickets-table .ticket-subject-link {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--btn);
   text-decoration: none;
 }
@@ -1320,6 +1329,12 @@ body[dir="rtl"] .edit-drawer {
 
   .grid-2 {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .content {
+    max-width: 100%;
   }
 }
 
