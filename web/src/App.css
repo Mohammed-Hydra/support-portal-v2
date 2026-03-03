@@ -9,6 +9,15 @@ body {
   overscroll-behavior-x: none;
 }
 
+/* Hide scrollbars but keep scroll functionality */
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
@@ -408,10 +417,8 @@ body {
 
 .content {
   padding: 16px;
-  max-width: min(50vw, 1000px);
-  margin-left: auto;
-  margin-right: auto;
   width: 100%;
+  min-width: 0;
 }
 
 .container {
@@ -809,6 +816,10 @@ a.attachment-link:active,
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.table-wrap::-webkit-scrollbar {
+  display: none;
 }
 
 .action-cell {
@@ -1329,12 +1340,6 @@ body[dir="rtl"] .edit-drawer {
 
   .grid-2 {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 900px) {
-  .content {
-    max-width: 100%;
   }
 }
 
