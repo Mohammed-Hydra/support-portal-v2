@@ -739,6 +739,13 @@ button:hover {
   color: #1d4ed8;
   text-align: left;
   padding: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.text-btn:focus,
+.text-btn:active {
+  outline: none;
+  box-shadow: none;
 }
 
 /* Prevent text selection and blue highlight when clicking "View attachment" */
@@ -1180,6 +1187,75 @@ body[dir="rtl"] .edit-drawer {
   justify-content: flex-end;
   gap: 10px;
   border-top: 1px solid var(--border);
+}
+
+.merge-modal .modal-body {
+  max-height: 400px;
+}
+
+.merge-ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.merge-ticket-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.merge-ticket-row.selected {
+  border-color: var(--border-focus);
+  background: var(--soft);
+}
+
+.merge-ticket-row.main {
+  border-color: var(--border-focus);
+  background: var(--soft);
+  color: var(--text);
+}
+
+.merge-ticket-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.merge-ticket-id {
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 36px;
+}
+
+.merge-ticket-subject {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+}
+
+.merge-ticket-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.merge-set-main {
+  font-size: 13px;
+}
+
+.merge-set-main:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-secondary {

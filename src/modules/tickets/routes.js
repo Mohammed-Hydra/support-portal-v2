@@ -770,38 +770,53 @@ function ticketsRoutes({ logAudit, createNotification: createNotificationFromApp
   });
 
   router.post("/tickets/merge", authRequired, roleRequired("admin", "agent"), async (req, res) => {
-    const sourceId = Number(req.body.sourceTicketId);
+    let sourceIds = [];
+    if (Array.isArray(req.body.sourceTicketIds)) {
+      sourceIds = req.body.sourceTicketIds.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
+    } else if (req.body.sourceTicketId) {
+      const single = Number(req.body.sourceTicketId);
+      if (Number.isFinite(single) && single > 0) sourceIds = [single];
+    }
     const targetId = Number(req.body.targetTicketId);
-    if (!sourceId || !targetId || sourceId === targetId) {
-      res.status(400).json({ error: "sourceTicketId and targetTicketId required and must differ" });
+    if (!targetId || !Number.isFinite(targetId)) {
+      res.status(400).json({ error: "targetTicketId required" });
       return;
     }
-    const source = await getOne(`SELECT * FROM tickets WHERE id = $1`, [sourceId]);
+    sourceIds = sourceIds.filter((id) => id !== targetId);
+    if (sourceIds.length === 0) {
+      res.status(400).json({ error: "At least one source ticket (different from target) required" });
+      return;
+    }
     const target = await getOne(`SELECT * FROM tickets WHERE id = $1`, [targetId]);
-    if (!source || !target) {
-      res.status(404).json({ error: "One or both tickets not found" });
+    if (!target) {
+      res.status(404).json({ error: "Target ticket not found" });
       return;
     }
-    const messages = await getMany(`SELECT * FROM ticket_messages WHERE ticket_id = $1 ORDER BY created_at ASC`, [sourceId]);
-    for (const m of messages) {
-      await query(
-        `INSERT INTO ticket_messages (ticket_id, author_user_id, source, body, attachment_url, is_internal, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [targetId, m.author_user_id, m.source, m.body, m.attachment_url, m.is_internal, m.created_at]
-      );
+    for (const sourceId of sourceIds) {
+      const source = await getOne(`SELECT * FROM tickets WHERE id = $1`, [sourceId]);
+      if (!source) continue;
+      if (source.merged_into_ticket_id) continue;
+      const messages = await getMany(`SELECT * FROM ticket_messages WHERE ticket_id = $1 ORDER BY created_at ASC`, [sourceId]);
+      for (const m of messages) {
+        await query(
+          `INSERT INTO ticket_messages (ticket_id, author_user_id, source, body, attachment_url, is_internal, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [targetId, m.author_user_id, m.source, m.body, m.attachment_url, m.is_internal, m.created_at]
+        );
+      }
+      const customFields = await getMany(`SELECT * FROM ticket_custom_fields WHERE ticket_id = $1`, [sourceId]);
+      for (const cf of customFields) {
+        await query(
+          `INSERT INTO ticket_custom_fields (ticket_id, field_key, field_value, created_at)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (ticket_id, field_key) DO UPDATE SET field_value = EXCLUDED.field_value`,
+          [targetId, cf.field_key, cf.field_value, cf.created_at]
+        ).catch(() => {});
+      }
+      await query(`UPDATE tickets SET status = 'Closed', merged_into_ticket_id = $1, updated_at = NOW() WHERE id = $2`, [targetId, sourceId]);
+      await logAudit(req.user.sub, targetId, "tickets_merged", { sourceTicketId: sourceId, targetTicketId: targetId });
     }
-    const customFields = await getMany(`SELECT * FROM ticket_custom_fields WHERE ticket_id = $1`, [sourceId]);
-    for (const cf of customFields) {
-      await query(
-        `INSERT INTO ticket_custom_fields (ticket_id, field_key, field_value, created_at)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (ticket_id, field_key) DO UPDATE SET field_value = EXCLUDED.field_value`,
-        [targetId, cf.field_key, cf.field_value, cf.created_at]
-      ).catch(() => {});
-    }
-    await query(`UPDATE tickets SET status = 'Closed', merged_into_ticket_id = $1, updated_at = NOW() WHERE id = $2`, [targetId, sourceId]);
     await query(`UPDATE tickets SET updated_at = NOW() WHERE id = $1`, [targetId]);
-    await logAudit(req.user.sub, targetId, "tickets_merged", { sourceTicketId: sourceId, targetTicketId: targetId });
     res.json({ success: true, targetTicketId: targetId });
   });
 

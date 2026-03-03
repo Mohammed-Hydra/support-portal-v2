@@ -31,7 +31,10 @@ export function TicketDetailPage({ token, user }) {
   const [customFieldDefs, setCustomFieldDefs] = useState([]);
   const [cannedResponses, setCannedResponses] = useState([]);
   const [showMergeModal, setShowMergeModal] = useState(false);
-  const [mergeTargetId, setMergeTargetId] = useState("");
+  const [mergeTickets, setMergeTickets] = useState([]);
+  const [mergeLoading, setMergeLoading] = useState(false);
+  const [mergeSelected, setMergeSelected] = useState(new Set());
+  const [mergeMainId, setMergeMainId] = useState(null);
   const [merging, setMerging] = useState(false);
 
   const load = async () => {
@@ -75,6 +78,26 @@ export function TicketDetailPage({ token, user }) {
         toastError(err.message || "Failed to load agents.");
       });
   }, [token, user]);
+
+  useEffect(() => {
+    if (showMergeModal && token) {
+      setMergeLoading(true);
+      setMergeSelected(new Set());
+      setMergeMainId(null);
+      apiRequest("/api/tickets", { token })
+        .then((rows) => {
+          const list = (rows || []).filter((t) => !t.merged_into_ticket_id);
+          setMergeTickets(list);
+          const current = Number(ticketId);
+          if (list.some((t) => t.id === current)) {
+            setMergeSelected(new Set([current]));
+            setMergeMainId(current);
+          }
+        })
+        .catch(() => setMergeTickets([]))
+        .finally(() => setMergeLoading(false));
+    }
+  }, [showMergeModal, token, ticketId]);
 
   useEffect(() => {
     if (!token || (user?.role !== "admin" && user?.role !== "agent")) return;
@@ -624,44 +647,84 @@ export function TicketDetailPage({ token, user }) {
 
       {showMergeModal && (
         <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={() => !merging && setShowMergeModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal merge-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
             <div className="modal-header">
               <strong>Merge tickets</strong>
               <button type="button" className="icon-close" onClick={() => !merging && setShowMergeModal(false)} aria-label="Close">×</button>
             </div>
             <div className="modal-body">
-              <p className="muted">This ticket (#{ticketId}) will be merged into the target. All messages will move to the target, and this ticket will be closed.</p>
-              <label htmlFor="merge-target-id">
-                Target ticket ID (to merge into)
-                <input
-                  id="merge-target-id"
-                  name="mergeTargetId"
-                  type="number"
-                  value={mergeTargetId}
-                  onChange={(e) => setMergeTargetId(e.target.value)}
-                  placeholder="e.g. 42"
-                />
-              </label>
+              <p className="muted">Select tickets to merge, then choose which ticket will be the main one. All messages from merged tickets will move to the main ticket.</p>
+              {mergeLoading ? (
+                <p className="muted">Loading tickets...</p>
+              ) : mergeTickets.length === 0 ? (
+                <p className="muted">No tickets available to merge.</p>
+              ) : (
+                <div className="merge-ticket-list">
+                  {mergeTickets.map((t) => {
+                    const id = t.id;
+                    const selected = mergeSelected.has(id);
+                    const isMain = mergeMainId === id;
+                    const requesterName = t.requester_name || t.requester_name_from_user || t.requester_name_from_contact || "-";
+                    return (
+                      <div key={id} className={`merge-ticket-row${selected ? " selected" : ""}${isMain ? " main" : ""}`}>
+                        <label className="merge-ticket-check">
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(e) => {
+                              const next = new Set(mergeSelected);
+                              if (e.target.checked) {
+                                next.add(id);
+                                if (!mergeMainId) setMergeMainId(id);
+                              } else {
+                                next.delete(id);
+                                if (mergeMainId === id) setMergeMainId(next.size ? [...next][0] : null);
+                              }
+                              setMergeSelected(next);
+                            }}
+                          />
+                          <span className="merge-ticket-id">#{id}</span>
+                        </label>
+                        <span className="merge-ticket-subject">{t.subject || "(no subject)"}</span>
+                        <span className="merge-ticket-meta">
+                          <StatusBadge status={t.status} /> · {requesterName}
+                        </span>
+                        <button
+                          type="button"
+                          className="text-btn merge-set-main"
+                          disabled={!selected}
+                          onClick={() => {
+                            if (selected) setMergeMainId(id);
+                          }}
+                        >
+                          {isMain ? "Main ticket" : "Set as main"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div className="modal-footer">
               <button type="button" onClick={() => !merging && setShowMergeModal(false)}>Cancel</button>
               <button
                 type="button"
-                disabled={merging || !mergeTargetId || Number(mergeTargetId) === Number(ticketId)}
+                disabled={merging || !mergeMainId || mergeSelected.size < 2}
                 onClick={async () => {
-                  const targetId = Number(mergeTargetId);
-                  if (!targetId || targetId === Number(ticketId)) return;
+                  const targetId = mergeMainId;
+                  const sourceIds = [...mergeSelected].filter((id) => id !== targetId);
+                  if (!targetId || sourceIds.length === 0) return;
                   setMerging(true);
                   try {
                     await apiRequest("/api/tickets/merge", {
                       token,
                       method: "POST",
-                      body: JSON.stringify({ sourceTicketId: Number(ticketId), targetTicketId: targetId }),
+                      body: JSON.stringify({ targetTicketId: targetId, sourceTicketIds: sourceIds }),
                     });
                     toastSuccess("Tickets merged.");
                     setShowMergeModal(false);
-                    setMergeTargetId("");
                     navigate(`/tickets/${targetId}`);
+                    load();
                   } catch (err) {
                     toastError(err.message || "Failed to merge.");
                   } finally {
