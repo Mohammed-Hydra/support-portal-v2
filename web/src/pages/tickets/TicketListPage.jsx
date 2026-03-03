@@ -368,7 +368,7 @@ export function TicketListPage({ token, user, t }) {
         </div>
       ) : null}
 
-      <Collapsible title="Create Ticket" defaultOpen={true}>
+      <Collapsible title="Create Ticket" defaultOpen={false}>
       <form className="card stack" onSubmit={submitTicket}>
         {ticketTemplates.length > 0 && (user?.role === "admin" || user?.role === "agent") && (
           <label htmlFor="ticket-template">
