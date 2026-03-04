@@ -463,27 +463,47 @@ function usersRoutes({ logAudit }) {
   router.patch("/users/:id", authRequired, roleRequired("admin"), async (req, res) => {
     try {
       const userId = Number(req.params.id);
-      if (userId === Number(req.user.sub)) {
-        res.status(400).json({ error: "You cannot change your own account status" });
-        return;
-      }
       const target = await getOne(`SELECT id, email, role, is_active FROM users WHERE id = $1`, [userId]);
       if (!target) {
         res.status(404).json({ error: "User not found" });
         return;
       }
       const isActive = req.body.is_active;
-      if (typeof isActive !== "boolean") {
-        res.status(400).json({ error: "is_active (boolean) is required" });
+      const role = (req.body.role || "").trim();
+      const updatingOwnAccount = userId === Number(req.user.sub);
+
+      if (typeof isActive === "boolean") {
+        if (updatingOwnAccount) {
+          res.status(400).json({ error: "You cannot change your own account status" });
+          return;
+        }
+        await query(`UPDATE users SET is_active = $1 WHERE id = $2`, [isActive, userId]);
+        await logAudit(req.user.sub, null, "user_status_updated", {
+          targetUserId: userId,
+          targetEmail: target.email,
+          is_active: isActive,
+        });
+        res.json({ success: true, is_active: isActive });
         return;
       }
-      await query(`UPDATE users SET is_active = $1 WHERE id = $2`, [isActive, userId]);
-      await logAudit(req.user.sub, null, "user_status_updated", {
-        targetUserId: userId,
-        targetEmail: target.email,
-        is_active: isActive,
-      });
-      res.json({ success: true, is_active: isActive });
+
+      if (["admin", "agent", "requester"].includes(role) && role !== target.role) {
+        if (updatingOwnAccount) {
+          res.status(400).json({ error: "You cannot change your own role" });
+          return;
+        }
+        await query(`UPDATE users SET role = $1 WHERE id = $2`, [role, userId]);
+        await logAudit(req.user.sub, null, "user_role_updated", {
+          targetUserId: userId,
+          targetEmail: target.email,
+          previousRole: target.role,
+          newRole: role,
+        });
+        res.json({ success: true, role });
+        return;
+      }
+
+      res.status(400).json({ error: "Provide is_active (boolean) or role (admin|agent|requester)" });
     } catch (error) {
       res.status(500).json({ error: "Failed to update user" });
     }

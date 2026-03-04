@@ -17,6 +17,7 @@ export function UserAdminPage({ token, user, t }) {
   const [newPassword, setNewPassword] = useState("");
   const [deletingUserId, setDeletingUserId] = useState("");
   const [togglingUserId, setTogglingUserId] = useState("");
+  const [changingRoleUserId, setChangingRoleUserId] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState({ userId: null, confirmEmail: "" });
 
   const loadUsers = async () => {
@@ -129,6 +130,29 @@ export function UserAdminPage({ token, user, t }) {
       toastError(err.message || "Failed to update user.");
     } finally {
       setTogglingUserId("");
+    }
+  };
+
+  const changeUserRole = async (targetUserId, newRole) => {
+    const target = users.find((item) => Number(item.id) === Number(targetUserId));
+    if (!target || target.role === newRole) return;
+    const label = `${target.name} (${target.email})`;
+    if (!window.confirm(`Change ${label} from ${target.role} to ${newRole}?`)) return;
+
+    try {
+      setChangingRoleUserId(String(targetUserId));
+      await apiRequest(`/api/users/${targetUserId}`, {
+        token,
+        method: "PATCH",
+        body: JSON.stringify({ role: newRole }),
+      });
+      await loadUsers();
+      toastSuccess(`Role updated to ${newRole}.`);
+    } catch (err) {
+      setError(err.message);
+      toastError(err.message || "Failed to update role.");
+    } finally {
+      setChangingRoleUserId("");
     }
   };
 
@@ -258,7 +282,19 @@ export function UserAdminPage({ token, user, t }) {
                   <tr key={item.id}>
                     <td>{item.name}</td>
                     <td>{item.email}</td>
-                    <td>{item.role}</td>
+                    <td>
+                      <select
+                        value={item.role}
+                        onChange={(e) => changeUserRole(item.id, e.target.value)}
+                        disabled={String(user?.id) === String(item.id) || changingRoleUserId === String(item.id)}
+                        title={String(user?.id) === String(item.id) ? "You cannot change your own role" : "Change role"}
+                      >
+                        <option value="requester">Requester</option>
+                        <option value="agent">Agent</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      {changingRoleUserId === String(item.id) ? " …" : null}
+                    </td>
                     <td>{item.phone || "-"}</td>
                     <td>{item.company_name || "-"}</td>
                     <td>{item.is_active ? "Active" : "Inactive"}</td>
