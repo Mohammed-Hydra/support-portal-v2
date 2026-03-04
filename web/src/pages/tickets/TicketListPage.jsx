@@ -610,8 +610,8 @@ export function TicketListPage({ token, user, t }) {
             </button>
           </div>
         </div>
-        <div className="stack" style={{ marginBottom: "16px", gap: "12px" }}>
-          <div className="grid-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
+        <div className="stack ticket-filters-compact">
+          <div className="grid-2">
             <label htmlFor="filter-status">
               Status
               <select
@@ -685,9 +685,9 @@ export function TicketListPage({ token, user, t }) {
               </select>
             </label>
           </div>
-          <div style={{ display: "flex", gap: "8px", alignItems: "flex-end", flexWrap: "wrap" }}>
-            <label style={{ margin: 0, flex: "1 1 140px", minWidth: "140px" }} htmlFor="search-text">
-              <span style={{ display: "block", marginBottom: "4px" }}>Search text</span>
+          <div className="search-merge-row" style={{ display: "flex", gap: "6px", alignItems: "flex-end", flexWrap: "wrap" }}>
+            <label style={{ margin: 0, flex: "1 1 100px", minWidth: "100px" }} htmlFor="search-text">
+              <span className="label-text" style={{ display: "block", marginBottom: "2px" }}>Search text</span>
               <input
                 id="search-text"
                 name="search"
@@ -698,8 +698,8 @@ export function TicketListPage({ token, user, t }) {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </label>
-            <label style={{ margin: 0, flex: "1 1 100px", minWidth: "100px" }} htmlFor="search-ticket-id">
-              <span style={{ display: "block", marginBottom: "4px" }}>Ticket #</span>
+            <label style={{ margin: 0, flex: "1 1 80px", minWidth: "80px" }} htmlFor="search-ticket-id">
+              <span className="label-text" style={{ display: "block", marginBottom: "2px" }}>Ticket #</span>
               <input
                 id="search-ticket-id"
                 name="ticketId"

@@ -991,6 +991,47 @@ a.attachment-link:active,
   margin: 0;
 }
 
+/* Compact ticket filters (search, merge area) */
+.ticket-filters-compact {
+  margin-bottom: 10px !important;
+  gap: 8px !important;
+}
+
+.ticket-filters-compact .grid-2 {
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+}
+
+.ticket-filters-compact label {
+  font-size: 12px;
+}
+
+.ticket-filters-compact input,
+.ticket-filters-compact select {
+  padding: 4px 8px;
+  font-size: 13px;
+  min-height: 28px;
+}
+
+.ticket-filters-compact button {
+  padding: 4px 10px;
+  font-size: 12px;
+  min-height: 28px;
+}
+
+.ticket-filters-compact .search-merge-row {
+  gap: 6px;
+}
+
+.ticket-filters-compact .search-merge-row label {
+  flex: 1 1 100px !important;
+  min-width: 100px !important;
+}
+
+.ticket-filters-compact .search-merge-row .label-text {
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+
 .ticket-title {
   margin: 0;
   font-size: 16px;
