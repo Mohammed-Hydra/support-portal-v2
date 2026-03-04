@@ -882,6 +882,37 @@ button:hover {
 .table.tickets-table-with-checkbox th:nth-child(11),
 .table.tickets-table-with-checkbox td:nth-child(11) { width: 8%; min-width: 115px; } /* Updated */
 
+/* Audit log table - reduced column widths */
+.table.audit-log-table {
+  font-size: 13px;
+}
+
+.table.audit-log-table th,
+.table.audit-log-table td {
+  padding: 6px 8px;
+}
+
+.table.audit-log-table th:nth-child(1),
+.table.audit-log-table td:nth-child(1) { width: 18%; min-width: 140px; }  /* Time */
+.table.audit-log-table th:nth-child(2),
+.table.audit-log-table td:nth-child(2) { width: 15%; min-width: 100px; }  /* Actor */
+.table.audit-log-table th:nth-child(3),
+.table.audit-log-table td:nth-child(3) { width: 12%; min-width: 90px; }   /* Action */
+.table.audit-log-table th:nth-child(4),
+.table.audit-log-table td:nth-child(4) { width: 8%; min-width: 60px; }   /* Ticket */
+.table.audit-log-table th:nth-child(5),
+.table.audit-log-table td:nth-child(5) { width: auto; min-width: 80px; } /* Details */
+
+.audit-filters-compact {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+.audit-filters-compact input,
+.audit-filters-compact select {
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
 /* Keep all cell content horizontal - single line, truncate with ellipsis */
 .table.tickets-table td:not(.action-cell) {
   overflow: hidden;

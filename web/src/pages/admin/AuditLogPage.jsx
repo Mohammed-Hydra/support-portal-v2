@@ -61,8 +61,11 @@ export function AuditLogPage({ token, t }) {
       </div>
       {error ? <p className="error">{error}</p> : null}
       <div className="card">
-        <h3>Filters</h3>
-        <div className="grid-2" style={{ gap: 12, marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <h3 style={{ margin: 0 }}>Filters</h3>
+          <button type="button" onClick={loadLogs}>Refresh</button>
+        </div>
+        <div className="grid-2 audit-filters-compact" style={{ gap: 12 }}>
           <label htmlFor="audit-action">
             Action
             <select
@@ -123,11 +126,10 @@ export function AuditLogPage({ token, t }) {
             />
           </label>
         </div>
-        <button type="button" onClick={loadLogs}>Refresh</button>
       </div>
       <div className="card">
         <div className="table-wrap">
-          <table className="table">
+          <table className="table audit-log-table">
             <thead>
               <tr>
                 <th>Time</th>
