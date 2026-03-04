@@ -61,7 +61,7 @@ export function AuditLogPage({ token, t }) {
       </div>
       {error ? <p className="error">{error}</p> : null}
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
           <h3 style={{ margin: 0 }}>Filters</h3>
           <button type="button" className="btn-compact" onClick={loadLogs}>Refresh</button>
         </div>
