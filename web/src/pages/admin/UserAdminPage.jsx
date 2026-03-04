@@ -18,7 +18,7 @@ export function UserAdminPage({ token, user, t }) {
   const [deletingUserId, setDeletingUserId] = useState("");
   const [togglingUserId, setTogglingUserId] = useState("");
   const [changingRoleUserId, setChangingRoleUserId] = useState("");
-  const [roleMenuUserId, setRoleMenuUserId] = useState(null);
+  const [roleChangeUserId, setRoleChangeUserId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ userId: null, confirmEmail: "" });
 
   const loadUsers = async () => {
@@ -239,6 +239,31 @@ export function UserAdminPage({ token, user, t }) {
 
         <div className="subcard">
           <h3>User List</h3>
+          {roleChangeUserId ? (() => {
+            const target = users.find((u) => Number(u.id) === Number(roleChangeUserId));
+            if (!target) return null;
+            return (
+              <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={() => setRoleChangeUserId(null)}>
+                <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 320, display: "block", gridTemplateRows: "none", padding: 16 }}>
+                  <h3 style={{ margin: "0 0 12px 0" }}>Change role for {target.name}</h3>
+                  <p style={{ margin: "0 0 12px 0", fontSize: 14, color: "var(--muted)" }}>Current: {target.role}</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {["admin", "agent", "requester"].map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        disabled={target.role === r}
+                        onClick={() => { changeUserRole(target.id, r); setRoleChangeUserId(null); }}
+                      >
+                        {r.charAt(0).toUpperCase() + r.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                  <button type="button" className="btn-secondary" style={{ marginTop: 12 }} onClick={() => setRoleChangeUserId(null)}>Cancel</button>
+                </div>
+              </div>
+            );
+          })() : null}
           {deleteConfirm.userId ? (() => {
             const target = users.find((u) => Number(u.id) === Number(deleteConfirm.userId));
             const label = target ? `${target.name} (${target.email})` : `#${deleteConfirm.userId}`;
@@ -292,7 +317,7 @@ export function UserAdminPage({ token, user, t }) {
                         <button
                           type="button"
                           className="btn-compact"
-                          onClick={() => setRoleMenuUserId((prev) => (prev === String(item.id) ? null : String(item.id)))}
+                          onClick={() => setRoleChangeUserId(String(item.id))}
                           disabled={String(user?.id) === String(item.id) || changingRoleUserId === String(item.id)}
                           title={String(user?.id) === String(item.id) ? "You cannot change your own role" : "Change role"}
                         >
@@ -318,23 +343,6 @@ export function UserAdminPage({ token, user, t }) {
                         >
                           {deletingUserId === String(item.id) ? "Deleting..." : "Delete"}
                         </button>
-                        {roleMenuUserId === String(item.id) ? (
-                          <div style={{ position: "absolute", left: 0, top: "100%", marginTop: 4, padding: 8, background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", zIndex: 10, minWidth: 100 }}>
-                            <p style={{ margin: "0 0 6px 0", fontSize: 12, color: "var(--muted)" }}>Set role:</p>
-                            {["admin", "agent", "requester"].map((r) => (
-                              <button
-                                key={r}
-                                type="button"
-                                className="btn-compact"
-                                style={{ display: "block", width: "100%", marginBottom: 4, textAlign: "left" }}
-                                disabled={item.role === r}
-                                onClick={() => { changeUserRole(item.id, r); setRoleMenuUserId(null); }}
-                              >
-                                {r.charAt(0).toUpperCase() + r.slice(1)}
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
                       </div>
                     </td>
                   </tr>
