@@ -370,7 +370,7 @@ export function TicketListPage({ token, user, t }) {
         <div className="card">
           <div className="tickets-header">
             <h3>Active Filters</h3>
-            <button type="button" onClick={() => navigate("/tickets")}>Clear</button>
+            <button type="button" className="btn-compact" onClick={() => navigate("/tickets")}>Clear</button>
           </div>
           <p className="muted" style={{ margin: 0 }}>
             {[
@@ -626,6 +626,7 @@ export function TicketListPage({ token, user, t }) {
             <span className="muted">{tickets.length} tickets</span>
             <button
               type="button"
+              className="btn-compact"
               onClick={() => {
                 exportTicketsToCsv(tickets);
                 toastSuccess("CSV exported.");

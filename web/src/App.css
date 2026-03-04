@@ -643,6 +643,16 @@ button {
   padding: 6px 10px;
 }
 
+/* Compact inline buttons (Refresh, Export CSV, Clear, etc.) - same size as Merge */
+.btn-compact {
+  width: auto !important;
+  flex: 0 0 auto;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+  min-height: 28px;
+  min-width: 60px;
+}
+
 input,
 select,
 textarea {

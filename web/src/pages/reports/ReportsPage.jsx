@@ -142,6 +142,7 @@ export function ReportsPage({ token, t }) {
               <h3>Search Tickets</h3>
               <button
                 type="button"
+                className="btn-compact"
                 onClick={() => {
                   exportTicketsToCsv(filteredTickets);
                   toastSuccess("CSV exported.");

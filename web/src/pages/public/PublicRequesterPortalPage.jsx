@@ -374,13 +374,13 @@ export function PublicRequesterPortalPage() {
         {info ? <p className="success">{info}</p> : null}
         <div className="top-actions" style={{ marginBottom: "12px" }}>
           <ThemeToggle />
-          <button type="button" onClick={() => refreshTickets().catch((err) => setError(err.message))}>
+          <button type="button" className="btn-compact" onClick={() => refreshTickets().catch((err) => setError(err.message))}>
             Refresh
           </button>
-          <button type="button" onClick={() => setShowEmailPrefs((v) => !v)}>
+          <button type="button" className="btn-compact" onClick={() => setShowEmailPrefs((v) => !v)}>
             {showEmailPrefs ? "Hide" : "Email"} preferences
           </button>
-          <button type="button" onClick={logoutSession}>End Session</button>
+          <button type="button" className="btn-compact" onClick={logoutSession}>End Session</button>
         </div>
         {showEmailPrefs && (
           <div className="card" style={{ marginBottom: 12 }}>
@@ -418,7 +418,7 @@ export function PublicRequesterPortalPage() {
                 Ticket assignment
               </label>
             </div>
-            <button type="button" onClick={saveEmailPrefs} style={{ marginTop: 8 }}>Save preferences</button>
+            <button type="button" className="btn-compact" onClick={saveEmailPrefs} style={{ marginTop: 8 }}>Save preferences</button>
           </div>
         )}
 

@@ -63,7 +63,7 @@ export function AuditLogPage({ token, t }) {
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <h3 style={{ margin: 0 }}>Filters</h3>
-          <button type="button" onClick={loadLogs}>Refresh</button>
+          <button type="button" className="btn-compact" onClick={loadLogs}>Refresh</button>
         </div>
         <div className="grid-2 audit-filters-compact" style={{ gap: 12 }}>
           <label htmlFor="audit-action">
