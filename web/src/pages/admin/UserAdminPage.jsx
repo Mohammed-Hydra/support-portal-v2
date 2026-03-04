@@ -18,6 +18,7 @@ export function UserAdminPage({ token, user, t }) {
   const [deletingUserId, setDeletingUserId] = useState("");
   const [togglingUserId, setTogglingUserId] = useState("");
   const [changingRoleUserId, setChangingRoleUserId] = useState("");
+  const [roleMenuUserId, setRoleMenuUserId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ userId: null, confirmEmail: "" });
 
   const loadUsers = async () => {
@@ -282,40 +283,59 @@ export function UserAdminPage({ token, user, t }) {
                   <tr key={item.id}>
                     <td>{item.name}</td>
                     <td>{item.email}</td>
-                    <td>
-                      <select
-                        value={item.role}
-                        onChange={(e) => changeUserRole(item.id, e.target.value)}
-                        disabled={String(user?.id) === String(item.id) || changingRoleUserId === String(item.id)}
-                        title={String(user?.id) === String(item.id) ? "You cannot change your own role" : "Change role"}
-                      >
-                        <option value="requester">Requester</option>
-                        <option value="agent">Agent</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                      {changingRoleUserId === String(item.id) ? " …" : null}
-                    </td>
+                    <td>{item.role}</td>
                     <td>{item.phone || "-"}</td>
                     <td>{item.company_name || "-"}</td>
                     <td>{item.is_active ? "Active" : "Inactive"}</td>
                     <td>
-                      <button
-                        type="button"
-                        onClick={() => toggleUserActive(item.id)}
-                        disabled={String(user?.id) === String(item.id) || togglingUserId === String(item.id)}
-                        title={String(user?.id) === String(item.id) ? "You cannot disable your own account" : item.is_active ? "Disable this user (they will see a message to contact admin)" : "Enable this user"}
-                      >
-                        {togglingUserId === String(item.id) ? "..." : item.is_active ? "Disable" : "Enable"}
-                      </button>
-                      {" "}
-                      <button
-                        type="button"
-                        onClick={() => openDeleteConfirm(item.id)}
-                        disabled={String(user?.id) === String(item.id) || deletingUserId === String(item.id)}
-                        title="Permanently delete this user (requires confirmation)"
-                      >
-                        {deletingUserId === String(item.id) ? "Deleting..." : "Delete"}
-                      </button>
+                      <div style={{ position: "relative", display: "inline-block" }}>
+                        <button
+                          type="button"
+                          className="btn-compact"
+                          onClick={() => setRoleMenuUserId((prev) => (prev === String(item.id) ? null : String(item.id)))}
+                          disabled={String(user?.id) === String(item.id) || changingRoleUserId === String(item.id)}
+                          title={String(user?.id) === String(item.id) ? "You cannot change your own role" : "Change role"}
+                        >
+                          {changingRoleUserId === String(item.id) ? "…" : "Change role"}
+                        </button>
+                        {" "}
+                        <button
+                          type="button"
+                          className="btn-compact"
+                          onClick={() => toggleUserActive(item.id)}
+                          disabled={String(user?.id) === String(item.id) || togglingUserId === String(item.id)}
+                          title={String(user?.id) === String(item.id) ? "You cannot disable your own account" : item.is_active ? "Disable this user (they will see a message to contact admin)" : "Enable this user"}
+                        >
+                          {togglingUserId === String(item.id) ? "..." : item.is_active ? "Disable" : "Enable"}
+                        </button>
+                        {" "}
+                        <button
+                          type="button"
+                          className="btn-compact"
+                          onClick={() => openDeleteConfirm(item.id)}
+                          disabled={String(user?.id) === String(item.id) || deletingUserId === String(item.id)}
+                          title="Permanently delete this user (requires confirmation)"
+                        >
+                          {deletingUserId === String(item.id) ? "Deleting..." : "Delete"}
+                        </button>
+                        {roleMenuUserId === String(item.id) ? (
+                          <div style={{ position: "absolute", left: 0, top: "100%", marginTop: 4, padding: 8, background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", zIndex: 10, minWidth: 100 }}>
+                            <p style={{ margin: "0 0 6px 0", fontSize: 12, color: "var(--muted)" }}>Set role:</p>
+                            {["admin", "agent", "requester"].map((r) => (
+                              <button
+                                key={r}
+                                type="button"
+                                className="btn-compact"
+                                style={{ display: "block", width: "100%", marginBottom: 4, textAlign: "left" }}
+                                disabled={item.role === r}
+                                onClick={() => { changeUserRole(item.id, r); setRoleMenuUserId(null); }}
+                              >
+                                {r.charAt(0).toUpperCase() + r.slice(1)}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}
