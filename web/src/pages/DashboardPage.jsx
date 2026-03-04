@@ -4,6 +4,31 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { apiRequest } from "../api";
 import { StatusBadge, PriorityBadge } from "../components/StatusBadge";
 
+function ChartTooltipWithTickets({ active, payload, label, type }) {
+  if (!active || !payload?.length || !payload[0]?.payload) return null;
+  const data = payload[0].payload;
+  const tickets = data.tickets || [];
+  const total = data.total ?? data.count ?? 0;
+  const qs = type === "status" ? `?status=${encodeURIComponent(data.name)}` : `?priority=${encodeURIComponent(data.name)}`;
+  return (
+    <div className="chart-tooltip-with-tickets">
+      <div className="chart-tooltip-title">{data.name}</div>
+      <div className="chart-tooltip-count">Count: {total}</div>
+      {tickets.length > 0 && (
+        <div className="chart-tooltip-tickets">
+          {tickets.map((t) => (
+            <Link key={t.id} to={`/tickets/${t.id}`} className="chart-tooltip-link">
+              #{t.id} {t.subject ? `– ${String(t.subject).slice(0, 30)}${(t.subject || "").length > 30 ? "…" : ""}` : ""}
+            </Link>
+          ))}
+          {total > 5 && <span className="muted">+{total - 5} more</span>}
+        </div>
+      )}
+      <Link to={`/tickets${qs}`} className="chart-tooltip-viewall">View all →</Link>
+    </div>
+  );
+}
+
 export function DashboardPage({ token, user, t }) {
   const [tickets, setTickets] = useState([]);
   const [report, setReport] = useState(null);
@@ -134,15 +159,37 @@ export function DashboardPage({ token, user, t }) {
     return rows;
   }, [activeStatus, activePriority, filteredByPeriod]);
 
-  const statusChartData = useMemo(
-    () => Object.entries(statusCounts).map(([name, count]) => ({ name, count })),
-    [statusCounts]
-  );
+  const statusChartData = useMemo(() => {
+    const byStatus = {};
+    filteredByPeriod.forEach((t) => {
+      if (Object.prototype.hasOwnProperty.call(statusCounts, t.status)) {
+        if (!byStatus[t.status]) byStatus[t.status] = [];
+        byStatus[t.status].push(t);
+      }
+    });
+    return Object.entries(statusCounts).map(([name, count]) => ({
+      name,
+      count,
+      tickets: (byStatus[name] || []).slice(0, 5),
+      total: count,
+    }));
+  }, [statusCounts, filteredByPeriod]);
 
-  const priorityChartData = useMemo(
-    () => Object.entries(priorityCounts).map(([name, count]) => ({ name, count })),
-    [priorityCounts]
-  );
+  const priorityChartData = useMemo(() => {
+    const byPriority = {};
+    filteredByPeriod.forEach((t) => {
+      if (Object.prototype.hasOwnProperty.call(priorityCounts, t.priority)) {
+        if (!byPriority[t.priority]) byPriority[t.priority] = [];
+        byPriority[t.priority].push(t);
+      }
+    });
+    return Object.entries(priorityCounts).map(([name, count]) => ({
+      name,
+      count,
+      tickets: (byPriority[name] || []).slice(0, 5),
+      total: count,
+    }));
+  }, [priorityCounts, filteredByPeriod]);
 
   const trendChartData = useMemo(() => {
     const byDay = {};
@@ -259,7 +306,12 @@ export function DashboardPage({ token, user, t }) {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--muted)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
-                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)" }} />
+                  <Tooltip
+                    content={({ active, payload, label }) => (
+                      <ChartTooltipWithTickets active={active} payload={payload} label={label} type="status" />
+                    )}
+                    contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)" }}
+                  />
                   <Bar dataKey="count" fill="var(--btn)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -287,7 +339,12 @@ export function DashboardPage({ token, user, t }) {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--muted)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
-                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)" }} />
+                  <Tooltip
+                    content={({ active, payload, label }) => (
+                      <ChartTooltipWithTickets active={active} payload={payload} label={label} type="priority" />
+                    )}
+                    contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)" }}
+                  />
                   <Bar dataKey="count" fill="var(--btn)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
