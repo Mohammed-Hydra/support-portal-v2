@@ -1,5 +1,6 @@
 html {
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -10,8 +11,8 @@ body {
 }
 
 /* Hide scrollbars but keep scroll functionality */
-html {
-  scrollbar-width: none;
+@supports (scrollbar-width: none) {
+  html { scrollbar-width: none; }
 }
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
@@ -177,6 +178,7 @@ body {
 
 .breadcrumb-sep {
   color: var(--muted);
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -1027,6 +1029,7 @@ button:hover {
 
 .table.tickets-table th.sortable {
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
   white-space: nowrap;
 }
@@ -1194,8 +1197,9 @@ a.attachment-link:active,
 .table-wrap {
   width: 100%;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+}
+@supports (scrollbar-width: none) {
+  .table-wrap { scrollbar-width: none; }
 }
 .table-wrap::-webkit-scrollbar {
   display: none;
@@ -1600,7 +1604,6 @@ body[dir="rtl"] .edit-drawer {
 .modal-body {
   padding: 12px 14px;
   overflow: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .modal-body img {
@@ -1722,7 +1725,6 @@ body[dir="rtl"] .edit-drawer {
     z-index: 9000;
     transform: translateX(-110%);
     transition: transform 0.25s ease;
-    -webkit-overflow-scrolling: touch;
     padding-top: env(safe-area-inset-top);
     padding-left: env(safe-area-inset-left);
   }
