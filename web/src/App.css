@@ -560,11 +560,24 @@ body {
   overflow: visible;
 }
 
-/* Chart tooltip with ticket info */
+/* Chart tooltip with ticket info - no gray background, accent border */
 .chart-tooltip-with-tickets {
-  padding: 8px 10px;
+  padding: 10px 12px;
   min-width: 160px;
   max-width: 280px;
+  background: transparent;
+  border-left: 3px solid var(--btn);
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.97);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .chart-tooltip-with-tickets {
+  background: rgba(30, 41, 59, 0.97);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border-left-color: var(--btn);
 }
 
 .chart-tooltip-with-tickets .chart-tooltip-title {
