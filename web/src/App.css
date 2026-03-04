@@ -1020,25 +1020,42 @@ a.attachment-link:active,
 
 .ticket-filters-compact .search-merge-stack {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 6px;
+  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .ticket-filters-compact .search-inputs-col {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-width: 200px;
+  max-width: 180px;
 }
 
 .ticket-filters-compact .search-inputs-col label {
   min-width: 0;
 }
 
+.ticket-filters-compact .search-inputs-col input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .ticket-filters-compact .search-merge-btns {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.ticket-filters-compact .search-merge-btns button {
+  padding: 4px 8px;
+  font-size: 13px;
+  min-height: 28px;
+  height: 28px;
+  line-height: 1;
+  flex: 0 0 auto;
 }
 
 .ticket-filters-compact .search-merge-row .label-text,
