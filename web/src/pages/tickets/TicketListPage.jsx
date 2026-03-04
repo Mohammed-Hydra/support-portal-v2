@@ -34,6 +34,26 @@ export function TicketListPage({ token, user, t }) {
     requesterCompanyName: "",
   });
   const [attachment, setAttachment] = useState(null);
+
+  const attachmentPreviewUrl = useMemo(() => {
+    if (!attachment) return "";
+    try {
+      return URL.createObjectURL(attachment);
+    } catch {
+      return "";
+    }
+  }, [attachment]);
+
+  useEffect(() => {
+    if (!attachmentPreviewUrl) return undefined;
+    return () => {
+      try {
+        URL.revokeObjectURL(attachmentPreviewUrl);
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [attachmentPreviewUrl]);
   const [kbSuggestions, setKbSuggestions] = useState([]);
   const [customFieldDefs, setCustomFieldDefs] = useState([]);
   const [customFields, setCustomFields] = useState({});
@@ -531,9 +551,14 @@ export function TicketListPage({ token, user, t }) {
               onChange={(e) => setAttachment(e.target.files?.[0] || null)}
             />
             {attachment && (
-              <small className="muted">
-                Selected: {attachment.name} ({Math.round((attachment.size || 0) / 1024)} KB)
-              </small>
+              <div className="requester-attachment-preview" style={{ marginTop: 8 }}>
+                <p className="muted" style={{ margin: 0 }}>
+                  Selected: <strong>{attachment.name}</strong> ({Math.round((attachment.size || 0) / 1024)} KB)
+                </p>
+                {attachmentPreviewUrl && String(attachment.type || "").startsWith("image/") && (
+                  <img src={attachmentPreviewUrl} alt="Attachment preview" style={{ marginTop: 8, maxHeight: 200, borderRadius: 8 }} />
+                )}
+              </div>
             )}
           </label>
         )}
@@ -685,48 +710,52 @@ export function TicketListPage({ token, user, t }) {
               </select>
             </label>
           </div>
-          <div className="search-merge-row" style={{ display: "flex", gap: "6px", alignItems: "flex-end", flexWrap: "wrap" }}>
-            <label style={{ margin: 0, flex: "1 1 100px", minWidth: "100px" }} htmlFor="search-text">
-              <span className="label-text" style={{ display: "block", marginBottom: "2px" }}>Search text</span>
-              <input
-                id="search-text"
-                name="search"
-                type="text"
-                placeholder="Subject or description..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-            </label>
-            <label style={{ margin: 0, flex: "1 1 80px", minWidth: "80px" }} htmlFor="search-ticket-id">
-              <span className="label-text" style={{ display: "block", marginBottom: "2px" }}>Ticket #</span>
-              <input
-                id="search-ticket-id"
-                name="ticketId"
-                type="text"
-                placeholder="e.g. 22"
-                value={searchTicketId}
-                onChange={(e) => setSearchTicketId(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-            </label>
-            <button type="button" onClick={handleSearch}>
-              Search
-            </button>
-            {(user?.role === "admin" || user?.role === "agent") && (
-              <button
-                type="button"
-                disabled={mergeSelected.size < 2}
-                onClick={() => {
-                  if (mergeSelected.size >= 2) {
-                    setMergeMainId([...mergeSelected][0]);
-                    setShowMergeModal(true);
-                  }
-                }}
-              >
-                Merge
+          <div className="search-merge-stack">
+            <div className="search-inputs-col">
+              <label style={{ margin: 0 }} htmlFor="search-ticket-id">
+                <span className="label-text" style={{ display: "block", marginBottom: "2px" }}>Ticket #</span>
+                <input
+                  id="search-ticket-id"
+                  name="ticketId"
+                  type="text"
+                  placeholder="e.g. 22"
+                  value={searchTicketId}
+                  onChange={(e) => setSearchTicketId(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </label>
+              <label style={{ margin: 0 }} htmlFor="search-text">
+                <span className="label-text" style={{ display: "block", marginBottom: "2px" }}>Search text</span>
+                <input
+                  id="search-text"
+                  name="search"
+                  type="text"
+                  placeholder="Subject or description..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </label>
+            </div>
+            <div className="search-merge-btns">
+              <button type="button" onClick={handleSearch}>
+                Search
               </button>
-            )}
+              {(user?.role === "admin" || user?.role === "agent") && (
+                <button
+                  type="button"
+                  disabled={mergeSelected.size < 2}
+                  onClick={() => {
+                    if (mergeSelected.size >= 2) {
+                      setMergeMainId([...mergeSelected][0]);
+                      setShowMergeModal(true);
+                    }
+                  }}
+                >
+                  Merge
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <div className="table-wrap">

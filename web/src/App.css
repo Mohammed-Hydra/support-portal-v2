@@ -1018,16 +1018,31 @@ a.attachment-link:active,
   min-height: 28px;
 }
 
-.ticket-filters-compact .search-merge-row {
+.ticket-filters-compact .search-merge-stack {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
-.ticket-filters-compact .search-merge-row label {
-  flex: 1 1 100px !important;
-  min-width: 100px !important;
+.ticket-filters-compact .search-inputs-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 200px;
 }
 
-.ticket-filters-compact .search-merge-row .label-text {
+.ticket-filters-compact .search-inputs-col label {
+  min-width: 0;
+}
+
+.ticket-filters-compact .search-merge-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ticket-filters-compact .search-merge-row .label-text,
+.ticket-filters-compact .search-inputs-col .label-text {
   margin-bottom: 2px;
   font-size: 11px;
 }
