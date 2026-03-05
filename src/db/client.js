@@ -2,14 +2,19 @@ const fs = require("fs");
 const path = require("path");
 const { Pool } = require("pg");
 
-const connectionString = process.env.DATABASE_URL;
+let connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error("DATABASE_URL is required for v2 backend.");
+}
+
+if (process.env.VERCEL === "1" && connectionString.includes("pooler.supabase.com") && !connectionString.includes("workaround=")) {
+  connectionString += (connectionString.includes("?") ? "&" : "?") + "workaround=supabase-pooler.vercel";
 }
 
 const pool = new Pool({
   connectionString,
   ssl: process.env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
+  connectionTimeoutMillis: 10000,
 });
 
 async function query(text, params = []) {
