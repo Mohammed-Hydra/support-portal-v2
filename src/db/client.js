@@ -32,6 +32,13 @@ async function getMany(text, params = []) {
 }
 
 async function migrate() {
+  const directUrl = process.env.DATABASE_DIRECT_URL || process.env.DIRECT_URL;
+  const migratePool = directUrl ? new Pool({
+    connectionString: directUrl,
+    ssl: process.env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
+    connectionTimeoutMillis: 15000,
+  }) : pool;
+
   const schemaPath = path.join(__dirname, "schema.sql");
   const raw = fs.readFileSync(schemaPath, "utf8");
   const statements = raw
@@ -39,9 +46,12 @@ async function migrate() {
     .map((part) => part.trim())
     .filter(Boolean);
 
-  for (const statement of statements) {
-    // eslint-disable-next-line no-await-in-loop
-    await query(statement);
+  try {
+    for (const statement of statements) {
+      await migratePool.query(statement);
+    }
+  } finally {
+    if (directUrl && migratePool !== pool) migratePool.end().catch(() => {});
   }
 }
 
