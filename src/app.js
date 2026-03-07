@@ -234,6 +234,33 @@ async function createApp() {
     res.json({ status: "ok", version: "v2" });
   });
 
+  // Deploy trigger for Slack / external webhooks
+  app.post("/api/deploy", async (req, res) => {
+    const hookUrl = process.env.VERCEL_DEPLOY_HOOK_URL;
+    const secret = process.env.DEPLOY_SECRET;
+    if (!hookUrl || !secret) {
+      res.status(503).json({ ok: false, error: "Deploy not configured", response_type: "ephemeral" });
+      return;
+    }
+    const token = req.query.token || req.headers.authorization?.replace(/^Bearer\s+/i) || req.body?.token;
+    if (token !== secret) {
+      res.status(401).json({ ok: false, error: "Unauthorized", response_type: "ephemeral" });
+      return;
+    }
+    try {
+      const r = await fetch(hookUrl, { method: "POST" });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        res.status(502).json({ ok: false, error: "Deploy hook failed", response_type: "ephemeral" });
+        return;
+      }
+      // Slack-friendly response (text is shown in channel)
+      res.json({ ok: true, text: "✅ Deployment triggered! Check Vercel for status.", response_type: "in_channel" });
+    } catch (err) {
+      res.status(502).json({ ok: false, error: err.message || "Deploy hook request failed", response_type: "ephemeral" });
+    }
+  });
+
   app.get("/", (req, res) => {
     if (hasWebDist) {
       res.set("Cache-Control", "no-store");

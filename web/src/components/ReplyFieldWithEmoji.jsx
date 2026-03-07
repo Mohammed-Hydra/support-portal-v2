@@ -27,31 +27,35 @@ export function ReplyFieldWithEmoji({ value, onChange, placeholder, id, name, ro
   };
 
   return (
-    <div className="reply-field-with-emoji" ref={popoverRef}>
+    <div className="reply-field-with-emoji" ref={popoverRef} style={{ border: "1px solid var(--border)", borderRadius: 8, background: "var(--card)", overflow: "visible" }}>
       <textarea
         id={id}
         name={name}
-        rows={rows}
+        rows={2}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="reply-field-textarea"
+        style={{ height: 72, minHeight: 72, maxHeight: 120, resize: "vertical" }}
       />
-      <div className="reply-field-toolbar">
-        {actions ? <div className="reply-field-toolbar-actions">{actions}</div> : null}
-        <button
-          type="button"
-          className="reply-field-emoji-btn"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Add emoji"
-          aria-expanded={open}
-          aria-haspopup="true"
-          title="Add emoji"
-        >
-          <span className="reply-field-emoji-icon">😊</span>
-          <span className="reply-field-emoji-label">Emoji</span>
-        </button>
-        {submitButton ? <div className="reply-field-toolbar-actions">{submitButton}</div> : null}
+      <div className="reply-field-toolbar" style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderTop: "1px solid var(--border)", overflow: "visible", justifyContent: "flex-start" }}>
+        {actions ? <div style={{ flexShrink: 0 }}>{actions}</div> : null}
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+          <button
+            type="button"
+            className="reply-field-emoji-btn"
+            onClick={() => setOpen((o) => !o)}
+            aria-label="Add emoji"
+            aria-expanded={open}
+            aria-haspopup="true"
+            title="Add emoji"
+            style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "6px 10px", background: "var(--btn)", color: "#fff", border: "1px solid var(--border)", borderRadius: 6, fontSize: 14, cursor: "pointer" }}
+          >
+            <span>😊</span>
+            <span>Emoji</span>
+          </button>
+          {submitButton || null}
+        </div>
       </div>
       {open && (
         <div className="reply-field-emoji-popover" role="menu">
