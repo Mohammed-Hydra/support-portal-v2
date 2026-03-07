@@ -108,8 +108,36 @@ export function TicketListPage({ token, user, t }) {
   }, [token, listFilters.status, listFilters.priority, listFilters.category, listFilters.agent, listFilters.channel, listFilters.id, listFilters.breached, listFilters.days, listFilters.search]);
 
   useEffect(() => {
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
+    let intervalId = null;
+    const INTERVAL_MS = 30000;
+
+    function tick() {
+      if (document.visibilityState === "visible") load();
+    }
+
+    function startInterval() {
+      if (intervalId) return;
+      intervalId = setInterval(tick, INTERVAL_MS);
+    }
+
+    function stopInterval() {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") startInterval();
+      else stopInterval();
+    };
+
+    if (document.visibilityState === "visible") startInterval();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      stopInterval();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [token, listFilters.status, listFilters.priority, listFilters.category, listFilters.agent, listFilters.channel, listFilters.id, listFilters.breached, listFilters.days, listFilters.search]);
 
   useEffect(() => {
@@ -624,6 +652,7 @@ export function TicketListPage({ token, user, t }) {
           <h3>Ticket Queue</h3>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span className="muted">{tickets.length} tickets</span>
+            <span className="muted" style={{ fontSize: "0.875rem" }}>Auto-refreshes every 30s</span>
             <button
               type="button"
               className="btn-compact"

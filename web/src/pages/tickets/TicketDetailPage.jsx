@@ -55,8 +55,36 @@ export function TicketDetailPage({ token, user }) {
   }, [ticketId, token]);
 
   useEffect(() => {
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
+    let intervalId = null;
+    const INTERVAL_MS = 30000;
+
+    function tick() {
+      if (document.visibilityState === "visible") load();
+    }
+
+    function startInterval() {
+      if (intervalId) return;
+      intervalId = setInterval(tick, INTERVAL_MS);
+    }
+
+    function stopInterval() {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") startInterval();
+      else stopInterval();
+    };
+
+    if (document.visibilityState === "visible") startInterval();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      stopInterval();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [ticketId, token]);
 
   useEffect(() => {
@@ -272,6 +300,7 @@ export function TicketDetailPage({ token, user }) {
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
         <h1 style={{ margin: 0 }}>Ticket #{ticket.id}: {ticket.subject}</h1>
+        <span className="muted" style={{ fontSize: "0.875rem" }}>Auto-refreshes every 30s</span>
         <button
           type="button"
           onClick={openEditModal}
