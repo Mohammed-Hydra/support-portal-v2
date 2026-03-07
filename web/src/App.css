@@ -1169,22 +1169,30 @@ button:hover {
   margin-left: auto;
 }
 .reply-field-emoji-btn {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  min-width: 44px;
+  min-height: 36px;
   background: var(--btn);
   color: var(--btn-text, #fff);
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 1.3rem;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
   transition: opacity 0.15s;
 }
 .reply-field-emoji-btn:hover {
   opacity: 0.9;
+}
+.reply-field-emoji-icon {
+  font-size: 1.2rem;
+}
+.reply-field-emoji-label {
+  font-size: inherit;
 }
 .reply-field-emoji-popover {
   position: absolute;

@@ -47,7 +47,8 @@ export function ReplyFieldWithEmoji({ value, onChange, placeholder, id, name, ro
           aria-haspopup="true"
           title="Add emoji"
         >
-          😊
+          <span className="reply-field-emoji-icon">😊</span>
+          <span className="reply-field-emoji-label">Emoji</span>
         </button>
         {actions ? <div className="reply-field-toolbar-actions">{actions}</div> : null}
       </div>
