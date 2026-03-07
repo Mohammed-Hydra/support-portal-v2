@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api";
 import { toastError, toastSuccess } from "../../toast";
 import { StatusBadge, PriorityBadge } from "../../components/StatusBadge";
+import { EmojiInsertBar } from "../../components/EmojiInsertBar";
+import { useTicketMessagesRealtime } from "../../hooks/useTicketMessagesRealtime";
 
 export function TicketDetailPage({ token, user }) {
   const { ticketId } = useParams();
@@ -36,6 +38,14 @@ export function TicketDetailPage({ token, user }) {
   const [mergeSelected, setMergeSelected] = useState(new Set());
   const [mergeMainId, setMergeMainId] = useState(null);
   const [merging, setMerging] = useState(false);
+
+  useTicketMessagesRealtime(ticketId, (newMsg) => {
+    setTicket((prev) => {
+      if (!prev || !prev.messages) return prev;
+      if (prev.messages.some((m) => m.id === newMsg.id)) return prev;
+      return { ...prev, messages: [...prev.messages, { ...newMsg, author_name: newMsg.author_name || (newMsg.source === "requester_portal" ? "Requester" : "Support") }] };
+    });
+  });
 
   const load = async () => {
     try {
@@ -389,9 +399,15 @@ export function TicketDetailPage({ token, user }) {
 
       <div className="card">
         <h3>Timeline</h3>
-        {ticket.messages?.map((item) => (
-          <div key={item.id} className="timeline-item">
-            <small>{new Date(item.created_at).toLocaleString()} - {item.author_name || item.source}</small>
+        {ticket.messages?.map((item) => {
+          const isRequester = item.source === "requester_portal";
+          const isInternal = Boolean(item.is_internal);
+          const isAutomation = item.source === "automation";
+          const icon = isInternal ? "📝" : isAutomation ? "🤖" : isRequester ? "👤" : "🎧";
+          const label = item.author_name || item.source;
+          return (
+          <div key={item.id} className="timeline-item timeline-item-with-icon">
+            <small><span className="msg-icon" aria-hidden>{icon}</span> {new Date(item.created_at).toLocaleString()} – {label}</small>
             <p>{item.body || "(attachment only)"}</p>
             {item.attachment_url ? (
               <div className="attachment-block" style={{ marginTop: "6px" }}>
@@ -421,7 +437,8 @@ export function TicketDetailPage({ token, user }) {
             ) : null}
             {item.is_internal ? <em>Internal note</em> : null}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {preview?.url ? (
@@ -664,6 +681,7 @@ export function TicketDetailPage({ token, user }) {
             </select>
           </div>
         )}
+        <EmojiInsertBar onInsert={(emoji) => setMessage((m) => m + emoji)} />
         <textarea id="reply-body" name="message" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your reply..." />
         {user?.role !== "requester" ? (
           <label className="inline-check" htmlFor="reply-internal">

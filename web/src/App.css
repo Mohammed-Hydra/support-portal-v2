@@ -1059,6 +1059,72 @@ button:hover {
   border-bottom: 1px dashed var(--border);
   padding: 8px 0;
 }
+.timeline-item-with-icon .msg-icon {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 1em;
+}
+
+.emoji-insert-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+.emoji-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.emoji-trigger-btn:hover {
+  background: var(--border);
+}
+.emoji-trigger-icon {
+  font-size: 1.25rem;
+}
+.emoji-popover {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 6px;
+  padding: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.emoji-popover-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+.emoji-popover-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.emoji-popover-btn:hover {
+  background: var(--border);
+}
 
 .list {
   margin: 0;

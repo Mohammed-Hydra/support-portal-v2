@@ -4,6 +4,8 @@ import { apiRequest } from "../../api";
 import { Logo } from "../../components/Logo";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { toastError, toastSuccess } from "../../toast";
+import { useTicketMessagesRealtime } from "../../hooks/useTicketMessagesRealtime";
+import { EmojiInsertBar } from "../../components/EmojiInsertBar";
 
 const STORAGE_KEY = "requesterPortalToken";
 const SEEN_KEY = "requesterPortalLastSeenV2";
@@ -109,6 +111,15 @@ export function PublicRequesterPortalPage() {
     refreshTicketDetails(selectedTicketId).catch((err) => setError(err.message || "Failed to load ticket details."));
   }, [selectedTicketId]);
 
+  useTicketMessagesRealtime(selectedTicketId, (newMsg) => {
+    setSelectedTicket((prev) => {
+      if (!prev || prev.id !== Number(newMsg.ticket_id)) return prev;
+      const messages = Array.isArray(prev?.messages) ? prev.messages : [];
+      if (messages.some((m) => m.id === newMsg.id)) return prev;
+      return { ...prev, messages: [...messages, { ...newMsg, author_name: newMsg.source === "requester_portal" ? "You" : "Support Team" }] };
+    });
+  }, { isRequester: true });
+
   useEffect(() => {
     if (!requesterToken) return;
     const interval = setInterval(() => {
@@ -116,7 +127,7 @@ export function PublicRequesterPortalPage() {
       if (selectedTicketId) {
         refreshTicketDetails(selectedTicketId, true).catch(() => {});
       }
-    }, 5000);
+    }, 15000);
     return () => clearInterval(interval);
   }, [selectedTicketId, requesterToken]);
 
@@ -287,6 +298,12 @@ export function PublicRequesterPortalPage() {
     if (item.author_name) return `Support - ${item.author_name}`;
     if (item.source === "admin" || item.source === "agent") return "Support Team";
     return item.source || "Message";
+  };
+
+  const messageIcon = (item) => {
+    if (item.source === "requester_portal") return "👤";
+    if (item.source === "automation") return "🤖";
+    return "🎧";
   };
 
   if (!requesterToken) {
@@ -534,8 +551,8 @@ export function PublicRequesterPortalPage() {
                 {(Array.isArray(selectedTicket?.messages) ? selectedTicket.messages : [])
                 .filter((item) => item && typeof item === "object")
                 .map((item, idx) => (
-                  <div key={item?.id ?? `msg-${idx}`} className="timeline-item">
-                    <small>{new Date(item.created_at).toLocaleString()} - {messageAuthor(item)}</small>
+                  <div key={item?.id ?? `msg-${idx}`} className="timeline-item timeline-item-with-icon">
+                    <small><span className="msg-icon" aria-hidden>{messageIcon(item)}</span> {new Date(item.created_at).toLocaleString()} – {messageAuthor(item)}</small>
                     <p style={{ whiteSpace: "pre-wrap" }}>{item.body || (item.attachment_url ? "(attachment)" : "")}</p>
                     {item.attachment_url ? (
                       <div className="requester-attachment attachment-block">
@@ -551,6 +568,7 @@ export function PublicRequesterPortalPage() {
                   </div>
                 ))}
                 <form className="stack" onSubmit={sendMessage}>
+                  <EmojiInsertBar onInsert={(emoji) => setMessageBody((m) => m + emoji)} />
                   <textarea
                     id="portal-reply-body"
                     name="messageBody"
