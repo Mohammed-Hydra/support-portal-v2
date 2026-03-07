@@ -306,26 +306,6 @@ export function PublicRequesterPortalPage() {
     return "🎧";
   };
 
-  if (!requesterToken) {
-    return (
-      <div className="auth-wrap requester-portal-wrap">
-        <div style={{ position: "absolute", top: 16, right: 16 }}>
-          <ThemeToggle />
-        </div>
-        <div className="card auth-card stack">
-          <div className="page-header">
-            <Logo className="login-brand-image" alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" />
-            <h2>Requester Access</h2>
-            <p className="muted">Enter your email to access your ticket portal.</p>
-          </div>
-          {error ? <p className="error">{error}</p> : null}
-          <Link to="/public/requester/track">Track tickets by email</Link>
-          <Link to="/public/requester">Create new ticket</Link>
-        </div>
-      </div>
-    );
-  }
-
   const filteredTickets = useMemo(() => {
     const days = Number(filters.days || "0");
     const hasDays = Number.isFinite(days) && days > 0;
@@ -354,9 +334,6 @@ export function PublicRequesterPortalPage() {
     return rows;
   }, [tickets, filters.days, filters.q, filters.sort, filters.status]);
 
-  const statusSteps = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
-  const selectedStepIndex = Math.max(0, statusSteps.indexOf(String(selectedTicket?.status || "")));
-
   const expectedFirstResponse = useMemo(() => {
     if (!selectedTicket?.first_response_due_at) return "";
     if (selectedTicket?.first_response_at) return "";
@@ -367,6 +344,29 @@ export function PublicRequesterPortalPage() {
       return "";
     }
   }, [selectedTicket]);
+
+  if (!requesterToken) {
+    return (
+      <div className="auth-wrap requester-portal-wrap">
+        <div style={{ position: "absolute", top: 16, right: 16 }}>
+          <ThemeToggle />
+        </div>
+        <div className="card auth-card stack">
+          <div className="page-header">
+            <Logo className="login-brand-image" alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" />
+            <h2>Requester Access</h2>
+            <p className="muted">Enter your email to access your ticket portal.</p>
+          </div>
+          {error ? <p className="error">{error}</p> : null}
+          <Link to="/public/requester/track">Track tickets by email</Link>
+          <Link to="/public/requester">Create new ticket</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const statusSteps = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
+  const selectedStepIndex = Math.max(0, statusSteps.indexOf(String(selectedTicket?.status || "")));
 
   const ticketUnread = (ticket) => {
     const lastSeen = Date.parse(lastSeenByTicket?.[String(ticket.id)] || "");
