@@ -1133,6 +1133,57 @@ button:hover {
   background: var(--border);
 }
 
+/* Reply field with emoji icon inside */
+.reply-field-with-emoji {
+  position: relative;
+  display: block;
+}
+.reply-field-with-emoji .reply-field-textarea {
+  width: 100%;
+  padding-right: 44px;
+  padding-bottom: 8px;
+  box-sizing: border-box;
+}
+.reply-field-emoji-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.reply-field-emoji-btn:hover {
+  background: var(--border);
+}
+.reply-field-emoji-popover {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 6px;
+  padding: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.reply-field-with-emoji .emoji-popover-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
 .list {
   margin: 0;
   padding-left: 18px;

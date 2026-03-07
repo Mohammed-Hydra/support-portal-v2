@@ -5,7 +5,7 @@ import { Logo } from "../../components/Logo";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { toastError, toastSuccess } from "../../toast";
 import { useTicketMessagesRealtime } from "../../hooks/useTicketMessagesRealtime";
-import { EmojiInsertBar } from "../../components/EmojiInsertBar";
+import { ReplyFieldWithEmoji } from "../../components/ReplyFieldWithEmoji";
 
 const STORAGE_KEY = "requesterPortalToken";
 const SEEN_KEY = "requesterPortalLastSeenV2";
@@ -568,14 +568,13 @@ export function PublicRequesterPortalPage() {
                   </div>
                 ))}
                 <form className="stack" onSubmit={sendMessage}>
-                  <EmojiInsertBar onInsert={(emoji) => setMessageBody((m) => m + emoji)} />
-                  <textarea
+                  <ReplyFieldWithEmoji
                     id="portal-reply-body"
                     name="messageBody"
                     rows={3}
-                    placeholder="Type your reply"
                     value={messageBody}
-                    onChange={(e) => setMessageBody(e.target.value)}
+                    onChange={setMessageBody}
+                    placeholder="Type your reply"
                   />
                   <label className="muted" style={{ marginTop: -4 }} htmlFor="portal-reply-attachment">
                     Attach image (optional)

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api";
 import { toastError, toastSuccess } from "../../toast";
 import { StatusBadge, PriorityBadge } from "../../components/StatusBadge";
-import { EmojiInsertBar } from "../../components/EmojiInsertBar";
+import { ReplyFieldWithEmoji } from "../../components/ReplyFieldWithEmoji";
 import { useTicketMessagesRealtime } from "../../hooks/useTicketMessagesRealtime";
 
 export function TicketDetailPage({ token, user }) {
@@ -681,8 +681,14 @@ export function TicketDetailPage({ token, user }) {
             </select>
           </div>
         )}
-        <EmojiInsertBar onInsert={(emoji) => setMessage((m) => m + emoji)} />
-        <textarea id="reply-body" name="message" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your reply..." />
+        <ReplyFieldWithEmoji
+          id="reply-body"
+          name="message"
+          rows={4}
+          value={message}
+          onChange={setMessage}
+          placeholder="Type your reply..."
+        />
         {user?.role !== "requester" ? (
           <label className="inline-check" htmlFor="reply-internal">
             <input id="reply-internal" name="isInternal" type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
