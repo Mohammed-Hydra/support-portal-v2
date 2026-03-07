@@ -1140,29 +1140,31 @@ button:hover {
 }
 .reply-field-with-emoji .reply-field-textarea {
   width: 100%;
-  padding-right: 44px;
-  padding-bottom: 8px;
+  padding-right: 50px;
+  padding-bottom: 10px;
   box-sizing: border-box;
 }
 .reply-field-emoji-btn {
   position: absolute;
   right: 8px;
   bottom: 8px;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--card);
+  background: var(--btn);
+  color: var(--btn-text, #fff);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 1.2rem;
+  border-radius: 8px;
+  font-size: 1.3rem;
   cursor: pointer;
-  transition: background 0.15s;
+  z-index: 5;
+  transition: opacity 0.15s;
 }
 .reply-field-emoji-btn:hover {
-  background: var(--border);
+  opacity: 0.9;
 }
 .reply-field-emoji-popover {
   position: absolute;
