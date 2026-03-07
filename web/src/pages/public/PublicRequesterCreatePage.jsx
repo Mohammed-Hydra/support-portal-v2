@@ -145,6 +145,19 @@ export function PublicRequesterCreatePage() {
     }
   }, [attachment]);
 
+  const isFormValid = useMemo(() => {
+    const name = String(form.requesterName || "").trim();
+    const email = String(form.requesterEmail || "").trim();
+    const phone = String(form.requesterPhone || "").trim();
+    const company = String(form.requesterCompanyName || "").trim();
+    const subject = String(form.subject || "").trim();
+    const description = String(form.description || "").trim();
+    const categoryOther = String(form.categoryOther || "").trim();
+    if (!name || !email || !phone || !company || !subject || !description) return false;
+    if (form.category === "other" && !categoryOther) return false;
+    return true;
+  }, [form]);
+
   useEffect(() => {
     if (!attachmentPreviewUrl) return undefined;
     return () => {
@@ -249,7 +262,7 @@ export function PublicRequesterCreatePage() {
         </div>
         <div className="grid-2">
           <label htmlFor="requester-name">
-            Name
+            Name <span className="muted">(required)</span>
             <input
               id="requester-name"
               name="requesterName"
@@ -260,7 +273,7 @@ export function PublicRequesterCreatePage() {
             />
           </label>
           <label htmlFor="requester-email">
-            Email
+            Email <span className="muted">(required)</span>
             <input
               id="requester-email"
               name="requesterEmail"
@@ -274,28 +287,30 @@ export function PublicRequesterCreatePage() {
         </div>
         <div className="grid-2">
           <label htmlFor="requester-phone">
-            Phone
+            Phone <span className="muted">(required)</span>
             <input
               id="requester-phone"
               name="requesterPhone"
               value={form.requesterPhone}
               onChange={(e) => setForm({ ...form, requesterPhone: e.target.value })}
+              required
               autoComplete="tel"
             />
           </label>
           <label htmlFor="requester-company">
-            Company
+            Company <span className="muted">(required)</span>
             <input
               id="requester-company"
               name="requesterCompanyName"
               value={form.requesterCompanyName}
               onChange={(e) => setForm({ ...form, requesterCompanyName: e.target.value })}
+              required
               autoComplete="organization"
             />
           </label>
         </div>
         <label htmlFor="requester-subject">
-          Subject
+          Subject <span className="muted">(required)</span>
           <input
             id="requester-subject"
             name="subject"
@@ -348,7 +363,7 @@ export function PublicRequesterCreatePage() {
           </label>
         )}
         <label htmlFor="requester-description">
-          Description
+          Description <span className="muted">(required)</span>
           <textarea
             id="requester-description"
             name="description"
@@ -380,7 +395,7 @@ export function PublicRequesterCreatePage() {
         ) : null}
         {error ? <p className="error">{error}</p> : null}
         {result ? <p className="success">{result}</p> : null}
-        <button type="submit" disabled={saving}>{saving ? "Creating..." : "Create Ticket"}</button>
+        <button type="submit" disabled={saving || !isFormValid}>{saving ? "Creating..." : "Create Ticket"}</button>
         <p className="muted">
           Already raised a ticket? <Link to="/public/requester/track">Track tickets by email</Link>
         </p>
