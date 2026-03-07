@@ -38,6 +38,7 @@ export function EmojiInsertBar({ onInsert, label = "Add emoji" }) {
         title={label}
       >
         <span className="emoji-trigger-icon" aria-hidden>😊</span>
+        <span className="emoji-trigger-label">{label}</span>
       </button>
       {open && (
         <div className="emoji-popover" role="menu">

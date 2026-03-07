@@ -1067,27 +1067,34 @@ button:hover {
 
 .emoji-insert-wrap {
   position: relative;
-  display: inline-block;
-  margin-bottom: 8px;
+  display: block;
+  margin-bottom: 10px;
 }
 .emoji-trigger-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background: var(--card);
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--btn);
+  color: var(--btn-text, #fff);
   border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  font-size: 0.9rem;
+  transition: opacity 0.15s, transform 0.1s;
 }
 .emoji-trigger-btn:hover {
-  background: var(--border);
+  opacity: 0.9;
+}
+.emoji-trigger-btn:active {
+  transform: scale(0.98);
 }
 .emoji-trigger-icon {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
+}
+.emoji-trigger-label {
+  font-weight: 500;
 }
 .emoji-popover {
   position: absolute;
