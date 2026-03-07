@@ -752,6 +752,32 @@ function publicRequesterRoutes({ logAudit, createNotification, notifyAdmins }) {
       await query(`UPDATE tickets SET updated_at = NOW() WHERE id = $1`, [ticketId]);
       await logAudit(null, ticketId, "public_requester_message_added", { email: req.requester.email });
 
+      const messagePreview = body
+        ? (body.length > 150 ? `${body.slice(0, 150).trim()}…` : body)
+        : (attachmentUrl ? "(attachment)" : "");
+      const notifyTitle = `New reply on ticket #${ticketId}`;
+      const notifyBody = messagePreview || "New message from requester";
+      const actorName = req.requester.name || "Requester";
+      if (createNotification && ticket.assigned_agent_id) {
+        await createNotification({
+          userId: ticket.assigned_agent_id,
+          ticketId,
+          type: "requester_reply",
+          title: notifyTitle,
+          body: notifyBody,
+          actorName,
+        });
+      } else if (notifyAdmins) {
+        await notifyAdmins({
+          ticketId,
+          type: "requester_reply",
+          title: notifyTitle,
+          body: notifyBody,
+          actorName,
+        });
+      }
+      fireWebhooks("new_message", { ticketId, subject: ticket.subject, bodyPreview: body ? body.slice(0, 200) : "" }).catch(() => {});
+
       await runAutomationRules({
         eventName: "ticket_message_added",
         ticketId,
