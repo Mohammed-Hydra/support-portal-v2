@@ -6,7 +6,7 @@ const COMMON_EMOJIS = [
   "👋", "💪", "🙌", "🤝", "📧", "📞", "🔔", "⭐", "💯", "🚀",
 ];
 
-export function ReplyFieldWithEmoji({ value, onChange, placeholder, id, name, rows = 3, actions }) {
+export function ReplyFieldWithEmoji({ value, onChange, placeholder, id, name, rows = 3, actions, submitButton }) {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef(null);
 
@@ -38,6 +38,7 @@ export function ReplyFieldWithEmoji({ value, onChange, placeholder, id, name, ro
         className="reply-field-textarea"
       />
       <div className="reply-field-toolbar">
+        {actions ? <div className="reply-field-toolbar-actions">{actions}</div> : null}
         <button
           type="button"
           className="reply-field-emoji-btn"
@@ -50,7 +51,7 @@ export function ReplyFieldWithEmoji({ value, onChange, placeholder, id, name, ro
           <span className="reply-field-emoji-icon">😊</span>
           <span className="reply-field-emoji-label">Emoji</span>
         </button>
-        {actions ? <div className="reply-field-toolbar-actions">{actions}</div> : null}
+        {submitButton ? <div className="reply-field-toolbar-actions">{submitButton}</div> : null}
       </div>
       {open && (
         <div className="reply-field-emoji-popover" role="menu">

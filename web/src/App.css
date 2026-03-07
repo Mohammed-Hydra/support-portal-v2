@@ -1153,6 +1153,8 @@ button:hover {
   box-sizing: border-box;
   background: transparent;
   color: var(--text);
+  min-height: 80px;
+  max-height: 180px;
 }
 .reply-field-with-emoji .reply-field-toolbar {
   display: flex;
@@ -1172,15 +1174,15 @@ button:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  min-width: 44px;
-  min-height: 36px;
+  gap: 4px;
+  padding: 6px 10px;
+  min-width: 40px;
+  min-height: 32px;
   background: var(--btn);
   color: var(--btn-text, #fff);
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: opacity 0.15s;

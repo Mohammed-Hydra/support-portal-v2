@@ -684,21 +684,19 @@ export function TicketDetailPage({ token, user }) {
         <ReplyFieldWithEmoji
           id="reply-body"
           name="message"
-          rows={4}
+          rows={3}
           value={message}
           onChange={setMessage}
           placeholder="Type your reply..."
           actions={
-            <>
-              {user?.role !== "requester" ? (
-                <label className="inline-check" htmlFor="reply-internal">
-                  <input id="reply-internal" name="isInternal" type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
-                  Internal Note
-                </label>
-              ) : null}
-              <button type="submit">Send</button>
-            </>
+            user?.role !== "requester" ? (
+              <label className="inline-check" htmlFor="reply-internal">
+                <input id="reply-internal" name="isInternal" type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
+                Internal Note
+              </label>
+            ) : null
           }
+          submitButton={<button type="submit" className="btn-compact">Send</button>}
         />
       </form>
 
