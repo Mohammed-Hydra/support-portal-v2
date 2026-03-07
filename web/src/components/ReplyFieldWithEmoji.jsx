@@ -37,17 +37,19 @@ export function ReplyFieldWithEmoji({ value, onChange, placeholder, id, name, ro
         onChange={(e) => onChange(e.target.value)}
         className="reply-field-textarea"
       />
-      <button
-        type="button"
-        className="reply-field-emoji-btn"
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Add emoji"
-        aria-expanded={open}
-        aria-haspopup="true"
-        title="Add emoji"
-      >
-        😊
-      </button>
+      <div className="reply-field-toolbar">
+        <button
+          type="button"
+          className="reply-field-emoji-btn"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Add emoji"
+          aria-expanded={open}
+          aria-haspopup="true"
+          title="Add emoji"
+        >
+          😊
+        </button>
+      </div>
       {open && (
         <div className="reply-field-emoji-popover" role="menu">
           <div className="emoji-popover-grid">
