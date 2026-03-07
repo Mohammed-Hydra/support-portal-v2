@@ -26,6 +26,14 @@ export function ReplyFieldWithEmoji({ value, onChange, placeholder, id, name, ro
     setOpen(false);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      const form = e.target.closest("form");
+      if (form && value?.trim()) form.requestSubmit();
+    }
+  };
+
   return (
     <div className="reply-field-with-emoji" ref={popoverRef} style={{ border: "1px solid var(--border)", borderRadius: 8, background: "var(--card)", overflow: "visible" }}>
       <textarea
@@ -35,6 +43,7 @@ export function ReplyFieldWithEmoji({ value, onChange, placeholder, id, name, ro
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
         className="reply-field-textarea"
         style={{ height: 72, minHeight: 72, maxHeight: 120, resize: "vertical" }}
       />
