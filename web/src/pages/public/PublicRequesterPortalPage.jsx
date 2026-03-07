@@ -531,8 +531,10 @@ export function PublicRequesterPortalPage() {
                 <hr />
                 <h4>Conversation <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>(updates automatically)</span></h4>
                 {loadingTicket ? <p className="muted">Loading conversation...</p> : null}
-                {(selectedTicket.messages || []).map((item) => (
-                  <div key={item.id} className="timeline-item">
+                {(Array.isArray(selectedTicket?.messages) ? selectedTicket.messages : [])
+                .filter((item) => item && typeof item === "object")
+                .map((item, idx) => (
+                  <div key={item?.id ?? `msg-${idx}`} className="timeline-item">
                     <small>{new Date(item.created_at).toLocaleString()} - {messageAuthor(item)}</small>
                     <p style={{ whiteSpace: "pre-wrap" }}>{item.body || (item.attachment_url ? "(attachment)" : "")}</p>
                     {item.attachment_url ? (

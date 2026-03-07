@@ -1,11 +1,22 @@
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { apiRequest } from "./api";
 import { dictionary } from "./i18n";
 import { Layout } from "./components/Layout";
 import { ToastHost } from "./components/ToastHost";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+
+function retryLazy(importFn, retries = 3, delay = 1000) {
+  return () =>
+    importFn().catch((err) => {
+      if (retries <= 0) throw err;
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(retryLazy(importFn, retries - 1, delay)()), delay);
+      });
+    });
+}
 
 const LoginPage = lazy(() => import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage").then((m) => ({ default: m.ForgotPasswordPage })));
@@ -20,9 +31,9 @@ const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage").then((m) =>
 const ContactsPage = lazy(() => import("./pages/ContactsPage").then((m) => ({ default: m.ContactsPage })));
 const HelpCenterPage = lazy(() => import("./pages/HelpCenterPage").then((m) => ({ default: m.HelpCenterPage })));
 const SettingsPage = lazy(() => import("./pages/SettingsPage").then((m) => ({ default: m.SettingsPage })));
-const PublicRequesterCreatePage = lazy(() => import("./pages/public/PublicRequesterCreatePage").then((m) => ({ default: m.PublicRequesterCreatePage })));
-const PublicRequesterTrackPage = lazy(() => import("./pages/public/PublicRequesterTrackPage").then((m) => ({ default: m.PublicRequesterTrackPage })));
-const PublicRequesterPortalPage = lazy(() => import("./pages/public/PublicRequesterPortalPage").then((m) => ({ default: m.PublicRequesterPortalPage })));
+const PublicRequesterCreatePage = lazy(retryLazy(() => import("./pages/public/PublicRequesterCreatePage").then((m) => ({ default: m.PublicRequesterCreatePage }))));
+const PublicRequesterTrackPage = lazy(retryLazy(() => import("./pages/public/PublicRequesterTrackPage").then((m) => ({ default: m.PublicRequesterTrackPage }))));
+const PublicRequesterPortalPage = lazy(retryLazy(() => import("./pages/public/PublicRequesterPortalPage").then((m) => ({ default: m.PublicRequesterPortalPage }))));
 
 function Protected({ token, children }) {
   if (!token) return <Navigate to="/login" replace />;
@@ -31,10 +42,12 @@ function Protected({ token, children }) {
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [token, setToken] = useState(localStorage.getItem("v2Token") || "");
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("v2User") || "null"));
   const [language, setLanguage] = useState(localStorage.getItem("v2Lang") || "en");
   const [theme, setTheme] = useState(localStorage.getItem("portal.theme") || "light");
+  const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
 
   const t = useMemo(() => dictionary[language] || dictionary.en, [language]);
 
@@ -86,7 +99,7 @@ function App() {
   const PageFallback = () => <div className="page-loading" aria-hidden="true">Loading…</div>;
 
   return (
-    <>
+    <ErrorBoundary key={`${location.pathname}-${errorBoundaryKey}`} onRetry={() => setErrorBoundaryKey((k) => k + 1)}>
       <Suspense fallback={<PageFallback />}>
       <Routes>
         <Route path="/login" element={<LoginPage onLogin={onLogin} t={t} />} />
@@ -119,7 +132,7 @@ function App() {
       </Routes>
       </Suspense>
       <ToastHost />
-    </>
+    </ErrorBoundary>
   );
 }
 

@@ -1,4 +1,5 @@
 import { Component } from "react";
+import { Link } from "react-router-dom";
 
 export class ErrorBoundary extends Component {
   state = { hasError: false, error: null };
@@ -18,7 +19,14 @@ export class ErrorBoundary extends Component {
         <div style={{ padding: 24, maxWidth: 560, margin: "40px auto", fontFamily: "sans-serif" }}>
           <h2>Something went wrong</h2>
           <p>This page failed to load. Try refreshing, or go back to the dashboard.</p>
-          <a href="/" style={{ color: "var(--btn, #0ea5e9)" }}>Go to Dashboard</a>
+          <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
+            {this.props.onRetry && (
+              <button type="button" onClick={() => this.props.onRetry()} style={{ padding: "8px 16px", cursor: "pointer" }}>
+                Try again
+              </button>
+            )}
+            <Link to="/" style={{ color: "var(--btn, #0ea5e9)", alignSelf: "center" }}>Go to Dashboard</Link>
+          </div>
         </div>
       );
     }
