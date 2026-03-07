@@ -7,14 +7,17 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is required for v2 backend.");
 }
 
-if (process.env.VERCEL === "1" && connectionString.includes("pooler.supabase.com") && !connectionString.includes("workaround=")) {
-  connectionString += (connectionString.includes("?") ? "&" : "?") + "workaround=supabase-pooler.vercel";
+if (process.env.VERCEL === "1" && connectionString.includes("pooler.supabase.com")) {
+  const sep = connectionString.includes("?") ? "&" : "?";
+  if (!connectionString.includes("workaround=")) connectionString += sep + "workaround=supabase-pooler.vercel";
+  if (!connectionString.includes("pgbouncer=")) connectionString += (connectionString.includes("?") ? "&" : "?") + "pgbouncer=true";
 }
 
 const pool = new Pool({
   connectionString,
   ssl: process.env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false },
   connectionTimeoutMillis: 10000,
+  ...(process.env.VERCEL === "1" && { max: 1, idleTimeoutMillis: 10000 }),
 });
 
 async function query(text, params = []) {

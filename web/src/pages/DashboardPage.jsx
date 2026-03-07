@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { apiRequest } from "../api";
 import { StatusBadge, PriorityBadge } from "../components/StatusBadge";
@@ -29,15 +29,29 @@ function ChartTooltipWithTickets({ active, payload, label, type }) {
   );
 }
 
+const REFRESH_INTERVAL_MS = 60 * 1000; // 60 seconds
+
 export function DashboardPage({ token, user, t }) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tickets, setTickets] = useState([]);
   const [report, setReport] = useState(null);
   const [loadingTickets, setLoadingTickets] = useState(true);
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState("");
-  const [period, setPeriod] = useState("all");
+  const urlPeriod = searchParams.get("period");
+  const period = ["all", "7", "30"].includes(urlPeriod) ? urlPeriod : "all";
+  const setPeriod = useCallback(
+    (value) => setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value === "all") next.delete("period");
+      else next.set("period", value);
+      return next;
+    }),
+    [setSearchParams]
+  );
   const [activeStatus, setActiveStatus] = useState("");
   const [activePriority, setActivePriority] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -61,7 +75,7 @@ export function DashboardPage({ token, user, t }) {
     return () => {
       mounted = false;
     };
-  }, [token]);
+  }, [token, refreshTrigger]);
 
   useEffect(() => {
     let mounted = true;
@@ -91,7 +105,40 @@ export function DashboardPage({ token, user, t }) {
     return () => {
       mounted = false;
     };
-  }, [token, user, period]);
+  }, [token, user, period, refreshTrigger]);
+
+  // Auto-refresh when tab is visible
+  useEffect(() => {
+    let intervalId = null;
+
+    function tick() {
+      if (document.visibilityState === "visible") setRefreshTrigger((n) => n + 1);
+    }
+
+    function startInterval() {
+      if (intervalId) return;
+      intervalId = setInterval(tick, REFRESH_INTERVAL_MS);
+    }
+
+    function stopInterval() {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") startInterval();
+      else stopInterval();
+    };
+
+    if (document.visibilityState === "visible") startInterval();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      stopInterval();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
 
   const filteredByPeriod = useMemo(() => {
     if (period === "all") return tickets;
@@ -254,6 +301,7 @@ export function DashboardPage({ token, user, t }) {
                 30 days
               </button>
             </div>
+            <span className="dashboard-auto-refresh muted">Auto-refreshes every 60s</span>
           </div>
 
           <div className="grid-4">

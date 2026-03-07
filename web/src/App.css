@@ -531,6 +531,16 @@ body {
   margin: 0 !important;
 }
 
+.dashboard-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.dashboard-auto-refresh {
+  margin-left: auto;
+  font-size: 0.875rem;
+}
 .dashboard-chart-wrap {
   min-height: 220px;
   width: 100%;
