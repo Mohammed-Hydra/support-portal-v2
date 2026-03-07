@@ -688,14 +688,18 @@ export function TicketDetailPage({ token, user }) {
           value={message}
           onChange={setMessage}
           placeholder="Type your reply..."
+          actions={
+            <>
+              {user?.role !== "requester" ? (
+                <label className="inline-check" htmlFor="reply-internal">
+                  <input id="reply-internal" name="isInternal" type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
+                  Internal Note
+                </label>
+              ) : null}
+              <button type="submit">Send</button>
+            </>
+          }
         />
-        {user?.role !== "requester" ? (
-          <label className="inline-check" htmlFor="reply-internal">
-            <input id="reply-internal" name="isInternal" type="checkbox" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
-            Internal Note
-          </label>
-        ) : null}
-        <button type="submit">Send</button>
       </form>
 
       {showMergeModal && (

@@ -575,6 +575,7 @@ export function PublicRequesterPortalPage() {
                     value={messageBody}
                     onChange={setMessageBody}
                     placeholder="Type your reply"
+                    actions={<button type="submit">Send Reply</button>}
                   />
                   <label className="muted" style={{ marginTop: -4 }} htmlFor="portal-reply-attachment">
                     Attach image (optional)
@@ -593,7 +594,6 @@ export function PublicRequesterPortalPage() {
                       <img src={attachmentPreviewUrl} alt="Attachment preview" />
                     </div>
                   ) : null}
-                  <button type="submit">Send Reply</button>
                 </form>
               </>
             )}

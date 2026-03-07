@@ -1157,10 +1157,16 @@ button:hover {
 .reply-field-with-emoji .reply-field-toolbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 6px 8px;
   border-top: 1px solid var(--border);
   gap: 8px;
+}
+.reply-field-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 .reply-field-emoji-btn {
   width: 36px;
