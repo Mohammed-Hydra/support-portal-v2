@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { apiRequest } from "../../api";
+import { apiRequest, resolveAttachmentUrl } from "../../api";
 import { Logo } from "../../components/Logo";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { toastError, toastSuccess } from "../../toast";
@@ -557,11 +557,11 @@ export function PublicRequesterPortalPage() {
                     {item.attachment_url ? (
                       <div className="requester-attachment attachment-block">
                         {String(item.attachment_url).startsWith("data:image/") ? (
-                          <a href={item.attachment_url} target="_blank" rel="noreferrer">
-                            <img src={item.attachment_url} alt="Attachment" />
+                          <a href={resolveAttachmentUrl(item.attachment_url)} target="_blank" rel="noreferrer">
+                            <img src={resolveAttachmentUrl(item.attachment_url)} alt="Attachment" />
                           </a>
                         ) : (
-                          <a href={item.attachment_url} target="_blank" rel="noreferrer" className="attachment-link">View attachment</a>
+                          <a href={resolveAttachmentUrl(item.attachment_url)} target="_blank" rel="noreferrer" className="attachment-link">View attachment</a>
                         )}
                       </div>
                     ) : null}
