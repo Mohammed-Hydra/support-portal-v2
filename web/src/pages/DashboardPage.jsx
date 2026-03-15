@@ -276,7 +276,7 @@ export function DashboardPage({ token, user, t }) {
   }, []);
 
   return (
-    <div>
+    <div className="dashboard-page">
       <div className="page-header">
         <h1>{t.dashboard}</h1>
         <p className="welcome-greeting">{greeting}</p>
@@ -346,11 +346,17 @@ export function DashboardPage({ token, user, t }) {
             </div>
           ) : null}
 
-          <div className="card">
+          <div className="card card-chart">
             <h3>Tickets by Status</h3>
             <div className="dashboard-chart-wrap">
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={statusChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                  <defs>
+                    <linearGradient id="barGradientStatus" x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0%" stopColor="#0284c7" />
+                      <stop offset="100%" stopColor="#0ea5e9" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--muted)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
@@ -360,7 +366,7 @@ export function DashboardPage({ token, user, t }) {
                     )}
                     contentStyle={{ background: "transparent", border: "none", padding: 0, color: "var(--text)" }}
                   />
-                  <Bar dataKey="count" fill="var(--btn)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="url(#barGradientStatus)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -379,11 +385,17 @@ export function DashboardPage({ token, user, t }) {
             </div>
           </div>
 
-          <div className="card">
+          <div className="card card-chart">
             <h3>Tickets by Priority</h3>
             <div className="dashboard-chart-wrap">
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={priorityChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                  <defs>
+                    <linearGradient id="barGradientPriority" x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0%" stopColor="#0284c7" />
+                      <stop offset="100%" stopColor="#0ea5e9" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="var(--muted)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
@@ -393,7 +405,7 @@ export function DashboardPage({ token, user, t }) {
                     )}
                     contentStyle={{ background: "transparent", border: "none", padding: 0, color: "var(--text)" }}
                   />
-                  <Bar dataKey="count" fill="var(--btn)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="url(#barGradientPriority)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -413,7 +425,7 @@ export function DashboardPage({ token, user, t }) {
           </div>
 
           {trendChartData.length > 0 && (
-            <div className="card">
+            <div className="card card-chart">
               <h3>Tickets Over Time</h3>
               <div className="dashboard-chart-wrap">
                 <ResponsiveContainer width="100%" height={220}>
