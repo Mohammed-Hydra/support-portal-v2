@@ -19,8 +19,8 @@
   --soft: #f2f8ff;
   --radius: 12px;
   --radius-sm: 8px;
-  --shadow: 0 4px 24px rgba(14, 52, 96, 0.08);
-  --shadow-lg: 0 8px 32px rgba(14, 52, 96, 0.14);
+  --shadow: 0 2px 8px rgba(14, 52, 96, 0.04), 0 8px 24px rgba(14, 52, 96, 0.08);
+  --shadow-lg: 0 4px 12px rgba(14, 52, 96, 0.06), 0 12px 40px rgba(14, 52, 96, 0.12);
   --transition: 0.2s ease;
   --danger: #dc2626;
   --success: #16a34a;
@@ -42,8 +42,8 @@
   --btn-hover: #38bdf8;
   --btn-active: #0284c7;
   --soft: #1e293b;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
 [data-theme="dark"] input,
