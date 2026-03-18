@@ -1,5 +1,12 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
+/** Resolves attachment URLs so they work when opened in a new tab (e.g. cross-origin dev setup). */
+export function resolveAttachmentUrl(url) {
+  if (!url || typeof url !== "string") return url;
+  if (url.startsWith("data:") || url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${API_BASE}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
 export async function apiRequest(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (options.token) headers.Authorization = `Bearer ${options.token}`;

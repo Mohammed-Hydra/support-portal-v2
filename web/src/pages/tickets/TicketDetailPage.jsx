@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { apiRequest } from "../../api";
+import { apiRequest, resolveAttachmentUrl } from "../../api";
 import { toastError, toastSuccess } from "../../toast";
 import { StatusBadge, PriorityBadge } from "../../components/StatusBadge";
 import { ReplyFieldWithEmoji } from "../../components/ReplyFieldWithEmoji";
@@ -415,19 +415,19 @@ export function TicketDetailPage({ token, user }) {
                   <button
                     type="button"
                     className="text-btn attachment-link"
-                    onClick={() => setPreview({ url: item.attachment_url, title: "Attachment" })}
+                    onClick={() => setPreview({ url: resolveAttachmentUrl(item.attachment_url), title: "Attachment" })}
                   >
                     View attachment
                   </button>
                 ) : (
-                  <a href={item.attachment_url} target="_blank" rel="noreferrer" className="attachment-link">
+                  <a href={resolveAttachmentUrl(item.attachment_url)} target="_blank" rel="noreferrer" className="attachment-link">
                     View attachment
                   </a>
                 )}
                 {isImageAttachment(item.attachment_url) ? (
                   <div style={{ marginTop: "8px" }}>
                     <img
-                      src={item.attachment_url}
+                      src={resolveAttachmentUrl(item.attachment_url)}
                       alt="Attachment"
                       style={{ maxWidth: "320px", width: "100%", borderRadius: "8px", border: "1px solid var(--border)" }}
                     />
