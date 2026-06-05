@@ -350,7 +350,7 @@ export function DashboardPage({ token, user, t }) {
             <h3>Tickets by Status</h3>
             <div className="dashboard-chart-wrap">
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={statusChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                <BarChart data={statusChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }} isAnimationActive={false}>
                   <defs>
                     <linearGradient id="barGradientStatus" x1="0" y1="1" x2="0" y2="0">
                       <stop offset="0%" stopColor="#0284c7" />
@@ -366,7 +366,7 @@ export function DashboardPage({ token, user, t }) {
                     )}
                     contentStyle={{ background: "transparent", border: "none", padding: 0, color: "var(--text)" }}
                   />
-                  <Bar dataKey="count" fill="url(#barGradientStatus)" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="count" fill="url(#barGradientStatus)" radius={[6, 6, 0, 0]} isAnimationActive={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -389,7 +389,7 @@ export function DashboardPage({ token, user, t }) {
             <h3>Tickets by Priority</h3>
             <div className="dashboard-chart-wrap">
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={priorityChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                <BarChart data={priorityChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }} isAnimationActive={false}>
                   <defs>
                     <linearGradient id="barGradientPriority" x1="0" y1="1" x2="0" y2="0">
                       <stop offset="0%" stopColor="#0284c7" />
@@ -405,7 +405,7 @@ export function DashboardPage({ token, user, t }) {
                     )}
                     contentStyle={{ background: "transparent", border: "none", padding: 0, color: "var(--text)" }}
                   />
-                  <Bar dataKey="count" fill="url(#barGradientPriority)" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="count" fill="url(#barGradientPriority)" radius={[6, 6, 0, 0]} isAnimationActive={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -429,12 +429,12 @@ export function DashboardPage({ token, user, t }) {
               <h3>Tickets Over Time</h3>
               <div className="dashboard-chart-wrap">
                 <ResponsiveContainer width="100%" height={220}>
-                  <LineChart data={trendChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                  <LineChart data={trendChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }} isAnimationActive={false}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted)" />
                     <YAxis tick={{ fontSize: 12 }} stroke="var(--muted)" />
                     <Tooltip contentStyle={{ background: "transparent", border: "none", padding: 0, color: "var(--text)" }} />
-                    <Line type="monotone" dataKey="count" stroke="var(--btn)" strokeWidth={2} dot={{ fill: "var(--btn)" }} />
+                    <Line type="monotone" dataKey="count" stroke="var(--btn)" strokeWidth={2} dot={{ fill: "var(--btn)" }} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

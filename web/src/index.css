@@ -21,7 +21,7 @@
   --radius-sm: 8px;
   --shadow: 0 2px 8px rgba(14, 52, 96, 0.04), 0 8px 24px rgba(14, 52, 96, 0.08);
   --shadow-lg: 0 4px 12px rgba(14, 52, 96, 0.06), 0 12px 40px rgba(14, 52, 96, 0.12);
-  --transition: 0.2s ease;
+  --transition: 0s;
   --danger: #dc2626;
   --success: #16a34a;
   --warn: #ca8a04;

@@ -2086,3 +2086,29 @@ body[dir="rtl"] .edit-drawer {
     min-height: 80px;
   }
 }
+
+/* Disable all UI motion across the portal */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+.card {
+  transform-style: flat;
+}
+
+.card:hover,
+[data-theme="dark"] .card:hover {
+  transform: none;
+}
+
+.dashboard-chart-wrap {
+  perspective: none;
+}
+
+.emoji-trigger-btn:active {
+  transform: none;
+}
