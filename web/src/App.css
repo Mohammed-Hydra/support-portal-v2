@@ -37,6 +37,9 @@ body {
   min-height: 100dvh;
   display: grid;
   grid-template-columns: 250px 1fr;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .app-shell:not(.menu-open) {
@@ -106,6 +109,9 @@ body {
 .main-shell {
   display: grid;
   grid-template-rows: auto 1fr;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .topbar-wrap {
@@ -137,6 +143,8 @@ body {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .quick-action-btn {
@@ -347,8 +355,8 @@ body {
   top: 100%;
   right: 0;
   margin-top: 8px;
-  min-width: 320px;
-  max-width: 400px;
+  min-width: min(320px, calc(100vw - 24px));
+  max-width: min(400px, calc(100vw - 24px));
   max-height: 400px;
   background: var(--card);
   border: 1px solid var(--border);
@@ -1458,7 +1466,9 @@ a.attachment-link:active,
 
 .table-wrap {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 @supports (scrollbar-width: none) {
   .table-wrap { scrollbar-width: none; }
@@ -1970,9 +1980,23 @@ body[dir="rtl"] .edit-drawer {
   background: var(--card-hover);
 }
 
-@media (max-width: 900px) {
-  .app-shell {
+@media (max-width: 1024px) {
+  .app-shell,
+  .app-shell:not(.menu-open) {
     grid-template-columns: 1fr;
+  }
+
+  .app-shell:not(.menu-open) .sidebar {
+    width: min(86vw, 290px);
+    padding: 18px 14px;
+    overflow: auto;
+    overflow-x: hidden;
+  }
+
+  .main-shell {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    box-sizing: border-box;
   }
 
   .sidebar {
@@ -2020,6 +2044,7 @@ body[dir="rtl"] .edit-drawer {
 @media (max-width: 768px) {
   .content {
     padding: 12px;
+    box-sizing: border-box;
   }
 
   .topbar {
@@ -2028,10 +2053,29 @@ body[dir="rtl"] .edit-drawer {
     align-items: center;
     padding: 10px 12px;
     gap: 8px;
+    box-sizing: border-box;
+  }
+
+  .topbar-left strong,
+  .topbar-left > .muted {
+    display: none;
+  }
+
+  .breadcrumbs {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quick-action-btn {
+    padding: 8px 10px;
+    font-size: 12px;
   }
 
   .top-actions {
     width: auto;
+    flex-shrink: 0;
   }
 
   .top-actions button {
@@ -2043,6 +2087,7 @@ body[dir="rtl"] .edit-drawer {
 
   .modal-backdrop {
     padding: 12px;
+    box-sizing: border-box;
   }
 
   .modal {
@@ -2054,10 +2099,77 @@ body[dir="rtl"] .edit-drawer {
 
   .card {
     padding: 12px;
+    box-sizing: border-box;
+  }
+
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-filters-compact .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ticket-filters-compact .search-inputs-col {
+    max-width: none;
+    width: 100%;
+  }
+
+  .ticket-filters-compact .search-merge-stack {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table.tickets-table {
+    table-layout: auto;
+    font-size: 12px;
+  }
+
+  /* Hide wide columns on small screens; details on ticket page */
+  .table.tickets-table:not(.tickets-table-with-checkbox) :is(th, td):nth-child(6),
+  .table.tickets-table:not(.tickets-table-with-checkbox) :is(th, td):nth-child(7),
+  .table.tickets-table:not(.tickets-table-with-checkbox) :is(th, td):nth-child(8),
+  .table.tickets-table:not(.tickets-table-with-checkbox) :is(th, td):nth-child(9) {
+    display: none;
+  }
+
+  .table.tickets-table-with-checkbox :is(th, td):nth-child(7),
+  .table.tickets-table-with-checkbox :is(th, td):nth-child(8),
+  .table.tickets-table-with-checkbox :is(th, td):nth-child(9),
+  .table.tickets-table-with-checkbox :is(th, td):nth-child(10) {
+    display: none;
+  }
+
+  .table.tickets-table :is(th, td) {
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  .table.tickets-table :is(th, td):nth-child(1) {
+    min-width: 32px !important;
+  }
+
+  .table.tickets-table :is(th, td):nth-child(2),
+  .table.tickets-table-with-checkbox :is(th, td):nth-child(3) {
+    min-width: 72px !important;
+    max-width: 140px;
   }
 
   .action-cell {
-    min-width: 280px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .edit-ticket-tab {
+    width: 32px;
+    min-height: 72px;
+    padding: 12px 4px;
+    font-size: 11px;
+  }
+
+  .edit-drawer {
+    width: 100vw;
+    max-width: 100%;
   }
 
   button {
@@ -2072,8 +2184,11 @@ body[dir="rtl"] .edit-drawer {
 }
 
 @media (max-width: 480px) {
-  .page-header h1 {
-    font-size: 1.25rem;
+  .page-header h1,
+  .content h1 {
+    font-size: 1.15rem;
+    word-break: break-word;
+    line-height: 1.35;
   }
 
   .tickets-header {

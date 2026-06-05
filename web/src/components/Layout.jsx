@@ -24,7 +24,7 @@ export function Layout({ user, t, language, setLanguage, theme, setTheme, onLogo
   const [menuOpen, setMenuOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
-      const isMobile = window.innerWidth <= 768;
+      const isMobile = window.innerWidth <= 1024;
       if (isMobile) return false;
       const raw = window.localStorage.getItem("portal.menuOpen");
       if (raw === null) return true;
@@ -131,7 +131,7 @@ export function Layout({ user, t, language, setLanguage, theme, setTheme, onLogo
                 key={item.to}
                 to={item.to}
                 className={location.pathname === item.to ? "active-link" : ""}
-                onClick={() => window.innerWidth <= 768 && setMenuOpen(false)}
+                onClick={() => window.innerWidth <= 1024 && setMenuOpen(false)}
                 style={{ position: "relative" }}
               >
                 {t[item.key]}

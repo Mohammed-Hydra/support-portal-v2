@@ -120,4 +120,14 @@ body::before {
 #root {
   position: relative;
   z-index: 1;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+@media (max-width: 1024px) {
+  body::before {
+    background-size: 100% 100%, min(85vw, 420px) auto, 100% 100%, 100% 100%;
+    background-position: 0 0, center 50%, 0 0, 0 0;
+  }
 }
