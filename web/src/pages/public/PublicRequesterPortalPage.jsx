@@ -6,6 +6,7 @@ import { ThemeToggle } from "../../components/ThemeToggle";
 import { toastError, toastSuccess } from "../../toast";
 import { useTicketMessagesRealtime } from "../../hooks/useTicketMessagesRealtime";
 import { ReplyFieldWithEmoji } from "../../components/ReplyFieldWithEmoji";
+import { PORTAL_REFRESH_INTERVAL_MS } from "../../constants/refresh";
 
 const STORAGE_KEY = "requesterPortalToken";
 const SEEN_KEY = "requesterPortalLastSeenV2";
@@ -127,7 +128,7 @@ export function PublicRequesterPortalPage() {
       if (selectedTicketId) {
         refreshTicketDetails(selectedTicketId, true).catch(() => {});
       }
-    }, 15000);
+    }, PORTAL_REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [selectedTicketId, requesterToken]);
 

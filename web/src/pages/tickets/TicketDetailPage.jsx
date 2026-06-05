@@ -5,6 +5,7 @@ import { toastError, toastSuccess } from "../../toast";
 import { StatusBadge, PriorityBadge } from "../../components/StatusBadge";
 import { ReplyFieldWithEmoji } from "../../components/ReplyFieldWithEmoji";
 import { useTicketMessagesRealtime } from "../../hooks/useTicketMessagesRealtime";
+import { PORTAL_REFRESH_INTERVAL_MS, PORTAL_REFRESH_LABEL } from "../../constants/refresh";
 
 export function TicketDetailPage({ token, user }) {
   const { ticketId } = useParams();
@@ -66,7 +67,7 @@ export function TicketDetailPage({ token, user }) {
 
   useEffect(() => {
     let intervalId = null;
-    const INTERVAL_MS = 30000;
+    const INTERVAL_MS = PORTAL_REFRESH_INTERVAL_MS;
 
     function tick() {
       if (document.visibilityState === "visible") load();
@@ -310,7 +311,7 @@ export function TicketDetailPage({ token, user }) {
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
         <h1 style={{ margin: 0 }}>Ticket #{ticket.id}: {ticket.subject}</h1>
-        <span className="muted" style={{ fontSize: "0.875rem" }}>Auto-refreshes every 30s</span>
+        <span className="muted" style={{ fontSize: "0.8rem" }}>Auto-refreshes every {PORTAL_REFRESH_LABEL}</span>
         <button
           type="button"
           onClick={openEditModal}

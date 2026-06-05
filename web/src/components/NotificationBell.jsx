@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../api";
+import { PORTAL_REFRESH_INTERVAL_MS } from "../constants/refresh";
 
 export function NotificationBell({ token }) {
   const [notifications, setNotifications] = useState([]);
@@ -72,7 +73,7 @@ export function NotificationBell({ token }) {
 
   useEffect(() => {
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
+    const interval = setInterval(fetchUnreadCount, PORTAL_REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [token]);
 

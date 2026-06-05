@@ -4,6 +4,7 @@ import { Logo } from "./Logo";
 import { NotificationBell } from "./NotificationBell";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { apiRequest } from "../api";
+import { PORTAL_REFRESH_INTERVAL_MS } from "../constants/refresh";
 
 const menu = [
   { to: "/", key: "dashboard" },
@@ -55,7 +56,7 @@ export function Layout({ user, t, language, setLanguage, theme, setTheme, onLogo
       apiRequest("/api/notifications/unread-count", { token })
         .then((r) => setUnreadCount(r?.count ?? 0))
         .catch(() => {});
-    }, 30000);
+    }, PORTAL_REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [token]);
 

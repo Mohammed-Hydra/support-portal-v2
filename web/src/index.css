@@ -25,6 +25,12 @@
   --danger: #dc2626;
   --success: #16a34a;
   --warn: #ca8a04;
+  --field-font-size: 12px;
+  --field-padding-y: 4px;
+  --field-padding-x: 8px;
+  --field-min-height: 30px;
+  --label-font-size: 12px;
+  --control-gap: 4px;
 }
 
 [data-theme="dark"] {
@@ -75,7 +81,7 @@
 }
 
 html {
-  font-size: 17px;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }
 
