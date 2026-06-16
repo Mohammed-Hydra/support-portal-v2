@@ -63,6 +63,12 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
+    const isClientPortal = location.pathname.startsWith("/public/requester");
+    document.body.classList.toggle("portal-client", isClientPortal);
+    document.body.classList.toggle("portal-ops", !isClientPortal);
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (!token) return;
     apiRequest("/api/auth/me", { token })
       .then((me) => {

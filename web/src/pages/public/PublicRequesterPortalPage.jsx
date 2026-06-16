@@ -378,7 +378,7 @@ export function PublicRequesterPortalPage() {
   };
 
   return (
-    <div className="content">
+    <div className="content requester-portal-wrap">
       <div className="container">
         <div className="page-header">
           <Logo className="login-brand-image" alt="HYDRA-TECH.PRO IT SUPPORT PLATFORM" />

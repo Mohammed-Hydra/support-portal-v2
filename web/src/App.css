@@ -2240,3 +2240,158 @@ body[dir="rtl"] .edit-drawer {
 .emoji-trigger-btn:active {
   transform: none;
 }
+
+/* ─── A: Minimal ops (agent / staff) ─── */
+body.portal-ops .sidebar {
+  background: var(--card);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.portal-ops .sidebar a:hover {
+  background: var(--soft);
+}
+
+body.portal-ops .sidebar a.active-link {
+  background: var(--btn);
+  color: #fff;
+}
+
+body.portal-ops .topbar {
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  border: 1px solid var(--border);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.portal-ops .topbar-wrap {
+  padding: 12px 12px 0;
+}
+
+body.portal-ops .content {
+  background: var(--bg);
+  box-shadow: none;
+}
+
+body.portal-ops .card {
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  border: 1px solid var(--border);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.portal-ops .card:hover,
+body.portal-ops [data-theme="dark"] .card:hover {
+  box-shadow: none;
+  transform: none;
+}
+
+body.portal-ops [data-theme="dark"] .card {
+  box-shadow: none;
+}
+
+body.portal-ops .subcard {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.portal-ops .dashboard-page::before {
+  display: none;
+}
+
+body.portal-ops .card.card-chart {
+  box-shadow: none;
+}
+
+body.portal-ops .status-card-btn {
+  box-shadow: none;
+}
+
+body.portal-ops .auth-wrap .card {
+  box-shadow: var(--shadow-lg);
+}
+
+body.portal-ops .quick-action-btn {
+  border-radius: var(--radius-sm);
+}
+
+body.portal-ops .logout-btn,
+body.portal-ops .top-actions button:not(.icon-btn):not(.quick-action-btn) {
+  background: var(--soft);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+body.portal-ops .logout-btn:hover,
+body.portal-ops .top-actions button:not(.icon-btn):not(.quick-action-btn):hover {
+  background: var(--card-hover);
+}
+
+/* ─── B: Soft corporate (requester / client) ─── */
+body.portal-client .requester-portal-wrap .auth-card,
+body.portal-client .requester-portal-wrap.content {
+  max-width: min(720px, 100%);
+  margin: 0 auto;
+}
+
+body.portal-client .requester-portal-wrap.content {
+  padding: 20px 16px 32px;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.portal-client .requester-portal-wrap .card,
+body.portal-client .auth-wrap .card {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  padding: 20px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.portal-client .requester-portal-wrap .card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+body.portal-client .auth-wrap {
+  padding: 24px 16px;
+}
+
+body.portal-client .requester-portal-wrap .page-header h1,
+body.portal-client .requester-portal-wrap .page-header h2 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+body.portal-client .requester-portal-wrap .page-header p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+body.portal-client .requester-portal-wrap button[type="submit"],
+body.portal-client .auth-wrap button[type="submit"] {
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 42px;
+  border-radius: var(--radius-sm);
+}
+
+body.portal-client .requester-portal-wrap .btn-compact {
+  min-height: 36px;
+  font-size: 13px !important;
+  border-radius: var(--radius-sm);
+  background: var(--soft);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+body.portal-client .requester-portal-wrap .btn-compact:hover {
+  background: var(--card-hover);
+}
+
+body.portal-client .requester-portal-wrap a {
+  color: var(--btn);
+}
