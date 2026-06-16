@@ -392,9 +392,6 @@ export function PublicRequesterPortalPage() {
         {info ? <p className="success">{info}</p> : null}
         <div className="top-actions" style={{ marginBottom: "12px" }}>
           <ThemeToggle />
-          <button type="button" className="btn-compact" onClick={() => refreshTickets().catch((err) => setError(err.message))}>
-            Refresh
-          </button>
           <button type="button" className="btn-compact" onClick={() => setShowEmailPrefs((v) => !v)}>
             {showEmailPrefs ? "Hide" : "Email"} preferences
           </button>

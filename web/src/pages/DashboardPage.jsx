@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { apiRequest } from "../api";
 import { StatusBadge, PriorityBadge } from "../components/StatusBadge";
-import { PORTAL_REFRESH_INTERVAL_MS, PORTAL_REFRESH_LABEL } from "../constants/refresh";
+import { PORTAL_REFRESH_INTERVAL_MS } from "../constants/refresh";
 
 function ChartTooltipWithTickets({ active, payload, label, type }) {
   if (!active || !payload?.length || !payload[0]?.payload) return null;
@@ -300,7 +300,6 @@ export function DashboardPage({ token, user, t }) {
                 30 days
               </button>
             </div>
-            <span className="dashboard-auto-refresh muted">Auto-refreshes every {PORTAL_REFRESH_LABEL}</span>
           </div>
 
           <div className="grid-4">

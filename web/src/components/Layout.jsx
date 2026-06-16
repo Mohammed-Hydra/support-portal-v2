@@ -191,24 +191,6 @@ export function Layout({ user, t, language, setLanguage, theme, setTheme, onLogo
             {token && (user?.role === "admin" || user?.role === "agent" || user?.role === "requester") && (
               <NotificationBell token={token} />
             )}
-            <button
-              type="button"
-              className="icon-btn"
-              title="Refresh"
-              aria-label="Refresh"
-              onClick={() => window.location.reload()}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M20 12a8 8 0 1 1-2.34-5.66M20 4v6h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
             <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")}>
               {language === "en" ? "AR" : "EN"}
             </button>

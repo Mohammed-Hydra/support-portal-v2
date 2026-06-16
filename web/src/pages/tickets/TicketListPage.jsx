@@ -5,7 +5,7 @@ import { toastError, toastSuccess } from "../../toast";
 import { exportTicketsToCsv } from "../../utils/csvExport";
 import { StatusBadge, PriorityBadge } from "../../components/StatusBadge";
 import { Collapsible } from "../../components/Collapsible";
-import { PORTAL_REFRESH_INTERVAL_MS, PORTAL_REFRESH_LABEL } from "../../constants/refresh";
+import { PORTAL_REFRESH_INTERVAL_MS } from "../../constants/refresh";
 
 const statuses = ["New", "In Progress", "Waiting User", "Resolved", "Closed"];
 const priorities = ["Low", "Medium", "High", "Critical"];
@@ -653,7 +653,6 @@ export function TicketListPage({ token, user, t }) {
           <h3>Ticket Queue</h3>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span className="muted">{tickets.length} tickets</span>
-            <span className="muted" style={{ fontSize: "0.8rem" }}>Auto-refreshes every {PORTAL_REFRESH_LABEL}</span>
             <button
               type="button"
               className="btn-compact"
